@@ -202,18 +202,22 @@ export default function ResultEntry() {
     );
   }
 
-  const returnInfo =
-    form?.existingResult?.status === "returned" && form.existingResult.comments
-      ? {
-          comment: form.existingResult.comments,
-          reviewer: form.existingResult.reviewedBy ?? "Reviewer",
-        }
-      : null;
+const returnInfo =
+  form?.existingResult?.status === "returned" && form.existingResult.comments
+    ? {
+        comment: form.existingResult.comments,
+        reviewer:
+          typeof form.existingResult.reviewedBy === "object" &&
+          typeof form.existingResult.reviewedBy.user === "object"
+            ? `${form.existingResult.reviewedBy.user.firstName ?? ""} ${
+                form.existingResult.reviewedBy.user.lastName ?? ""
+              }`
+            : "Reviewer",
+      }
+    : null;
 
-  // ── Main layout ────────────────────────────────────────────
   return (
     <div className="flex h-full -m-4 md:-m-6 overflow-hidden animate-fade-in">
-      {/* ── Left panel ─────────────────────────────────────── */}
       <div className="hidden lg:flex flex-col w-72 xl:w-80 border-r border-border flex-shrink-0 overflow-y-auto bg-muted/20">
         <div className="p-6 space-y-6">
           <div className="space-y-4">
@@ -301,8 +305,6 @@ export default function ResultEntry() {
           <span className="text-xs font-medium">Result Entry</span>
         </div>
       </div>
-
-      {/* ── Right panel ────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <div className="lg:hidden px-4 py-3 border-b border-border bg-muted/20 flex items-center justify-between gap-3">
           <div className="min-w-0">

@@ -126,12 +126,10 @@ function calculateAge(dob: string): string {
   return `${m < 0 || (m === 0 && now.getDate() < birth.getDate()) ? age - 1 : age} yrs`;
 }
 
-// ─── Main Component ──────────────────────────────────────────────
-
 export default function PatientDetail() {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
-  const { orders } = useOrders(); // NOTE: still local/mock — Test Orders endpoints not wired yet
+  const { orders } = useOrders(); 
   const { toast } = useToast();
 
   const { patient, isLoading, refetch } = usePatient(patientId ?? null);
@@ -141,7 +139,6 @@ export default function PatientDetail() {
     patientId ? [`/patients/${patientId}`] : [],
   );
 
-  // Edit sheet state
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: "",
@@ -202,8 +199,6 @@ export default function PatientDetail() {
 
   const fullName = `${patient.firstName} ${patient.lastName}`;
   const access = derivePortalAccess(patient.user);
-
-  // ── Stats (from local order context — pending real orders endpoint) ──
   const totalOrders = patientOrders.length;
   const completedOrders = patientOrders.filter(
     (o) => o.status === "completed",

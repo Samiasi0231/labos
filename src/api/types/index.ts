@@ -3,6 +3,10 @@ export * from "./auth";
 export * from "./lab";
 export * from "./user";
 export * from "./staff";
-export * from "./staff";
 export * from "./pagination";
 export * from "./enums";
+export * from "./test-order";
+export * from "./test-catalog";
+export * from "./results"; 
+export * from "./doctors" 
+export * from "./inventory"

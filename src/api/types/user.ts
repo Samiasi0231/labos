@@ -45,12 +45,22 @@ export interface CurrentUser extends User {
   emailVerified: boolean;
   status: string;
   createdAt: string;
-  membership?: {
+  staff?: {
     _id: string;
     role: string;
     status: string;
     lab: string;
     joinedAt: string;
+  };
+membership?: {
+    id: string;
+    role: string;
+    permissions: string[];
+    lab: {
+      id: string;
+      name: string;
+      code: string;
+    };
   };
   patient?: {
     _id: string;

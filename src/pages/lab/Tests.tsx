@@ -65,6 +65,7 @@ import type { TestCatalogEntry } from "@/api/types/test-catalog";
 
 import {
   useTestOrderList,
+  useTestOrder,
   useCreateTestOrder,
   useUpdateTestOrder,
   useCancelTestOrder,
@@ -229,7 +230,9 @@ export default function Tests() {
     useTestCatalogList({ isActive: true, limit: 100 });
   const { staff, isLoading: isLoadingStaff } = useStaffList({ limit: 100 });
   const scientists = staff.filter(
-    (staff) => staff.role === "scientist" || staff.role === "technician",
+    (staff) =>
+      (staff.role === "scientist" || staff.role === "technician") &&
+      staff.status === "active",
   );
 
   useEffect(() => {
@@ -254,7 +257,17 @@ export default function Tests() {
   const [search, setSearch] = useState("");
   const [priority, setPriority] = useState<"All" | TestOrderPriority>("All");
   const [detailId, setDetailId] = useState<string | null>(null);
-  const detailOrder = orders.find((o) => o._id === detailId) ?? null;
+  // NOTE: the list endpoint (GET /test-orders) returns `items` as bare
+  // ObjectId strings, not populated TestOrderItem objects — confirmed via
+  // Swagger against GET /test-orders/{orderId}, which populates correctly.
+  // So the detail sheet/dialogs fetch the single order directly instead of
+  // reading from the already-loaded `orders` list. This is a workaround;
+  // the real fix is backend-side (add .populate('items') to the list query).
+  const {
+    order: detailOrder,
+    isLoading: isLoadingDetail,
+    refetch: refetchDetailOrder,
+  } = useTestOrder(detailId);
   const [detPriority, setDetPriority] = useState<TestOrderPriority>("routine");
   const [detNotes, setDetNotes] = useState("");
   const [detEditing, setDetEditing] = useState(false);
@@ -264,6 +277,7 @@ export default function Tests() {
   const [detChecked, setDetChecked] = useState<Record<string, Set<string>>>({});
   const [assignItemId, setAssignItemId] = useState<string | null>(null);
   const [assignScientist, setAssignScientist] = useState("");
+  const [assignSearch, setAssignSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
   const [coPatient, setCoPatient] = useState("");
@@ -277,10 +291,18 @@ export default function Tests() {
   const [coChecked, setCoChecked] = useState<Record<string, Set<string>>>({});
 
   // ── Collect Sample dialog state ──
+  // NOTE: item._id is confirmed missing at runtime on items returned from
+  // GET /test-orders (both rows were writing to itemSampleTypes["undefined"],
+  // hence the duplicate-typing bug) even though the Swagger schema documents
+  // it. Until the backend fixes that, this is keyed by array index instead —
+  // safe because detailOrder.items keeps a stable order within one dialog
+  // session. The itemId actually sent to the backend in submitCollectSample
+  // is still item._id and will still be flagged as missing there — that half
+  // needs a backend fix; this only fixes the UI glitch.
   const [showCollect, setShowCollect] = useState(false);
   const [containerType, setContainerType] = useState("");
   const [itemSampleTypes, setItemSampleTypes] = useState<
-    Record<string, string>
+    Record<number, string>
   >({});
 
   const filtered = useMemo(
@@ -325,7 +347,7 @@ export default function Tests() {
         priority: detPriority,
         notes: detNotes,
       });
-      await refetchOrders();
+      await Promise.all([refetchOrders(), refetchDetailOrder()]);
       setDetEditing(false);
       toast({ title: "Order updated" });
     } catch {
@@ -370,7 +392,7 @@ export default function Tests() {
           { testCatalogId: test._id, parameterIds: Array.from(paramSet) },
         ],
       });
-      await refetchOrders();
+      await Promise.all([refetchOrders(), refetchDetailOrder()]);
       setDetShowAdd(false);
       setDetExpandedId(null);
       setDetChecked({});
@@ -386,7 +408,7 @@ export default function Tests() {
   const handleRemoveItem = async (orderId: string, itemId: string) => {
     try {
       await removeTestOrderItem(orderId, itemId);
-      await refetchOrders();
+      await Promise.all([refetchOrders(), refetchDetailOrder()]);
       toast({ title: "Item removed" });
     } catch {
       toast({ title: "Failed to remove item", variant: "destructive" });
@@ -401,12 +423,13 @@ export default function Tests() {
       await assignTestOrderItem(detailOrder._id, assignItemId, {
         assignedTo: sci._id,
       });
-      await refetchOrders();
+      await Promise.all([refetchOrders(), refetchDetailOrder()]);
       setAssignItemId(null);
       setAssignScientist("");
+      setAssignSearch("");
       toast({
         title: "Assigned",
-        description: `${sci.firstName} ${sci.lastName} assigned to test item.`,
+        description: `${sci.user.firstName} ${sci.user.lastName} assigned to test item.`,
       });
     } catch {
       toast({ title: "Failed to assign scientist", variant: "destructive" });
@@ -429,9 +452,9 @@ export default function Tests() {
   const openCollectDialog = () => {
     if (!detailOrder) return;
     setContainerType(detailOrder.containerType ?? "");
-    const defaults: Record<string, string> = {};
-    detailOrder.items.forEach((item) => {
-      defaults[item._id] = item.sampleType ?? "";
+    const defaults: Record<number, string> = {};
+    detailOrder.items.forEach((item, idx) => {
+      defaults[idx] = item.sampleType ?? "";
     });
     setItemSampleTypes(defaults);
     setShowCollect(true);
@@ -443,10 +466,27 @@ export default function Tests() {
       toast({ title: "Container type required", variant: "destructive" });
       return;
     }
-    const items = detailOrder.items.map((item) => ({
-      itemId: item._id,
-      sampleType: itemSampleTypes[item._id] || item.sampleType || "",
-    }));
+
+    const items = detailOrder.items.map((item, idx) => {
+      const itemId = item._id ?? (item as { id?: string }).id;
+      return {
+        itemId,
+        sampleType: itemSampleTypes[idx] || item.sampleType || "",
+      };
+    });
+
+    const missingId = items.some((i) => !i.itemId);
+    if (missingId) {
+      toast({
+        title: "Couldn't collect sample",
+        description:
+          "One or more test items is missing an ID from the server response. Refresh and try again.",
+        variant: "destructive",
+      });
+      console.error("[collect-sample] item missing _id/id:", detailOrder.items);
+      return;
+    }
+
     if (items.some((i) => !i.sampleType)) {
       toast({
         title: "Every item needs a sample type",
@@ -454,6 +494,7 @@ export default function Tests() {
       });
       return;
     }
+
     const payload: CollectSamplePayload = { containerType, items };
     try {
       await collectSample(detailOrder._id, payload);
@@ -562,6 +603,11 @@ export default function Tests() {
   };
 
   const coGrandTotal = coItems.reduce((s, i) => s + i.subtotal, 0);
+  const filteredScientists = scientists.filter((s) =>
+    `${s.user.firstName} ${s.user.lastName}`
+      .toLowerCase()
+      .includes(assignSearch.toLowerCase()),
+  );
   const coFilteredCat = catalogTests.filter((t) =>
     t.name.toLowerCase().includes(coCatSearch.toLowerCase()),
   );
@@ -852,12 +898,32 @@ export default function Tests() {
 
       {/* ─── ORDER DETAIL SHEET ─── */}
       <Sheet
-        open={!!detailOrder}
+        open={!!detailId}
         onOpenChange={(v) => {
           if (!v) setDetailId(null);
         }}
       >
         <SheetContent className="sm:max-w-xl w-full overflow-y-auto flex flex-col gap-0 p-0">
+          {isLoadingDetail && (
+            <div className="flex items-center justify-center py-24 text-sm text-muted-foreground">
+              Loading order…
+            </div>
+          )}
+          {!isLoadingDetail && detailId && !detailOrder && (
+            <div className="flex flex-col items-center gap-3 py-24 text-center px-6">
+              <AlertTriangle className="w-8 h-8 text-destructive/60" />
+              <p className="text-sm text-muted-foreground">
+                Couldn't load this order.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => refetchDetailOrder()}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
           {detailOrder && (
             <>
               <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
@@ -1102,8 +1168,8 @@ export default function Tests() {
                         {assignedScientist && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                             <User className="w-3 h-3" />
-                            {assignedScientist.firstName}{" "}
-                            {assignedScientist.lastName}
+                            {assignedScientist.user.firstName}{" "}
+                            {assignedScientist.user.lastName}
                           </p>
                         )}
 
@@ -1132,6 +1198,7 @@ export default function Tests() {
                                 onClick={() => {
                                   setAssignItemId(item._id);
                                   setAssignScientist("");
+                                  setAssignSearch("");
                                 }}
                               >
                                 <UserPlus className="w-3 h-3" />
@@ -1204,18 +1271,18 @@ export default function Tests() {
             <Separator />
             <div className="space-y-3">
               <p className="text-sm font-medium">Sample type per item</p>
-              {detailOrder?.items.map((item) => (
-                <div key={item._id} className="space-y-1.5">
+              {detailOrder?.items.map((item, idx) => (
+                <div key={item._id ?? idx} className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">
                     {item.testName}
                   </Label>
                   <Input
                     className="h-8 text-sm"
-                    value={itemSampleTypes[item._id] ?? ""}
+                    value={itemSampleTypes[idx] ?? ""}
                     onChange={(e) =>
                       setItemSampleTypes((prev) => ({
                         ...prev,
-                        [item._id]: e.target.value,
+                        [idx]: e.target.value,
                       }))
                     }
                   />
@@ -1243,7 +1310,10 @@ export default function Tests() {
       <Dialog
         open={!!assignItemId}
         onOpenChange={(v) => {
-          if (!v) setAssignItemId(null);
+          if (!v) {
+            setAssignItemId(null);
+            setAssignSearch("");
+          }
         }}
       >
         <DialogContent className="sm:max-w-sm">
@@ -1255,31 +1325,66 @@ export default function Tests() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <Label className="text-sm">Select Scientist</Label>
-            <Select value={assignScientist} onValueChange={setAssignScientist}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a scientist..." />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingStaff && (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    Loading staff…
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name..."
+                className="pl-9"
+                value={assignSearch}
+                onChange={(e) => setAssignSearch(e.target.value)}
+              />
+            </div>
+            <div className="border border-border rounded-lg max-h-56 overflow-y-auto divide-y divide-border">
+              {isLoadingStaff && (
+                <p className="text-sm text-muted-foreground p-3">
+                  Loading staff…
+                </p>
+              )}
+              {!isLoadingStaff && filteredScientists.length === 0 && (
+                <p className="text-sm text-muted-foreground p-3">
+                  No scientists match "{assignSearch}".
+                </p>
+              )}
+              {filteredScientists.map((s) => (
+                <button
+                  key={s._id}
+                  type="button"
+                  onClick={() => setAssignScientist(s._id)}
+                  className={`w-full text-left px-3 py-2.5 hover:bg-muted/30 transition-colors flex items-center gap-2.5 ${
+                    assignScientist === s._id ? "bg-primary/10" : ""
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-primary">
+                      {[s.user.firstName, s.user.lastName]
+                        .filter(Boolean)
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </span>
                   </div>
-                )}
-                {scientists.map((s) => (
-                  <SelectItem key={s._id} value={s._id}>
-                    <span>
-                      {s.firstName} {s.lastName}
-                    </span>
-                    <span className="text-muted-foreground text-xs ml-2">
-                      ({s.role})
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">
+                      {s.user.firstName} {s.user.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{s.role}</p>
+                  </div>
+                  {assignScientist === s._id && (
+                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignItemId(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAssignItemId(null);
+                setAssignSearch("");
+              }}
+            >
               Cancel
             </Button>
             <Button

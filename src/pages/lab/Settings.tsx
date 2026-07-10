@@ -52,10 +52,7 @@ export default function Settings() {
   const { lab, isLoading: isLabLoading, refetch } = useLab();
   const { updateLab, isLoading: isSaving } = useUpdateLab();
   const { updateLogo, isLoading: isUploadingLogo } = useUpdateLabLogo();
-
   const [labForm, setLabForm] = useState<LabFormState>(emptyLabForm);
-
-  // Seed the form once the real lab loads
   useEffect(() => {
     if (!lab) return;
     setLabForm({

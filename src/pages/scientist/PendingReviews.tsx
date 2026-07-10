@@ -1,79 +1,287 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/lab/StatusBadge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  AlertTriangle, CheckCircle, Eye, RefreshCw, Clock,
-  FileText, ThumbsUp, MessageSquare
+  AlertTriangle,
+  CheckCircle,
+  Eye,
+  RefreshCw,
+  Clock,
+  FileText,
+  ThumbsUp,
+  MessageSquare,
 } from "lucide-react";
-import { results, type Result, type ResultStatus } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
+import {
+  useResultsList,
+  useApproveResult,
+  useReturnResult,
+  useReleaseResult,
+} from "@/hooks/use-results";
+import type {
+  LabResult,
+  ResultStatus,
+  PopulatedRef,
+} from "@/api/types/results";
+
+// ── Helpers for PopulatedRef<T> = string | (T & { _id }) ──────────
+// Same defensive pattern used elsewhere in this app (TestOrder.patient,
+// TestOrderItem[]) since this backend inconsistently populates refs
+// across endpoints. Confirm against a live /results response whether
+// these are actually populated before trusting the "else" branches below.
+
+function getRefId<T>(ref: PopulatedRef<T>): string {
+  return typeof ref === "string" ? ref : ref._id;
+}
+
+function isPopulated<T>(ref: PopulatedRef<T>): ref is T & { _id: string } {
+  return typeof ref !== "string";
+}
+
+function getPatientName(ref: LabResult["patient"]): string {
+  if (!isPopulated(ref)) return "Unknown patient";
+  const { firstName, lastName, code } = ref;
+  return (
+    [firstName, lastName].filter(Boolean).join(" ") || code || "Unknown patient"
+  );
+}
+
+function getTestName(ref: LabResult["testOrderItem"]): string {
+  if (!isPopulated(ref)) return "Unknown test";
+  return ref.testName ?? "Unknown test";
+}
+
+function getSampleType(ref: LabResult["testOrderItem"]): string {
+  if (!isPopulated(ref)) return "";
+  return ref.sampleType ?? "";
+}
+
+const TABS: (ResultStatus | "All")[] = [
+  "All",
+  "submitted",
+  "approved",
+  "released",
+  "returned",
+];
+const TAB_LABEL: Record<string, string> = {
+  All: "All",
+  submitted: "Submitted",
+  approved: "Approved",
+  released: "Released",
+  returned: "Returned",
+};
+
+const STATUS_CONFIG: Record<
+  ResultStatus,
+  { label: string; cls: string; icon: React.ElementType }
+> = {
+  draft: {
+    label: "Draft",
+    cls: "bg-muted/60 text-muted-foreground border",
+    icon: FileText,
+  },
+  submitted: {
+    label: "Submitted",
+    cls: "bg-info/15 text-info border-info/30 border",
+    icon: Clock,
+  },
+  approved: {
+    label: "Approved",
+    cls: "bg-success/15 text-success border-success/30 border",
+    icon: ThumbsUp,
+  },
+  released: {
+    label: "Released",
+    cls: "bg-primary/15 text-primary border-primary/30 border",
+    icon: CheckCircle,
+  },
+  returned: {
+    label: "Returned",
+    cls: "bg-destructive/15 text-destructive border-destructive/30 border",
+    icon: RefreshCw,
+  },
+};
+
+function StatusPill({ status }: { status: ResultStatus }) {
+  const cfg = STATUS_CONFIG[status];
+  const Icon = cfg.icon;
+  return (
+    <Badge className={`text-xs gap-1 ${cfg.cls}`}>
+      <Icon className="w-3 h-3" />
+      {cfg.label}
+    </Badge>
+  );
+}
+function refId(ref: string | { _id: string } | undefined | null) {
+  if (!ref) return "";
+  return typeof ref === "string" ? ref : ref._id;
+}
+
 export default function PendingReviews() {
-  const [activeTab, setActiveTab] = useState("All");
-  const [resultList, setResultList] = useState<Result[]>(results);
-  const [selected, setSelected] = useState<Result | null>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { results, isLoading, error, refetch } = useResultsList({ limit: 100 });
+  const { approve, isLoading: isApproving } = useApproveResult();
+  const { returnResult, isLoading: isReturning } = useReturnResult();
+  const { release, isLoading: isReleasing } = useReleaseResult();
+  const [activeTab, setActiveTab] = useState<ResultStatus | "All">("All");
+  const [selected, setSelected] = useState<LabResult | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [returnNote, setReturnNote] = useState("");
   const [returnOpen, setReturnOpen] = useState(false);
-  const { toast } = useToast();
-
-  const tabs: (ResultStatus | 'All')[] = ['All', 'Submitted', 'Approved', 'Released', 'Returned'];
-  const tabCounts = tabs.map(tab => ({
-    tab,
-    count: tab === 'All' ? resultList.length : resultList.filter(r => r.status === tab).length
-  }));
-
-  const filtered = resultList.filter(r =>
-    activeTab === 'All' || r.status === activeTab
+  const reviewable = useMemo(
+    () => results.filter((r) => r.status !== "draft"),
+    [results],
   );
 
-  const returnResult = () => {
-    if (!selected) return;
-    setResultList(prev => prev.map(r =>
-      r.id === selected.id ? { ...r, status: 'Returned' as ResultStatus } : r
-    ));
-    setReturnOpen(false);
-    setViewOpen(false);
-    setReturnNote("");
-    toast({ title: "Result Returned", description: "The result has been returned for correction with your notes." });
+  const tabCounts = TABS.map((t) => ({
+    t,
+    count:
+      t === "All"
+        ? reviewable.length
+        : reviewable.filter((r) => r.status === t).length,
+  }));
+
+  const filtered = reviewable.filter(
+    (r) => activeTab === "All" || r.status === activeTab,
+  );
+
+  const isAbnormal = (r: LabResult) => r.values.some((v) => v.isAbnormal);
+
+  const handleApprove = async (result: LabResult) => {
+    try {
+      await approve(result._id);
+      await refetch();
+      toast({ title: "Result approved" });
+      setViewOpen(false);
+    } catch {
+      toast({ title: "Failed to approve result", variant: "destructive" });
+    }
   };
 
-  const statusIcon = (status: ResultStatus) => {
-    if (status === 'Submitted') return <Clock className="w-4 h-4 text-info" />;
-    if (status === 'Approved') return <ThumbsUp className="w-4 h-4 text-success" />;
-    if (status === 'Released') return <CheckCircle className="w-4 h-4 text-success" />;
-    if (status === 'Returned') return <RefreshCw className="w-4 h-4 text-destructive" />;
-    return null;
+  const handleRelease = async (result: LabResult) => {
+    try {
+      await release(result._id);
+      await refetch();
+      toast({ title: "Result released to patient" });
+      setViewOpen(false);
+    } catch {
+      toast({ title: "Failed to release result", variant: "destructive" });
+    }
   };
+
+  const submitReturn = async () => {
+    if (!selected || !returnNote.trim()) return;
+    try {
+      await returnResult(selected._id, returnNote.trim());
+      await refetch();
+      setReturnOpen(false);
+      setViewOpen(false);
+      setReturnNote("");
+      toast({
+        title: "Result returned",
+        description:
+          "The result has been returned for correction with your notes.",
+      });
+    } catch {
+      toast({ title: "Failed to return result", variant: "destructive" });
+    }
+  };
+
+  const goCorrect = (result: LabResult) => {
+    navigate("/lab/result-entry", {
+      state: {
+        orderId: getRefId(result.testOrder),
+        itemId: getRefId(result.testOrderItem),
+        testName: getTestName(result.testOrderItem),
+        patientName: getPatientName(result.patient),
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-sm text-muted-foreground">
+        Loading results…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-20 text-center bg-card border border-border rounded-2xl">
+        <AlertTriangle className="w-8 h-8 text-destructive/60" />
+        <p className="text-sm text-muted-foreground">Couldn't load results.</p>
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h2 className="text-xl font-semibold">Pending Reviews</h2>
-        <p className="text-sm text-muted-foreground">Track your submitted results and approval status</p>
+        <p className="text-sm text-muted-foreground">
+          Track submitted results and approval status
+        </p>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Submitted', count: resultList.filter(r => r.status === 'Submitted').length, color: 'text-info', bg: 'bg-info/10' },
-          { label: 'Approved', count: resultList.filter(r => r.status === 'Approved').length, color: 'text-success', bg: 'bg-success/10' },
-          { label: 'Released', count: resultList.filter(r => r.status === 'Released').length, color: 'text-primary', bg: 'bg-primary/10' },
-          { label: 'Returned', count: resultList.filter(r => r.status === 'Returned').length, color: 'text-destructive', bg: 'bg-destructive/10' },
-        ].map(item => (
-          <Card key={item.label} className={`shadow-card p-4 ${item.bg} border-0`}>
+          {
+            label: "Submitted",
+            count: reviewable.filter((r) => r.status === "submitted").length,
+            color: "text-info",
+            bg: "bg-info/10",
+          },
+          {
+            label: "Approved",
+            count: reviewable.filter((r) => r.status === "approved").length,
+            color: "text-success",
+            bg: "bg-success/10",
+          },
+          {
+            label: "Released",
+            count: reviewable.filter((r) => r.status === "released").length,
+            color: "text-primary",
+            bg: "bg-primary/10",
+          },
+          {
+            label: "Returned",
+            count: reviewable.filter((r) => r.status === "returned").length,
+            color: "text-destructive",
+            bg: "bg-destructive/10",
+          },
+        ].map((item) => (
+          <Card
+            key={item.label}
+            className={`shadow-card p-4 ${item.bg} border-0`}
+          >
             <p className={`text-2xl font-bold ${item.color}`}>{item.count}</p>
             <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
           </Card>
@@ -81,11 +289,12 @@ export default function PendingReviews() {
       </div>
 
       {/* Returned alert */}
-      {resultList.filter(r => r.status === 'Returned').length > 0 && (
+      {reviewable.filter((r) => r.status === "returned").length > 0 && (
         <Alert className="border-destructive/30 bg-destructive/10">
           <RefreshCw className="w-4 h-4 text-destructive" />
           <AlertDescription className="text-destructive font-medium">
-            {resultList.filter(r => r.status === 'Returned').length} result(s) were returned for correction. Please review and resubmit.
+            {reviewable.filter((r) => r.status === "returned").length} result(s)
+            were returned for correction. Please review and resubmit.
           </AlertDescription>
         </Alert>
       )}
@@ -93,12 +302,20 @@ export default function PendingReviews() {
       {/* Table */}
       <Card className="shadow-card">
         <CardHeader className="pb-2 pt-4 px-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as ResultStatus | "All")}
+          >
             <TabsList className="flex-wrap h-auto gap-1">
-              {tabCounts.map(({ tab, count }) => (
-                <TabsTrigger key={tab} value={tab} className="gap-2 text-xs">
-                  {tab}
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5 min-w-[20px]">{count}</Badge>
+              {tabCounts.map(({ t, count }) => (
+                <TabsTrigger key={t} value={t} className="gap-2 text-xs">
+                  {TAB_LABEL[t]}
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] h-4 px-1.5 min-w-[20px]"
+                  >
+                    {count}
+                  </Badge>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -109,11 +326,14 @@ export default function PendingReviews() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead className="pl-6">Sample ID</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead className="hidden md:table-cell">Test Type</TableHead>
-                  <TableHead className="hidden sm:table-cell">Submitted</TableHead>
-                  <TableHead className="hidden lg:table-cell">Approved By</TableHead>
+                  <TableHead className="pl-6">Patient</TableHead>
+                  <TableHead className="hidden md:table-cell">Test</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    Submitted
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    Approved By
+                  </TableHead>
                   <TableHead className="hidden sm:table-cell">Flags</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="pr-6 text-right">Actions</TableHead>
@@ -122,60 +342,85 @@ export default function PendingReviews() {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No results found.</TableCell>
+                    <TableCell
+                      colSpan={7}
+                      className="text-center py-12 text-muted-foreground"
+                    >
+                      No results found.
+                    </TableCell>
                   </TableRow>
-                ) : filtered.map((result) => (
-                  <TableRow
-                    key={result.id}
-                    className={`hover:bg-muted/20 transition-colors ${result.status === 'Returned' ? 'border-l-2 border-l-destructive' : ''}`}
-                  >
-                    <TableCell className="pl-6 font-mono text-xs text-muted-foreground">{result.sampleId}</TableCell>
-                    <TableCell className="font-medium">{result.patientName}</TableCell>
-                    <TableCell className="hidden md:table-cell text-sm">{result.testType}</TableCell>
-                    <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{result.submittedAt}</TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {result.approvedBy ?? <span className="text-muted-foreground/50 italic">Pending</span>}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <div className="flex gap-1">
-                        {result.isAbnormal && (
-                          <Badge className="bg-destructive/15 text-destructive border-destructive/30 border text-xs gap-1">
-                            <AlertTriangle className="w-3 h-3" />Abnormal
-                          </Badge>
+                ) : (
+                  filtered.map((result) => (
+                    <TableRow
+                      key={result._id}
+                      className={`hover:bg-muted/20 transition-colors ${
+                        result.status === "returned"
+                          ? "border-l-2 border-l-destructive"
+                          : ""
+                      }`}
+                    >
+                      <TableCell className="pl-6 font-medium">
+                        {getPatientName(result.patient)}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm">
+                        {getTestName(result.testOrderItem)}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
+                        {result.submittedAt
+                          ? new Date(result.submittedAt).toLocaleString()
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground font-mono">
+                        {result.approvedBy ? (
+                          refId(result.approvedBy).slice(-6)
+                        ) : (
+                          <span className="text-muted-foreground/50 italic font-sans">
+                            Pending
+                          </span>
                         )}
-                        {result.hasAttachment && (
-                          <Badge variant="outline" className="text-xs gap-1">
-                            <FileText className="w-3 h-3" />File
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        {statusIcon(result.status)}
-                        <StatusBadge status={result.status} />
-                      </div>
-                    </TableCell>
-                    <TableCell className="pr-6 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          size="sm" variant="ghost" className="h-7 text-xs gap-1"
-                          onClick={() => { setSelected(result); setViewOpen(true); }}
-                        >
-                          <Eye className="w-3.5 h-3.5" />View
-                        </Button>
-                        {result.status === 'Returned' && (
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex gap-1">
+                          {isAbnormal(result) && (
+                            <Badge className="bg-destructive/15 text-destructive border-destructive/30 border text-xs gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Abnormal
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusPill status={result.status} />
+                      </TableCell>
+                      <TableCell className="pr-6 text-right">
+                        <div className="flex justify-end gap-1">
                           <Button
-                            size="sm" className="h-7 text-xs gap-1"
-                            onClick={() => toast({ title: "Edit Result", description: "Navigate to Result Entry to correct this result." })}
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => {
+                              setSelected(result);
+                              setViewOpen(true);
+                            }}
                           >
-                            <RefreshCw className="w-3.5 h-3.5" />Correct
+                            <Eye className="w-3.5 h-3.5" />
+                            View
                           </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {result.status === "returned" && (
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => goCorrect(result)}
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              Correct
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -187,48 +432,96 @@ export default function PendingReviews() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />Result Details
+              <FileText className="w-4 h-4 text-primary" />
+              Result Details
             </DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div><span className="text-muted-foreground">Patient:</span> <span className="font-medium">{selected.patientName}</span></div>
-                <div><span className="text-muted-foreground">Test:</span> <span className="font-medium">{selected.testType}</span></div>
-                <div><span className="text-muted-foreground">Sample:</span> <span className="font-mono text-xs">{selected.sampleId}</span></div>
-                <div className="flex items-center gap-1.5"><span className="text-muted-foreground">Status:</span> <StatusBadge status={selected.status} /></div>
-                <div><span className="text-muted-foreground">Submitted by:</span> <span className="font-medium">{selected.submittedBy}</span></div>
-                <div><span className="text-muted-foreground">Submitted:</span> <span className="text-muted-foreground">{selected.submittedAt}</span></div>
+                <div>
+                  <span className="text-muted-foreground">Patient:</span>{" "}
+                  <span className="font-medium">
+                    {getPatientName(selected.patient)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Test:</span>{" "}
+                  <span className="font-medium">
+                    {getTestName(selected.testOrderItem)}
+                  </span>
+                </div>
+                {getSampleType(selected.testOrderItem) && (
+                  <div>
+                    <span className="text-muted-foreground">Sample:</span>{" "}
+                    <span className="text-xs">
+                      {getSampleType(selected.testOrderItem)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Status:</span>{" "}
+                  <StatusPill status={selected.status} />
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Submitted:</span>{" "}
+                  <span className="text-muted-foreground">
+                    {selected.submittedAt
+                      ? new Date(selected.submittedAt).toLocaleString()
+                      : "—"}
+                  </span>
+                </div>
               </div>
 
               {selected.approvedBy && (
                 <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg text-sm text-success">
                   <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>Approved by <span className="font-semibold">{selected.approvedBy}</span> at {selected.approvedAt}</span>
+                  <span>
+                    Approved
+                    {selected.approvedAt &&
+                      ` at ${new Date(selected.approvedAt).toLocaleString()}`}
+                  </span>
                 </div>
               )}
 
-              {selected.status === 'Returned' && (
+              {selected.status === "returned" && (
                 <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
                   <RefreshCw className="w-4 h-4 flex-shrink-0" />
-                  <span>This result was returned for correction. Please review and resubmit.</span>
+                  <span>
+                    {selected.comments ||
+                      "This result was returned for correction. Please review and resubmit."}
+                  </span>
                 </div>
               )}
 
               <div className="border border-border rounded-lg overflow-hidden">
                 <div className="bg-muted/30 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground grid grid-cols-3">
-                  <span>Parameter</span><span className="text-center">Result</span><span className="text-right">Reference</span>
+                  <span>Parameter</span>
+                  <span className="text-center">Result</span>
+                  <span className="text-right">Reference</span>
                 </div>
-                {Object.entries(selected.values).map(([key, value]) => (
-                  <div key={key} className="px-4 py-2.5 text-sm grid grid-cols-3 border-t border-border">
-                    <span className="text-muted-foreground">{key}</span>
-                    <span className={`text-center font-medium ${selected.isAbnormal ? 'text-destructive' : ''}`}>{value}</span>
-                    <span className="text-right text-xs text-muted-foreground">{selected.referenceRange[key]}</span>
+                {selected.values.map((v) => (
+                  <div
+                    key={v.parameterId}
+                    className="px-4 py-2.5 text-sm grid grid-cols-3 border-t border-border"
+                  >
+                    <span className="text-muted-foreground">
+                      {v.parameterName}
+                    </span>
+                    <span
+                      className={`text-center font-medium ${v.isAbnormal ? "text-destructive" : ""}`}
+                    >
+                      {v.value}
+                      {v.unit ? ` ${v.unit}` : ""}
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      {v.referenceRange ?? "—"}
+                    </span>
                   </div>
                 ))}
               </div>
 
-              {selected.isAbnormal && (
+              {isAbnormal(selected) && (
                 <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                   <span>Abnormal values detected in this result.</span>
@@ -236,18 +529,47 @@ export default function PendingReviews() {
               )}
             </div>
           )}
-          <DialogFooter>
-            {selected?.status === 'Submitted' && (
+          <DialogFooter className="flex-wrap gap-2">
+            {selected?.status === "submitted" && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => setReturnOpen(true)}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Request Correction
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={isApproving}
+                  onClick={() => selected && handleApprove(selected)}
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  {isApproving ? "Approving…" : "Approve"}
+                </Button>
+              </>
+            )}
+            {selected?.status === "approved" && (
               <Button
-                variant="outline"
                 size="sm"
-                className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={() => { setReturnOpen(true); }}
+                className="gap-1.5"
+                disabled={isReleasing}
+                onClick={() => selected && handleRelease(selected)}
               >
-                <MessageSquare className="w-3.5 h-3.5" />Request Correction
+                <CheckCircle className="w-3.5 h-3.5" />
+                {isReleasing ? "Releasing…" : "Release to Patient"}
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={() => setViewOpen(false)}>Close</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setViewOpen(false)}
+            >
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -260,26 +582,35 @@ export default function PendingReviews() {
           </DialogHeader>
           <div className="space-y-3 py-2">
             <p className="text-sm text-muted-foreground">
-              Returning result for <span className="font-medium text-foreground">{selected?.patientName} – {selected?.testType}</span>. Please add notes for correction.
+              Returning result for{" "}
+              <span className="font-medium text-foreground">
+                {selected && getPatientName(selected.patient)} –{" "}
+                {selected && getTestName(selected.testOrderItem)}
+              </span>
+              . Please add notes for correction.
             </p>
             <div className="space-y-1.5">
-              <Label>Correction Notes <span className="text-destructive">*</span></Label>
+              <Label>
+                Correction Notes <span className="text-destructive">*</span>
+              </Label>
               <Textarea
                 placeholder="Describe what needs to be corrected..."
                 value={returnNote}
-                onChange={e => setReturnNote(e.target.value)}
+                onChange={(e) => setReturnNote(e.target.value)}
                 rows={4}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReturnOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setReturnOpen(false)}>
+              Cancel
+            </Button>
             <Button
               variant="destructive"
-              onClick={returnResult}
-              disabled={!returnNote.trim()}
+              onClick={submitReturn}
+              disabled={!returnNote.trim() || isReturning}
             >
-              Return for Correction
+              {isReturning ? "Returning…" : "Return for Correction"}
             </Button>
           </DialogFooter>
         </DialogContent>

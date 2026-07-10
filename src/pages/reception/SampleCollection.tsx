@@ -107,8 +107,6 @@ const CONTAINERS = [
   "Other",
 ];
 
-// ─── Main component ───────────────────────────────────────────
-
 export default function SampleCollection() {
   const { toast } = useToast();
 
@@ -127,8 +125,6 @@ export default function SampleCollection() {
   const [collectTarget, setCollectTarget] = useState<string | null>(null); // orderId
   const [containerType, setContainerType] = useState("");
   const [itemSamples, setItemSamples] = useState<Record<string, string>>({});
-
-  // Client-side filter over the current fetched page — not a global search.
   const pendingOrders = pendingOrdersRaw.filter((o) =>
     getPatientName(o).toLowerCase().includes(search.toLowerCase()),
   );

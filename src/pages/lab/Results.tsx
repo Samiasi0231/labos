@@ -29,7 +29,6 @@ import {
   ThumbsUp,
   Send,
   TrendingUp,
-  TrendingDown,
   Undo2,
 } from "lucide-react";
 import {
@@ -41,7 +40,6 @@ import {
 import { asPopulated, refId } from "@/lib/pouplated-ref";
 import { useToast } from "@/hooks/use-toast";
 import type { LabResult, ResultStatus } from "@/api/types/results";
-
 const STATUS_CONFIG: Record<ResultStatus, { label: string; cls: string }> = {
   draft: { label: "Draft", cls: "bg-muted text-muted-foreground border" },
   submitted: {
@@ -71,6 +69,7 @@ function ResultStatusBadge({ status }: { status: ResultStatus }) {
   );
 }
 
+
 function patientLabel(result: LabResult): string {
   const p = asPopulated(result.patient);
   return p
@@ -79,6 +78,18 @@ function patientLabel(result: LabResult): string {
         refId(result.patient)
     : refId(result.patient);
 }
+
+function staffLabel(ref?: LabResult["submittedBy"]): string {
+  if (!ref) return "—";
+  const staff = asPopulated(ref);
+  if (!staff) return refId(ref); 
+  const user = staff.user ? asPopulated(staff.user) : undefined;
+  const name = user
+    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+    : "";
+  return name || staff.role || refId(ref);
+}
+
 
 function testLabel(result: LabResult): string {
   const item = asPopulated(result.testOrderItem);
@@ -116,7 +127,7 @@ export default function Results() {
   const { returnResult } = useReturnResult([listUrl]);
   const { release } = useReleaseResult([listUrl]);
 
-  const tabCounts = TABS.map((t) => ({ t, count: results.length })); // NOTE: count reflects current filter only; see caveat below
+  const tabCounts = TABS.map((t) => ({ t, count: results.length })); 
 
   const handleApprove = async (result: LabResult) => {
     try {
@@ -261,7 +272,7 @@ export default function Results() {
                           {testLabel(result)}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                          {result.submittedBy ?? "—"}
+                          {staffLabel(result.submittedBy)}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                           {result.submittedAt
@@ -384,7 +395,7 @@ export default function Results() {
                         Submitted by
                       </span>
                       <p className="font-medium">
-                        {selected.submittedBy ?? "—"}
+                        {staffLabel(selected.submittedBy)}
                       </p>
                     </div>
                     <div>
@@ -402,7 +413,9 @@ export default function Results() {
                         <span className="text-muted-foreground text-xs">
                           Approved by
                         </span>
-                        <p className="font-medium">{selected.approvedBy}</p>
+                        <p className="font-medium">
+                          {staffLabel(selected.approvedBy)}
+                        </p>
                       </div>
                     )}
                     {selected.comments && selected.status === "returned" && (

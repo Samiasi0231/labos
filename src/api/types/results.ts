@@ -12,26 +12,17 @@ export interface ResultValue {
 
 
 export type PopulatedRef<T> = string | (T & { _id: string });
-
 export interface LabResult {
-  _id: string;
-  lab: string;
-  testOrder: PopulatedRef<{ code?: string }>;
-  testOrderItem: PopulatedRef<{ testName?: string; sampleType?: string }>;
-  patient: PopulatedRef<{ firstName?: string; lastName?: string; code?: string }>;
-  values: ResultValue[];
-  status: ResultStatus;
-  submittedBy?: string;
-  reviewedBy?: string;
-  approvedBy?: string;
-  comments?: string;
-  submittedAt?: string;
-  approvedAt?: string;
-  releasedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
+   _id: string;
+    lab: string;
+    testOrder: PopulatedRef<{ code?: string }>; 
+    testOrderItem: PopulatedRef<{ testName?: string; sampleType?: string }>;
+    patient: PopulatedRef<{ firstName?: string; lastName?: string; code?: string }>; 
+    values: ResultValue[]; status: ResultStatus; 
+    submittedBy?: PopulatedRef<{ user?: PopulatedRef<{ firstName?: string; lastName?: string }>; role?: string }>;
+    reviewedBy?: PopulatedRef<{ user?: PopulatedRef<{ firstName?: string; lastName?: string }>; role?: string }>;
+    approvedBy?: PopulatedRef<{ user?: PopulatedRef<{ firstName?: string; lastName?: string }>; role?: string }>;
+    comments?: string; submittedAt?: string; approvedAt?: string; releasedAt?: string; createdAt: string; updatedAt: string; }
 export interface ResultListResponse {
   docs: LabResult[];
   totalDocs: number;

@@ -6,7 +6,7 @@ export type TestOrderStatus =
   | "cancelled";
 
 export type TestOrderPriority = "routine" | "urgent" | "stat";
-
+import type { PopulatedRef } from "./results";
 export type TestOrderItemStatus = "pending" | "in_progress" | "completed";
 
 export interface TestOrderItemParameter {
@@ -26,17 +26,11 @@ export interface TestOrderItem {
   sampleType: string;
   subtotal: number;
   parameters: TestOrderItemParameter[];
-  assignedTo?: string | null;
+  assignedTo?: PopulatedRef<{ user: string }> | null;
   status: TestOrderItemStatus;
   createdAt: string;
   updatedAt: string;
 }
-
-/**
- * Minimal patient shape as populated on a test order.
- * The API docs show `patient` as an opaque object in examples — confirm
- * the exact populated fields against a live response and extend as needed.
- */
 export interface TestOrderPatient {
   _id: string;
   name: string;
