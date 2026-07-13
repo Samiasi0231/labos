@@ -1,9 +1,9 @@
 import { useApi, useMutation } from "@/hooks/use-api";
-import { labEndpoints } from "@/api/endpoints/lab";
+import endpoint from "@/api/endpoints";
 import type { Lab, UpdateLabPayload, UpdateLabLogoPayload, UpdateLabLogoResponse } from "@/api/types/lab";
 
 export function useUpdateLab() {
-  const mutation = useMutation<Lab, UpdateLabPayload>(labEndpoints.update, {
+  const mutation = useMutation<Lab, UpdateLabPayload>(endpoint.lab.update, {
     method: "PATCH",
     skipErrorHandling: true,
   });
@@ -18,7 +18,7 @@ export function useUpdateLab() {
 }
 
 export function useUpdateLabLogo() {
-  const mutation = useMutation<UpdateLabLogoResponse, UpdateLabLogoPayload>(labEndpoints.updateLogo, {
+  const mutation = useMutation<UpdateLabLogoResponse, UpdateLabLogoPayload>(endpoint.lab.updateLogo, {
     method: "PATCH",
     skipErrorHandling: true,
   });
@@ -33,7 +33,7 @@ export function useUpdateLabLogo() {
 }
 
 export function useLab() {
-  const { data, error, isLoading, mutate } = useApi<Lab>(labEndpoints.me);
+  const { data, error, isLoading, mutate } = useApi<Lab>(endpoint.lab.me);
   return {
     lab: data?.data ?? null,
     error,

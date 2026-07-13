@@ -6,9 +6,10 @@ export interface AuthTokens {
   refresh_token: string;
   access_token_expires_at: string;
   refresh_token_expires_at: string;
-  role: string;
-  labId: string;
+  role: string | null;
+  labId: string | null;
   nextAction: NextAction;
+  access_type?: "staff" | "patient" | "doctor";
 }
 
 export interface SwitchTokens {

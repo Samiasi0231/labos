@@ -1,5 +1,5 @@
 import { useMutation } from "@/hooks/use-api";
-import { labEndpoints } from "@/api/endpoints/lab";
+import endpoint from "@/api/endpoints";
 import type {
   GrantPortalAccessPayload,
   ResendPortalInvitePayload,
@@ -7,11 +7,11 @@ import type {
 import type { PortalAccessType } from "@/api/types/enums";
 
 export function usePortalAccess(accessType: PortalAccessType, invalidate: string[] = []) {
-  const grantMutation = useMutation<unknown, GrantPortalAccessPayload>(labEndpoints.invite, {
+  const grantMutation = useMutation<unknown, GrantPortalAccessPayload>(endpoint.lab.invite, {
     skipErrorHandling: true,
     invalidate,
   });
-  const resendMutation = useMutation<unknown, ResendPortalInvitePayload>(labEndpoints.resendInvite, {
+  const resendMutation = useMutation<unknown, ResendPortalInvitePayload>(endpoint.lab.resendInvite, {
     skipErrorHandling: true,
     invalidate,
   });
@@ -34,7 +34,7 @@ export function usePortalAccess(accessType: PortalAccessType, invalidate: string
   const revoke = async (identifier: string) => {
     const res = await revokeMutation.trigger(
       undefined,
-      labEndpoints.revokeInvite(accessType, identifier)
+      endpoint.lab.revokeInvite(accessType, identifier)
     );
     if (!res) throw new Error("Failed to revoke access");
   };

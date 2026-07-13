@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useMutation } from "@/hooks/use-api";
-import { endpoints } from "@/api/endpoints/auth";
+import endpoint from "@/api/endpoints";
 import { toast } from "sonner";
 
 export default function VerifyEmail() {
@@ -16,7 +16,7 @@ export default function VerifyEmail() {
   const verifyMutation = useMutation<
     { message: string; data: {} },
     { token: string }
-  >(endpoints.verifyEmail, {
+  >(endpoint.auth.verifyEmail, {
     skipErrorHandling: true,
     onSuccess: (res) => {
       toast.success(res.message || "Email verified successfully");

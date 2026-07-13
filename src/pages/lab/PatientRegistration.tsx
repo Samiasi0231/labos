@@ -190,7 +190,7 @@ export default function PatientRegistration() {
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="max-w-2xl space-y-10 animate-fade-in pb-12">
-      
+
         <div className="space-y-5">
           <SectionHeading icon={User} label="Personal Information" index={1} />
 

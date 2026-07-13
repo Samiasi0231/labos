@@ -1,230 +1,177 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import {
-  FileText, CalendarDays, CheckCircle, Clock,
-  ArrowRight, Heart, Droplets, Activity, AlertCircle,
-  Download, TrendingUp, TrendingDown, Minus
-} from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FlaskConical, ClipboardList, CalendarDays } from "lucide-react";
+import { usePatientProfile, usePatientResults, usePatientOrders } from "@/hooks/use-patient-portal";
 
-const glucoseTrend = [
-  { date: "Apr 15", value: 5.8 },
-  { date: "Apr 28", value: 6.1 },
-  { date: "May 10", value: 5.5 },
-  { date: "May 24", value: 5.9 },
-  { date: "Jun 05", value: 5.3 },
-  { date: "Jun 17", value: 5.6 },
+// ── Mock appointments (no API yet) ────────────────────────────────────────────
+
+const UPCOMING_APPOINTMENTS = [
+  { date: "2026-07-18", time: "10:30 AM", doctor: "Dr. Tunde Bakare", type: "Follow-up Consultation" },
+  { date: "2026-07-25", time: "9:00 AM",  doctor: "Dr. Ngozi Eze",    type: "Annual Check-up" },
 ];
 
-const recentResults = [
-  { id: "RES-001", test: "Full Blood Count", date: "Jun 17, 2024", status: "Ready", abnormal: false },
-  { id: "RES-002", test: "Blood Glucose (Fasting)", date: "Jun 05, 2024", status: "Released", abnormal: false },
-  { id: "RES-003", test: "Liver Function Test", date: "May 20, 2024", status: "Released", abnormal: true },
-  { id: "RES-004", test: "Malaria Parasite", date: "Apr 28, 2024", status: "Released", abnormal: false },
-];
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const upcomingAppts = [
-  { test: "Kidney Function Test", date: "Jun 20, 2024", time: "09:00", lab: "HealthFirst Laboratories" },
-  { test: "Full Blood Count Follow-up", date: "Jul 03, 2024", time: "10:30", lab: "HealthFirst Laboratories" },
-];
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()] +
+    " " + d.getDate() + ", " + d.getFullYear();
+}
 
-const healthMetrics = [
-  { label: "Blood Pressure", value: "118/76", unit: "mmHg", status: "normal", icon: Activity },
-  { label: "Blood Glucose", value: "5.6", unit: "mmol/L", status: "normal", icon: Droplets },
-  { label: "Haemoglobin", value: "13.2", unit: "g/dL", status: "low", icon: Heart },
-  { label: "WBC Count", value: "7.4", unit: "×10⁹/L", status: "normal", icon: Activity },
-];
+function getTestName(result: { testOrderItem: unknown }): string {
+  const item = result.testOrderItem;
+  if (item && typeof item === "object" && "testName" in item) {
+    return (item as { testName?: string }).testName ?? "Test Result";
+  }
+  return "Test Result";
+}
 
-const statusIcons = {
-  normal: { icon: TrendingUp, color: "text-success", bg: "bg-success/10" },
-  low: { icon: TrendingDown, color: "text-warning", bg: "bg-warning/10" },
-  high: { icon: TrendingUp, color: "text-destructive", bg: "bg-destructive/10" },
-};
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
 
+  const { profile, isLoading: profileLoading } = usePatientProfile();
+  const { results, pagination: resultsPagination, isLoading: resultsLoading } =
+    usePatientResults({ limit: 3 });
+  const { pagination: ordersPagination, isLoading: ordersLoading } =
+    usePatientOrders({ limit: 1 });
+
+  const firstName  = profile?.firstName ?? "";
+  const patientCode = profile?.patientCode ?? "";
+
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Welcome hero */}
-      <div className="gradient-hero rounded-xl p-6 text-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-white/70 text-sm font-medium">Tuesday, June 17, 2024</p>
-            <h2 className="text-2xl font-bold mt-1">Hello, Amara</h2>
-            <p className="text-white/70 text-sm mt-1">
-              <span className="text-white font-semibold">1 new result</span> ready to view ·{" "}
-              <span className="text-white font-semibold">2 upcoming</span> appointments
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30" onClick={() => navigate("/patient/results")}>
-              <FileText className="w-4 h-4 mr-2" />View Results
-            </Button>
-            <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30" onClick={() => navigate("/patient/appointments")}>
-              <CalendarDays className="w-4 h-4 mr-2" />Appointments
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* New result alert */}
-      <div className="flex items-center gap-4 p-4 border border-primary/30 bg-primary/5 rounded-xl">
-        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center flex-shrink-0 shadow-glow">
-          <FileText className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold">Full Blood Count result is ready</p>
-          <p className="text-xs text-muted-foreground">Completed Jun 17, 2024 · HealthFirst Laboratories</p>
-        </div>
-        <Button size="sm" className="flex-shrink-0 gap-1.5" onClick={() => navigate("/patient/results")}>
-          View <ArrowRight className="w-3.5 h-3.5" />
-        </Button>
-      </div>
-
-      {/* Health metrics */}
+      {/* Header */}
       <div>
-        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <Heart className="w-4 h-4 text-primary" /> Latest Health Metrics
-        </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {healthMetrics.map(m => {
-            const cfg = statusIcons[m.status as keyof typeof statusIcons];
-            return (
-              <Card key={m.label} className={`shadow-card border ${m.status !== "normal" ? "border-warning/30" : ""}`}>
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`w-8 h-8 rounded-lg ${cfg.bg} flex items-center justify-center`}>
-                      <m.icon className={`w-4 h-4 ${cfg.color}`} />
-                    </div>
-                    <Badge variant="outline" className={`text-[10px] px-1.5 ${
-                      m.status === "normal" ? "border-success/30 text-success" :
-                      m.status === "low" ? "border-warning/30 text-warning" : "border-destructive/30 text-destructive"
-                    }`}>
-                      {m.status === "normal" ? "Normal" : m.status === "low" ? "Low" : "High"}
-                    </Badge>
-                  </div>
-                  <p className="text-2xl font-bold">{m.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{m.label}</p>
-                  <p className="text-[10px] text-muted-foreground/70">{m.unit}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {profileLoading ? (
+          <Skeleton className="h-7 w-48 mb-1" />
+        ) : (
+          <h2 className="text-xl font-semibold">
+            Welcome back{firstName ? `, ${firstName}` : ""}
+          </h2>
+        )}
+        {profileLoading ? (
+          <Skeleton className="h-4 w-32 mt-1" />
+        ) : patientCode ? (
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Patient Code{" "}
+            <span className="font-mono font-semibold text-foreground">{patientCode}</span>
+          </p>
+        ) : null}
       </div>
 
-      {/* Charts + upcoming */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Glucose trend */}
-        <Card className="lg:col-span-3 shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold">Blood Glucose Trend</CardTitle>
-                <CardDescription>Last 6 readings · Reference: 3.9–5.6 mmol/L</CardDescription>
-              </div>
-              <Badge variant="outline" className="text-xs border-success/30 text-success bg-success/5">In Range</Badge>
+      {/* Quick action cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          {
+            icon: FlaskConical,
+            label: "View My Results",
+            sub: resultsLoading ? "Loading…" : `${resultsPagination?.totalDocs ?? 0} released`,
+            to: "/patient/results",
+          },
+          {
+            icon: ClipboardList,
+            label: "My Orders",
+            sub: ordersLoading ? "Loading…" : `${ordersPagination?.totalDocs ?? 0} total`,
+            to: "/patient/orders",
+          },
+          {
+            icon: CalendarDays,
+            label: "My Appointments",
+            sub: `${UPCOMING_APPOINTMENTS.length} upcoming`,
+            to: "/patient/appointments",
+          },
+        ].map((card) => (
+          <button
+            key={card.to}
+            onClick={() => navigate(card.to)}
+            className="flex flex-col items-start gap-2 p-5 bg-card border border-border rounded-xl shadow-card text-left hover:bg-muted/20 transition-colors cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <card.icon className="w-5 h-5 text-primary" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={glucoseTrend} margin={{ left: -20, right: 10, top: 5, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <YAxis domain={[4, 8]} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
-                  formatter={(v: number) => [`${v} mmol/L`, "Glucose"]}
-                />
-                {/* Reference zone visualized as line */}
-                <Line type="monotone" dataKey="value" stroke="hsl(174 62% 35%)" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(174 62% 35%)" }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
+            <span className="text-[15px] font-semibold">{card.label}</span>
+            <span className="text-xs text-muted-foreground">{card.sub}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Bottom section */}
+      <div className="flex gap-4 flex-wrap items-start">
+        {/* Recent Results */}
+        <Card className="shadow-card flex-[3] min-w-[320px] p-0">
+          <div className="flex items-center justify-between px-5 pt-5 pb-3">
+            <h3 className="text-[15px] font-semibold">Recent Results</h3>
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate("/patient/results")}>
+              View All
+            </Button>
+          </div>
+          <div className="flex flex-col">
+            {resultsLoading ? (
+              [1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 px-5 py-3 border-t border-border">
+                  <Skeleton className="w-8 h-8 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 w-40" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))
+            ) : results.length === 0 ? (
+              <p className="px-5 pb-5 text-sm text-muted-foreground">No results released yet.</p>
+            ) : (
+              results.map((r) => (
+                <div
+                  key={r._id}
+                  className="flex items-center justify-between gap-3 px-5 py-3 border-t border-border cursor-pointer hover:bg-muted/20 transition-colors"
+                  onClick={() => navigate(`/patient/results/${r._id}`)}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <FlaskConical className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{getTestName(r)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Released {r.releasedAt ? fmtDate(r.releasedAt) : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-success/15 text-success border-success/30 border text-xs shrink-0">
+                    Released
+                  </Badge>
+                </div>
+              ))
+            )}
+          </div>
         </Card>
 
-        {/* Upcoming appointments */}
-        <Card className="lg:col-span-2 shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Upcoming Appointments</CardTitle>
-              <Button variant="ghost" size="sm" className="text-primary text-xs gap-1" onClick={() => navigate("/patient/appointments")}>
-                All <ArrowRight className="w-3 h-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {upcomingAppts.map((appt, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex flex-col items-center justify-center flex-shrink-0">
-                  <CalendarDays className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{appt.test}</p>
-                  <p className="text-xs text-muted-foreground">{appt.date} · {appt.time}</p>
-                  <p className="text-xs text-muted-foreground">{appt.lab}</p>
-                </div>
+        {/* Upcoming Appointments — stays mock until API exists */}
+        <Card className="shadow-card flex-[2] min-w-[260px] p-0">
+          <div className="flex items-center justify-between px-5 pt-5 pb-3">
+            <h3 className="text-[15px] font-semibold">Upcoming Appointments</h3>
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => navigate("/patient/appointments")}>
+              View All
+            </Button>
+          </div>
+          <div className="flex flex-col">
+            {UPCOMING_APPOINTMENTS.map((a, i) => (
+              <div key={i} className="px-5 py-3 border-t border-border">
+                <p className="text-sm font-semibold">
+                  {fmtDate(a.date)} · {a.time}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {a.doctor} — {a.type}
+                </p>
               </div>
             ))}
-            <p className="text-xs text-center text-muted-foreground">Bring a valid ID on your appointment day</p>
-          </CardContent>
+          </div>
         </Card>
       </div>
-
-      {/* Recent results */}
-      <Card className="shadow-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-semibold">Recent Test Results</CardTitle>
-              <CardDescription>Your latest laboratory results</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" className="text-primary text-xs gap-1" onClick={() => navigate("/patient/results")}>
-              View All <ArrowRight className="w-3 h-3" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {recentResults.map(r => (
-            <div key={r.id} className="flex items-center gap-4 p-3 rounded-xl border border-border hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => navigate("/patient/results")}>
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                r.status === "Ready" ? "bg-primary/10" : "bg-muted"
-              }`}>
-                <FileText className={`w-4 h-4 ${r.status === "Ready" ? "text-primary" : "text-muted-foreground"}`} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium">{r.test}</p>
-                  {r.abnormal && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 border-warning/30 text-warning bg-warning/5">
-                      Attention needed
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">{r.date}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge variant="outline" className={`text-xs ${
-                  r.status === "Ready" ? "border-primary/30 text-primary bg-primary/5" : "border-success/30 text-success"
-                }`}>
-                  {r.status === "Ready" ? <Clock className="w-3 h-3 mr-1 inline" /> : <CheckCircle className="w-3 h-3 mr-1 inline" />}
-                  {r.status}
-                </Badge>
-                {r.status !== "Ready" && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <Download className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
     </div>
   );
 }

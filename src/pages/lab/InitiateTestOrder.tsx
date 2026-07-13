@@ -30,10 +30,11 @@ interface SampleEntry {
   condition: string;
 }
 
+type OrderPriority = "Routine" | "Urgent" | "STAT";
+
 interface Assignment {
   testId: string;
   assignedTo: string;
-  priority: "Normal" | "Urgent";
   notes: string;
 }
 
@@ -100,6 +101,8 @@ export default function InitiateTestOrder() {
 
   // Phase 3 — professional assignment
   const [assignments, setAssignments] = useState<Record<string, Assignment>>({});
+  const [orderPriority, setOrderPriority] = useState<OrderPriority>("Routine");
+  const [orderNotes, setOrderNotes] = useState("");
 
   // ── Derived ───────────────────────────────────────────────────────────
   const selectedTests = catalogTests.filter(t => selectedIds.has(t.id));
@@ -190,7 +193,7 @@ export default function InitiateTestOrder() {
   const initAssignments = () => {
     const next: Record<string, Assignment> = {};
     selectedTests.forEach(t => {
-      next[t.id] = assignments[t.id] ?? { testId: t.id, assignedTo: "", priority: "Normal", notes: "" };
+      next[t.id] = assignments[t.id] ?? { testId: t.id, assignedTo: "", notes: "" };
     });
     setAssignments(next);
   };
@@ -199,7 +202,7 @@ export default function InitiateTestOrder() {
     setSamples(prev => ({ ...prev, [testId]: { ...prev[testId], [key]: value } }));
 
   const updateAssignment = (testId: string, key: keyof Assignment, value: string) =>
-    setAssignments(prev => ({ ...prev, [testId]: { ...prev[testId], [key]: value as "Normal" | "Urgent" } }));
+    setAssignments(prev => ({ ...prev, [testId]: { ...prev[testId], [key]: value } }));
 
   // ── Navigation guards ─────────────────────────────────────────────────
   const goToStep2 = () => {
@@ -260,6 +263,7 @@ export default function InitiateTestOrder() {
               <div><p className="text-muted-foreground text-xs">Patient</p><p className="font-semibold">{patient.name}</p></div>
               <div><p className="text-muted-foreground text-xs">Patient ID</p><p className="font-mono font-semibold">{patient.id}</p></div>
               <div><p className="text-muted-foreground text-xs">Order Date</p><p className="font-semibold">{new Date().toLocaleDateString("en-NG")}</p></div>
+              <div><p className="text-muted-foreground text-xs">Priority</p><p className={`font-semibold ${orderPriority === "STAT" ? "text-destructive" : orderPriority === "Urgent" ? "text-warning" : ""}`}>{orderPriority}</p></div>
               <div><p className="text-muted-foreground text-xs">Total Amount</p><p className="font-bold text-primary text-lg">₦{totalAmount.toLocaleString()}</p></div>
             </div>
             <Separator />
@@ -274,8 +278,10 @@ export default function InitiateTestOrder() {
                       <span className="text-sm font-semibold text-primary">₦{testSelectedPrice(t).toLocaleString()}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {paramCount} of {t.parameters.length} params · {samples[t.id]?.sampleType} · {assignments[t.id]?.assignedTo}
-                      {assignments[t.id]?.priority === "Urgent" && <span className="ml-1 text-destructive font-medium">· URGENT</span>}
+                      {paramCount} of {t.parameters.length} params · {samples[t.id]?.sampleType} · {assignments[t.id]?.assignedTo || "Unassigned"}
+                      {orderPriority !== "Routine" && (
+                        <span className={`ml-1 font-medium ${orderPriority === "STAT" ? "text-destructive" : "text-warning"}`}>· {orderPriority}</span>
+                      )}
                     </p>
                   </div>
                 );
@@ -565,11 +571,51 @@ export default function InitiateTestOrder() {
         <div className="space-y-5">
           <div>
             <h3 className="text-lg font-semibold">Assign to Professionals</h3>
-            <p className="text-sm text-muted-foreground">Assign each test individually to a scientist or technician.</p>
+            <p className="text-sm text-muted-foreground">Set order priority, add notes, then assign each test to a scientist or technician.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
+              {/* Order-level priority + notes */}
+              <Card className="shadow-card border">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Order Priority</Label>
+                    <div className="flex gap-2">
+                      {(["Routine", "Urgent", "STAT"] as OrderPriority[]).map(p => (
+                        <button
+                          key={p}
+                          onClick={() => setOrderPriority(p)}
+                          className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                            orderPriority === p
+                              ? p === "STAT"
+                                ? "bg-destructive/15 text-destructive border-destructive/50"
+                                : p === "Urgent"
+                                  ? "bg-warning/15 text-warning border-warning/50"
+                                  : "bg-primary/10 text-primary border-primary/40"
+                              : "border-border text-muted-foreground hover:bg-muted/30"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">
+                      Notes <span className="font-normal text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Textarea
+                      className="text-sm min-h-[60px] resize-none"
+                      placeholder="Clinical context or special instructions for this order…"
+                      value={orderNotes}
+                      onChange={e => setOrderNotes(e.target.value)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Per-test assignment */}
               {selectedTests.map(test => (
                 <Card key={test.id} className="shadow-card border">
                   <CardContent className="pt-5 pb-5">
@@ -579,13 +625,16 @@ export default function InitiateTestOrder() {
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-sm">{test.name}</p>
-                        <p className="text-xs text-muted-foreground">{selectedParams[test.id]?.size ?? 0} of {test.parameters.length} params · {test.turnaround}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedParams[test.id]?.size ?? 0} of {test.parameters.length} params · {test.turnaround}
+                          {samples[test.id]?.sampleType ? ` · ${samples[test.id].sampleType}` : ""}
+                        </p>
                       </div>
                       <Badge variant="outline" className={`text-[10px] border ${categoryColors[test.category]}`}>{test.category}</Badge>
                       <span className="font-bold text-primary text-sm">₦{testSelectedPrice(test).toLocaleString()}</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
+                      <div className="sm:col-span-2 space-y-1.5">
                         <Label className="text-xs">Assign To *</Label>
                         <Select value={assignments[test.id]?.assignedTo} onValueChange={v => updateAssignment(test.id, "assignedTo", v)}>
                           <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select professional" /></SelectTrigger>
@@ -598,20 +647,10 @@ export default function InitiateTestOrder() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Priority</Label>
-                        <Select value={assignments[test.id]?.priority} onValueChange={v => updateAssignment(test.id, "priority", v)}>
-                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Normal">Normal</SelectItem>
-                            <SelectItem value="Urgent">Urgent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
                       <div className="sm:col-span-2 space-y-1.5">
-                        <Label className="text-xs">Notes (optional)</Label>
+                        <Label className="text-xs">Notes for Scientist <span className="text-muted-foreground font-normal">(optional)</span></Label>
                         <Textarea className="text-sm min-h-[60px] resize-none"
-                          placeholder="Special instructions..."
+                          placeholder="Special instructions for this specific test…"
                           value={assignments[test.id]?.notes}
                           onChange={e => updateAssignment(test.id, "notes", e.target.value)} />
                       </div>
@@ -625,7 +664,20 @@ export default function InitiateTestOrder() {
             <div>
               <Card className="shadow-card border sticky top-24">
                 <CardContent className="pt-5 pb-5">
-                  <p className="font-semibold mb-4 text-sm">Order Summary</p>
+                  <p className="font-semibold mb-3 text-sm">Order Summary</p>
+                  <div className="space-y-1.5 mb-3 text-xs">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Patient</span>
+                      <span className="font-medium text-foreground">{patient.name}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Priority</span>
+                      <span className={`font-semibold ${
+                        orderPriority === "STAT" ? "text-destructive" : orderPriority === "Urgent" ? "text-warning" : "text-foreground"
+                      }`}>{orderPriority}</span>
+                    </div>
+                  </div>
+                  <Separator className="my-3" />
                   <div className="space-y-3">
                     {selectedTests.map(t => (
                       <div key={t.id} className="space-y-1">
@@ -637,13 +689,10 @@ export default function InitiateTestOrder() {
                         {assignments[t.id]?.assignedTo
                           ? <p className="text-[10px] text-success">{assignments[t.id].assignedTo}</p>
                           : <p className="text-[10px] text-muted-foreground/60 italic">Not assigned</p>}
-                        {assignments[t.id]?.priority === "Urgent" && (
-                          <Badge className="text-[10px] px-1.5 bg-destructive/10 text-destructive border-destructive/30">URGENT</Badge>
-                        )}
                       </div>
                     ))}
                   </div>
-                  <Separator className="my-4" />
+                  <Separator className="my-3" />
                   <div className="space-y-1.5 text-xs text-muted-foreground">
                     <div className="flex justify-between"><span>Tests</span><span>{selectedTests.length}</span></div>
                     <div className="flex justify-between"><span>Parameters</span><span>{totalParamsCount}</span></div>

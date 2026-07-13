@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/styles.css">
+  <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+  <script src="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/_ds_bundle.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    .wiz-2col { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; }
+    .wiz-steps { display: flex; align-items: flex-start; width: 100%; }
+    .wiz-step-line { flex: 1 1 12px; min-width: 12px; height: 2px; margin: 15px 4px 0; }
+    .wiz-step-label { font-size: 10.5px; text-align: center; line-height: 1.25; overflow-wrap: break-word; max-width: 72px; }
+  </style>
+</helmet>
+
+<div style="min-height:100vh;background:hsl(var(--background));font-family:var(--font-sans);display:flex;align-items:flex-start;justify-content:center;padding:48px 24px">
+
+  <div style="max-width:520px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:60px">
+    <span style="width:48px;height:48px;border-radius:var(--radius-xl);background:var(--gradient-primary);display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow-glow)">{{ ic.flaskWhite }}</span>
+    <h1 style="margin:0;font-size:20px;font-weight:600">Test Catalog</h1>
+    <p style="margin:0;font-size:14px;color:hsl(var(--muted-foreground))">Add a new test to your lab's catalog — basic info, parameters, and the materials it consumes.</p>
+    <button class="labos-btn labos-btn-default labos-btn-sz-default" onClick="{{ openWizard }}">{{ ic.plus }}New Test</button>
+  </div>
+
+  <!-- ============ WIZARD MODAL ============ -->
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Dialog" open="{{ wizardOpen }}" on-close="{{ closeWizard }}" width="{{ n640 }}" hint-size="0px,0px">
+    <div style="display:flex;flex-direction:column;gap:16px;max-height:min(640px,80vh);width:100%;box-sizing:border-box;overflow-x:hidden">
+
+      <div style="flex-shrink:0">
+        <h2 style="margin:0 0 16px;font-size:17px;font-weight:600">Add New Test</h2>
+        <!-- Step indicator -->
+        <div class="wiz-steps">
+          <sc-for list="{{ stepItems }}" as="st" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;flex:{{ st.flexVal }};min-width:0">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
+                <span style="{{ st.circleStyle }}">
+                  <sc-if value="{{ st.showCheck }}" hint-placeholder-val="{{ false }}">{{ ic.check }}</sc-if>
+                  <sc-if value="{{ st.showNum }}" hint-placeholder-val="{{ true }}">{{ st.num }}</sc-if>
+                </span>
+                <span class="wiz-step-label" style="{{ st.labelStyle }}">{{ st.label }}</span>
+              </div>
+              <sc-if value="{{ st.hasLine }}" hint-placeholder-val="{{ false }}">
+                <span class="wiz-step-line" style="{{ st.lineStyle }}"></span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div id="wizard-scroll-region" style="overflow-y:auto;padding-right:6px;margin-right:-6px;flex:1;min-height:0;padding-bottom:2px">
+
+        <!-- ===== STEP 1 — BASIC INFO ===== -->
+        <sc-if value="{{ step1 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:13px;font-weight:500">Test Name <span style="color:hsl(var(--destructive))">*</span></label>
+              <input class="labos-input" placeholder="e.g. Complete Blood Count" value="{{ b.name }}" onChange="{{ b.onName }}">
+            </div>
+            <div class="wiz-2col">
+              <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                <label style="font-size:13px;font-weight:500">Test Code <span style="color:hsl(var(--destructive))">*</span></label>
+                <input class="labos-input" style="font-family:var(--font-mono);width:100%;box-sizing:border-box" placeholder="e.g. CBC-001" value="{{ b.code }}" onChange="{{ b.onCode }}">
+                <p style="margin:0;font-size:11.5px;color:hsl(var(--muted-foreground))">Unique identifier for this test — uppercase letters and numbers only</p>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                <label style="font-size:13px;font-weight:500">Category</label>
+                <input class="labos-input" style="width:100%;box-sizing:border-box" list="cat-suggestions" placeholder="e.g. Haematology" value="{{ b.category }}" onChange="{{ b.onCategory }}">
+                <datalist id="cat-suggestions">
+                  <sc-for list="{{ categorySuggestions }}" as="c" hint-placeholder-count="0"><option value="{{ c }}"></option></sc-for>
+                </datalist>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:13px;font-weight:500">Sample Type</label>
+              <input class="labos-input" placeholder="e.g. EDTA whole blood, Serum" value="{{ b.sampleType }}" onChange="{{ b.onSampleType }}">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;max-width:220px">
+              <label style="font-size:13px;font-weight:500">Turnaround Time</label>
+              <div style="position:relative">
+                <input class="labos-input" type="number" min="0" style="padding-right:52px" value="{{ b.turnaround }}" onChange="{{ b.onTurnaround }}">
+                <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:hsl(var(--muted-foreground))">hours</span>
+              </div>
+            </div>
+            <sc-if value="{{ step1Error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:12px;color:hsl(var(--destructive))">{{ step1Error }}</p></sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ===== STEP 2 — PARAMETERS ===== -->
+        <sc-if value="{{ step2 }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <p style="margin:0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:hsl(var(--muted-foreground))">Test Parameters</p>
+              <button class="labos-btn labos-btn-outline labos-btn-sz-sm" onClick="{{ openParamForm }}">{{ ic.plus }}Add Parameter</button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ paramRows }}" as="p" hint-placeholder-count="0">
+                <div class="labos-card" style="display:flex;align-items:center;gap:12px;padding:10px 14px">
+                  <span style="flex:1;min-width:0;font-size:13px;font-weight:600">{{ p.name }}</span>
+                  <span style="{{ p.typeStyle }}">{{ p.type }}</span>
+                  <span style="font-size:13px;font-weight:600;width:80px;text-align:right">{{ p.priceFmt }}</span>
+                  <button class="labos-btn labos-btn-ghost labos-btn-sz-icon" style="height:28px;width:28px;flex-shrink:0" onClick="{{ p.remove }}">{{ ic.trash }}</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ showParamsEmpty }}" hint-placeholder-val="{{ true }}">
+                <div style="text-align:center;padding:20px;border:1px dashed hsl(var(--border));border-radius:var(--radius);color:hsl(var(--muted-foreground));font-size:13px">No parameters added yet — parameters can also be added later.</div>
+              </sc-if>
+            </div>
+
+            <!-- Inline add-parameter form -->
+            <sc-if value="{{ paramFormOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px solid hsl(var(--primary)/.3);background:hsl(var(--primary)/.04);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label style="font-size:13px;font-weight:500">Parameter Name <span style="color:hsl(var(--destructive))">*</span></label>
+                  <input class="labos-input" placeholder="e.g. Haemoglobin" value="{{ pf.name }}" onChange="{{ pf.onName }}">
+                </div>
+
+                <div class="wiz-2col">
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                    <label style="font-size:13px;font-weight:500">Price <span style="color:hsl(var(--destructive))">*</span></label>
+                    <div style="position:relative">
+                      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:hsl(var(--muted-foreground))">₦</span>
+                      <input class="labos-input" type="number" min="0" style="padding-left:26px;width:100%;box-sizing:border-box" value="{{ pf.price }}" onChange="{{ pf.onPrice }}">
+                    </div>
+                  </div>
+                  <sc-if value="{{ pf.showUnit }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                      <label style="font-size:13px;font-weight:500">Unit</label>
+                      <input class="labos-input" style="width:100%;box-sizing:border-box" placeholder="e.g. g/dL, mmol/L" value="{{ pf.unit }}" onChange="{{ pf.onUnit }}">
+                    </div>
+                  </sc-if>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label style="font-size:13px;font-weight:500">Type</label>
+                  <p style="margin:0;font-size:11.5px;color:hsl(var(--muted-foreground))">Determines how a lab scientist enters this parameter's result</p>
+                  <div style="display:inline-flex;border:1px solid hsl(var(--border));border-radius:var(--radius-md);overflow:hidden;width:fit-content">
+                    <sc-for list="{{ pf.typeOptions }}" as="t" hint-placeholder-count="0">
+                      <button style="{{ t.style }}" onClick="{{ t.select }}">{{ t.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <sc-if value="{{ pf.showRange }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <label style="font-size:13px;font-weight:500">Reference Range</label>
+                    <div style="display:inline-flex;border:1px solid hsl(var(--border));border-radius:var(--radius-md);overflow:hidden;width:fit-content">
+                      <sc-for list="{{ pf.rangeTabs }}" as="rt" hint-placeholder-count="0">
+                        <button style="{{ rt.style }}" onClick="{{ rt.select }}">{{ rt.label }}</button>
+                      </sc-for>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:280px">
+                      <div style="display:flex;flex-direction:column;gap:4px">
+                        <label style="font-size:12px;color:hsl(var(--muted-foreground))">Min</label>
+                        <input class="labos-input" type="number" value="{{ pf.rangeMin }}" onChange="{{ pf.onRangeMin }}">
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:4px">
+                        <label style="font-size:12px;color:hsl(var(--muted-foreground))">Max</label>
+                        <input class="labos-input" type="number" value="{{ pf.rangeMax }}" onChange="{{ pf.onRangeMax }}">
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ pf.showOptions }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <label style="font-size:13px;font-weight:500">Options</label>
+                    <input class="labos-input" placeholder="Type a value and press Enter" value="{{ pf.optionDraft }}" onChange="{{ pf.onOptionDraft }}" onKeyDown="{{ pf.onOptionKeyDown }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">
+                      <sc-for list="{{ pf.optionChips }}" as="oc" hint-placeholder-count="0">
+                        <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;background:hsl(var(--muted));border:1px solid hsl(var(--border));border-radius:999px;padding:3px 6px 3px 10px">
+                          {{ oc.value }}
+                          <button style="border:none;background:transparent;cursor:pointer;color:hsl(var(--muted-foreground));display:flex;padding:2px" onClick="{{ oc.remove }}">{{ ic.xSmall }}</button>
+                        </span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ pf.error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:12px;color:hsl(var(--destructive))">{{ pf.error }}</p></sc-if>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px">
+                  <button class="labos-btn labos-btn-ghost labos-btn-sz-sm" onClick="{{ closeParamForm }}">Cancel</button>
+                  <button class="labos-btn labos-btn-default labos-btn-sz-sm" onClick="{{ saveParam }}">Save Parameter</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ===== STEP 3 — MATERIALS ===== -->
+        <sc-if value="{{ step3 }}" hint-placeholder-val="{{ false }}">
+          <div class="wiz-2col" style="gap:16px">
+
+            <!-- Collection phase -->
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <p style="margin:0;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:hsl(var(--muted-foreground))">{{ ic.droplet }}Collection Phase</p>
+                <button class="labos-btn labos-btn-outline labos-btn-sz-sm" onClick="{{ openMatForm_Collection }}">{{ ic.plus }}Add</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ collectionRows }}" as="m" hint-placeholder-count="0">
+                  <div class="labos-card" style="display:flex;align-items:center;gap:8px;padding:8px 10px">
+                    <span style="flex:1;min-width:0;font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.name }}</span>
+                    <span style="{{ m.badgeStyle }}">Collection</span>
+                    <button class="labos-btn labos-btn-ghost labos-btn-sz-icon" style="height:24px;width:24px;flex-shrink:0" onClick="{{ m.remove }}">{{ ic.xSmall }}</button>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ showCollectionEmpty }}" hint-placeholder-val="{{ true }}">
+                  <div style="text-align:center;padding:18px 10px;border:1px dashed hsl(var(--border));border-radius:var(--radius);color:hsl(var(--muted-foreground));font-size:12px">No materials added</div>
+                </sc-if>
+              </div>
+              <sc-if value="{{ matFormOpen_Collection }}" hint-placeholder-val="{{ false }}">
+                <div style="border:1px solid hsl(var(--primary)/.3);background:hsl(var(--primary)/.04);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:8px">
+                  <input class="labos-input" style="height:34px" placeholder="Search inventory items…" value="{{ mf_Collection.query }}" onChange="{{ mf_Collection.onQuery }}">
+                  <div style="max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+                    <sc-for list="{{ mf_Collection.results }}" as="ri" hint-placeholder-count="0">
+                      <button style="{{ ri.style }}" onClick="{{ ri.select }}">
+                        <span>{{ ri.name }}</span>
+                        <span style="font-size:11px;color:hsl(var(--muted-foreground))">{{ ri.stockLabel }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:2px">
+                    <button class="labos-btn labos-btn-ghost labos-btn-sz-sm" onClick="{{ closeMatForm_Collection }}">Cancel</button>
+                    <button class="labos-btn labos-btn-default labos-btn-sz-sm" disabled="{{ mf_Collection.addDisabled }}" onClick="{{ mf_Collection.add }}">Add</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+
+            <!-- Analysis phase -->
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <p style="margin:0;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:hsl(var(--muted-foreground))">{{ ic.flaskTiny }}Analysis Phase</p>
+                <button class="labos-btn labos-btn-outline labos-btn-sz-sm" onClick="{{ openMatForm_Analysis }}">{{ ic.plus }}Add</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ analysisRows }}" as="m" hint-placeholder-count="0">
+                  <div class="labos-card" style="display:flex;align-items:center;gap:8px;padding:8px 10px">
+                    <span style="flex:1;min-width:0;font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.name }}</span>
+                    <span style="{{ m.badgeStyle }}">Analysis</span>
+                    <button class="labos-btn labos-btn-ghost labos-btn-sz-icon" style="height:24px;width:24px;flex-shrink:0" onClick="{{ m.remove }}">{{ ic.xSmall }}</button>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ showAnalysisEmpty }}" hint-placeholder-val="{{ true }}">
+                  <div style="text-align:center;padding:18px 10px;border:1px dashed hsl(var(--border));border-radius:var(--radius);color:hsl(var(--muted-foreground));font-size:12px">No materials added</div>
+                </sc-if>
+              </div>
+              <sc-if value="{{ matFormOpen_Analysis }}" hint-placeholder-val="{{ false }}">
+                <div style="border:1px solid hsl(var(--primary)/.3);background:hsl(var(--primary)/.04);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:8px">
+                  <input class="labos-input" style="height:34px" placeholder="Search inventory items…" value="{{ mf_Analysis.query }}" onChange="{{ mf_Analysis.onQuery }}">
+                  <div style="max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+                    <sc-for list="{{ mf_Analysis.results }}" as="ri" hint-placeholder-count="0">
+                      <button style="{{ ri.style }}" onClick="{{ ri.select }}">
+                        <span>{{ ri.name }}</span>
+                        <span style="font-size:11px;color:hsl(var(--muted-foreground))">{{ ri.stockLabel }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:2px">
+                    <button class="labos-btn labos-btn-ghost labos-btn-sz-sm" onClick="{{ closeMatForm_Analysis }}">Cancel</button>
+                    <button class="labos-btn labos-btn-default labos-btn-sz-sm" disabled="{{ mf_Analysis.addDisabled }}" onClick="{{ mf_Analysis.add }}">Add</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- Footer nav -->
+      <div style="flex-shrink:0;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid hsl(var(--border));padding-top:16px">
+        <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+          <button class="labos-btn labos-btn-outline labos-btn-sz-default" onClick="{{ goBack }}">Back</button>
+        </sc-if>
+        <button class="labos-btn labos-btn-default labos-btn-sz-default" onClick="{{ goNext }}">{{ nextLabel }}</button>
+      </div>
+    </div>
+  </x-import>
+
+  {{ toastEl }}
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  INVENTORY = [
+    { id: 'INV-001', name: 'EDTA Tubes (5mL)', stock: 240 },
+    { id: 'INV-002', name: 'Malaria RDT Kits', stock: 45 },
+    { id: 'INV-003', name: 'Full Blood Count Reagent', stock: 12 },
+    { id: 'INV-004', name: 'Urine Cups', stock: 380 },
+    { id: 'INV-005', name: 'Latex Gloves (M)', stock: 8 },
+    { id: 'INV-006', name: 'Hepatitis B Surface Antigen Kit', stock: 60 },
+    { id: 'INV-007', name: 'Autoclave Tapes', stock: 25 },
+    { id: 'INV-008', name: 'Centrifuge Tubes (15mL)', stock: 150 },
+    { id: 'INV-009', name: 'SST/Gel Tubes (Yellow)', stock: 190 },
+    { id: 'INV-010', name: 'Alcohol Swabs', stock: 500 },
+  ];
+  CATEGORIES = ['Haematology', 'Biochemistry', 'Microbiology', 'Serology', 'Parasitology', 'Endocrinology', 'Immunology'];
+  TYPE_OPTIONS = ['Numeric', 'Text', 'Select'];
+  RANGE_TABS = ['Male', 'Female', 'General'];
+
+  emptyRanges() { return { Male: { min: '', max: '' }, Female: { min: '', max: '' }, General: { min: '', max: '' } }; }
+  emptyParamForm(editing) {
+    return {
+      editingId: editing ? editing.id : null,
+      name: editing ? editing.name : '', type: editing ? editing.type : 'Numeric',
+      unit: editing ? editing.unit : '', price: editing ? String(editing.price) : '',
+      rangeTab: 'Male', ranges: editing ? editing.ranges : this.emptyRanges(),
+      options: editing ? [...editing.options] : [], optionDraft: '', error: '',
+    };
+  }
+  emptyMatForm() { return { query: '', selectedId: null }; }
+
+  state = {
+    wizardOpen: false, step: 1, step1Error: '',
+    b: { name: '', code: '', category: '', sampleType: '', turnaround: '' },
+    parameters: [], paramFormOpen: false, pf: this.emptyParamForm(null),
+    materials: { Collection: [], Analysis: [] },
+    matFormOpen: { Collection: false, Analysis: false },
+    mf: { Collection: this.emptyMatForm(), Analysis: this.emptyMatForm() },
+    toast: null,
+  };
+
+  get DS() { return window.LabOSDesignSystem_ab2dfe || null; }
+  componentDidMount() { if (!this.DS) { this._poll = setInterval(() => { if (this.DS) { clearInterval(this._poll); this.forceUpdate(); } }, 100); } }
+  componentWillUnmount() { clearInterval(this._poll); clearTimeout(this._t); }
+
+  i(name, size, color) { return React.createElement(this.DS.Icon, { name, size: size || 15, color: color || 'currentColor' }); }
+  pill(tint) {
+    const base = { display: 'inline-flex', alignItems: 'center', borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' };
+    if (!tint) return { ...base, background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' };
+    return { ...base, background: 'hsl(var(--' + tint + ')/.15)', color: 'hsl(var(--' + tint + '))', border: '1px solid hsl(var(--' + tint + ')/.3)' };
+  }
+  showToast(title, description) {
+    clearTimeout(this._t);
+    this.setState({ toast: { title, description } });
+    this._t = setTimeout(() => this.setState({ toast: null }), 3200);
+  }
+
+  openWizard() {
+    this.setState({
+      wizardOpen: true, step: 1, step1Error: '',
+      b: { name: '', code: '', category: '', sampleType: '', turnaround: '' },
+      parameters: [], paramFormOpen: false, pf: this.emptyParamForm(null),
+      materials: { Collection: [], Analysis: [] },
+      matFormOpen: { Collection: false, Analysis: false },
+      mf: { Collection: this.emptyMatForm(), Analysis: this.emptyMatForm() },
+    });
+  }
+  closeWizard() { this.setState({ wizardOpen: false }); }
+
+  goNext() {
+    const s = this.state;
+    if (s.step === 1) {
+      if (!s.b.name.trim() || !s.b.code.trim()) { this.setState({ step1Error: 'Test Name and Test Code are required.' }); return; }
+      this.setState({ step: 2, step1Error: '' });
+      return;
+    }
+    if (s.step === 2) { this.setState({ step: 3 }); return; }
+    // step 3 -> create
+    this.setState({ wizardOpen: false });
+    this.showToast('Test Created', s.b.name.trim() + ' was added to the catalog with ' + s.parameters.length + ' parameter' + (s.parameters.length === 1 ? '' : 's') + '.');
+  }
+  goBack() { this.setState({ step: Math.max(1, this.state.step - 1) }); }
+
+  // ── parameters ──
+  openParamForm() { this.setState({ paramFormOpen: true, pf: this.emptyParamForm(null) }); }
+  closeParamForm() { this.setState({ paramFormOpen: false }); }
+  saveParam() {
+    const pf = this.state.pf;
+    if (!pf.name.trim()) { this.setState({ pf: { ...pf, error: 'Parameter name is required.' } }); return; }
+    if (pf.price === '' || parseFloat(pf.price) < 0) { this.setState({ pf: { ...pf, error: 'Enter a valid price (0 or more).' } }); return; }
+    const entry = { id: pf.editingId || ('param' + Date.now()), name: pf.name.trim(), type: pf.type, unit: pf.unit.trim(), price: parseFloat(pf.price) || 0, ranges: pf.ranges, options: pf.options };
+    const parameters = pf.editingId ? this.state.parameters.map((p) => (p.id === pf.editingId ? entry : p)) : [...this.state.parameters, entry];
+    this.setState({ parameters, paramFormOpen: false });
+  }
+  removeParam(id) { this.setState({ parameters: this.state.parameters.filter((p) => p.id !== id) }); }
+
+  // ── materials ──
+  openMatForm(phase) { const mf = { ...this.state.mf, [phase]: this.emptyMatForm() }; this.setState({ matFormOpen: { ...this.state.matFormOpen, [phase]: true }, mf }); }
+  closeMatForm(phase) { this.setState({ matFormOpen: { ...this.state.matFormOpen, [phase]: false } }); }
+  addMaterial(phase) {
+    const sel = this.state.mf[phase].selectedId;
+    if (!sel) return;
+    const item = this.INVENTORY.find((i) => i.id === sel);
+    if (!item) return;
+    const list = [...this.state.materials[phase], { id: item.id + '-' + Date.now(), itemId: item.id, name: item.name }];
+    this.setState({ materials: { ...this.state.materials, [phase]: list }, matFormOpen: { ...this.state.matFormOpen, [phase]: false } });
+  }
+  removeMaterial(phase, rowId) {
+    this.setState({ materials: { ...this.state.materials, [phase]: this.state.materials[phase].filter((m) => m.id !== rowId) } });
+  }
+
+  renderVals() {
+    const DS = this.DS;
+    if (!DS) return { wizardOpen: false };
+    const s = this.state;
+    const set = (patch) => this.setState(patch);
+
+    const ic = {
+      plus: this.i('plus', 14), check: this.i('check', 14, '#fff'), trash: this.i('trash-2', 14, 'hsl(var(--destructive))'),
+      xSmall: this.i('x', 12), flaskWhite: this.i('flask-conical', 22, '#fff'),
+      droplet: this.i('droplet', 12, 'hsl(var(--muted-foreground))'), flaskTiny: this.i('flask-conical', 12, 'hsl(var(--muted-foreground))'),
+    };
+
+    // step indicator
+    const stepLabels = ['Basic Info', 'Parameters', 'Materials'];
+    const stepItems = stepLabels.map((label, idx) => {
+      const num = idx + 1;
+      const isDone = num < s.step, isActive = num === s.step;
+      const circleStyle = {
+        width: 30, height: 30, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 13, fontWeight: 700, flexShrink: 0,
+        background: isDone ? 'hsl(var(--primary))' : isActive ? 'hsl(var(--card))' : 'hsl(var(--muted))',
+        color: isDone ? '#fff' : isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+        border: isActive ? '2px solid hsl(var(--primary))' : isDone ? 'none' : '1px solid hsl(var(--border))',
+        boxSizing: 'border-box',
+      };
+      return {
+        num, label, showCheck: isDone, showNum: !isDone,
+        circleStyle, labelStyle: { fontSize: 11, fontWeight: isActive ? 600 : 500, color: isActive ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', whiteSpace: 'nowrap' },
+        hasLine: idx < stepLabels.length - 1,
+        lineStyle: { flex: 1, height: 2, background: num < s.step ? 'hsl(var(--primary))' : 'hsl(var(--border))', margin: '0 8px 18px' },
+        flexVal: idx < stepLabels.length - 1 ? '1' : '0 0 auto',
+      };
+    });
+
+    // step 1
+    const b = s.b;
+    const bind = (key) => (e) => set({ b: { ...s.b, [key]: e.target.value } });
+    const step1Vals = {
+      name: b.name, onName: bind('name'), code: b.code, onCode: bind('code'),
+      category: b.category, onCategory: bind('category'), sampleType: b.sampleType, onSampleType: bind('sampleType'),
+      turnaround: b.turnaround, onTurnaround: bind('turnaround'),
+    };
+
+    // step 2 — parameter list rows
+    const paramRows = s.parameters.map((p) => ({
+      name: p.name, type: p.type, typeStyle: this.pill(p.type === 'Numeric' ? 'info' : p.type === 'Select' ? 'primary' : null),
+      priceFmt: '₦' + p.price.toLocaleString('en-US'),
+      remove: () => this.removeParam(p.id),
+    }));
+
+    // param form
+    const pf = s.pf;
+    const typeOptions = this.TYPE_OPTIONS.map((t) => ({
+      label: t, style: { padding: '7px 16px', fontSize: 12.5, fontWeight: 600, border: 'none', borderRight: t !== 'Select' ? '1px solid hsl(var(--border))' : 'none', cursor: 'pointer', background: pf.type === t ? 'hsl(var(--primary))' : 'hsl(var(--card))', color: pf.type === t ? '#fff' : 'hsl(var(--foreground))' },
+      select: () => set({ pf: { ...pf, type: t } }),
+    }));
+    const rangeTabs = this.RANGE_TABS.map((rt) => ({
+      label: rt, style: { padding: '6px 14px', fontSize: 12, fontWeight: 600, border: 'none', borderRight: rt !== 'General' ? '1px solid hsl(var(--border))' : 'none', cursor: 'pointer', background: pf.rangeTab === rt ? 'hsl(var(--primary))' : 'hsl(var(--card))', color: pf.rangeTab === rt ? '#fff' : 'hsl(var(--foreground))' },
+      select: () => set({ pf: { ...pf, rangeTab: rt } }),
+    }));
+    const currentRange = pf.ranges[pf.rangeTab] || { min: '', max: '' };
+
+    const pfVals = {
+      name: pf.name, onName: (e) => set({ pf: { ...pf, name: e.target.value, error: '' } }),
+      typeOptions, showUnit: pf.type !== 'Select', unit: pf.unit, onUnit: (e) => set({ pf: { ...pf, unit: e.target.value } }),
+      price: pf.price, onPrice: (e) => set({ pf: { ...pf, price: e.target.value, error: '' } }),
+      showRange: pf.type === 'Numeric', rangeTabs,
+      rangeMin: currentRange.min, onRangeMin: (e) => set({ pf: { ...pf, ranges: { ...pf.ranges, [pf.rangeTab]: { ...currentRange, min: e.target.value } } } }),
+      rangeMax: currentRange.max, onRangeMax: (e) => set({ pf: { ...pf, ranges: { ...pf.ranges, [pf.rangeTab]: { ...currentRange, max: e.target.value } } } }),
+      showOptions: pf.type === 'Select', optionDraft: pf.optionDraft, onOptionDraft: (e) => set({ pf: { ...pf, optionDraft: e.target.value } }),
+      onOptionKeyDown: (e) => {
+        if (e.key === 'Enter' && pf.optionDraft.trim()) {
+          e.preventDefault();
+          set({ pf: { ...pf, options: [...pf.options, pf.optionDraft.trim()], optionDraft: '' } });
+        }
+      },
+      optionChips: pf.options.map((o, idx) => ({ value: o, remove: () => set({ pf: { ...pf, options: pf.options.filter((_, i) => i !== idx) } }) })),
+      error: pf.error,
+    };
+
+    // step 3 — materials per phase
+    const buildPhase = (phase) => {
+      const rows = s.materials[phase].map((m) => ({ name: m.name, badgeStyle: this.pill(phase === 'Collection' ? 'info' : 'primary'), remove: () => this.removeMaterial(phase, m.id) }));
+      const mfState = s.mf[phase];
+      const query = mfState.query.trim().toLowerCase();
+      const filtered = this.INVENTORY.filter((it) => !query || it.name.toLowerCase().includes(query)).slice(0, 6);
+      const results = filtered.map((it) => ({
+        name: it.name, stockLabel: it.stock + ' in stock',
+        style: { display: 'flex', justifyContent: 'space-between', gap: 8, padding: '7px 9px', fontSize: 12.5, border: mfState.selectedId === it.id ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: 'var(--radius-md)', background: mfState.selectedId === it.id ? 'hsl(var(--primary)/.08)' : 'transparent', cursor: 'pointer', textAlign: 'left' },
+        select: () => set({ mf: { ...s.mf, [phase]: { ...mfState, selectedId: it.id, query: it.name } } }),
+      }));
+      return {
+        rows, empty: rows.length === 0,
+        formOpen: s.matFormOpen[phase],
+        form: { query: mfState.query, onQuery: (e) => set({ mf: { ...s.mf, [phase]: { ...mfState, query: e.target.value, selectedId: null } } }), results, addDisabled: !mfState.selectedId, add: () => this.addMaterial(phase) },
+      };
+    };
+    const colPhase = buildPhase('Collection');
+    const anaPhase = buildPhase('Analysis');
+
+    return {
+      ic, n640: 640,
+      wizardOpen: s.wizardOpen, openWizard: () => this.openWizard(), closeWizard: () => this.closeWizard(),
+      stepItems,
+      step1: s.step === 1, step2: s.step === 2, step3: s.step === 3,
+      b: step1Vals, categorySuggestions: this.CATEGORIES, step1Error: s.step1Error,
+
+      paramRows, paramsEmpty: paramRows.length === 0, showParamsEmpty: paramRows.length === 0 && !s.paramFormOpen,
+      paramFormOpen: s.paramFormOpen, openParamForm: () => this.openParamForm(), closeParamForm: () => this.closeParamForm(), saveParam: () => this.saveParam(),
+      pf: pfVals,
+
+      collectionRows: colPhase.rows, collectionEmpty: colPhase.empty, showCollectionEmpty: colPhase.empty && !colPhase.formOpen,
+      matFormOpen_Collection: colPhase.formOpen, openMatForm_Collection: () => this.openMatForm('Collection'), closeMatForm_Collection: () => this.closeMatForm('Collection'),
+      mf_Collection: colPhase.form,
+
+      analysisRows: anaPhase.rows, analysisEmpty: anaPhase.empty, showAnalysisEmpty: anaPhase.empty && !anaPhase.formOpen,
+      matFormOpen_Analysis: anaPhase.formOpen, openMatForm_Analysis: () => this.openMatForm('Analysis'), closeMatForm_Analysis: () => this.closeMatForm('Analysis'),
+      mf_Analysis: anaPhase.form,
+
+      showBack: s.step > 1, goBack: () => this.goBack(), goNext: () => this.goNext(),
+      nextLabel: s.step === 3 ? 'Create Test' : 'Next',
+
+      toastEl: s.toast ? React.createElement(DS.Toast, { fixed: true, tone: 'success', title: s.toast.title, description: s.toast.description, onClose: () => set({ toast: null }) }) : null,
+    };
+  }
+}
+</script>
+</body>
+</html>

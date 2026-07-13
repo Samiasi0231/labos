@@ -46,7 +46,7 @@ export interface InventoryListQuery {
 
 export interface CreateInventoryItemPayload {
   name: string;
-  sku: string;
+  sku?: string;
   category: InventoryCategory;
   unit: string;
   reorderLevel: number;
@@ -86,14 +86,14 @@ export interface AdjustStockPayload {
 export interface StockMovement {
   _id: string;
   lab: string;
-  inventoryItem: string;
+  inventoryItem: string | { _id: string; name: string; unit: string };
   type: MovementType;
   quantityChange: number;
   quantityAfter: number;
   referenceType?: string;
   referenceId?: string;
   reason?: string;
-  recordedBy?: string;
+  recordedBy?: string | { _id: string; firstName?: string; lastName?: string };
   createdAt: string;
   updatedAt: string;
 }

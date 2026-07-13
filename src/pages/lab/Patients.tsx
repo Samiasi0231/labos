@@ -115,7 +115,8 @@ export default function Patients() {
                 <TableRow className="bg-muted/30">
                   <TableHead className="pl-6">Patient Code</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Phone</TableHead>
+                  <TableHead className="hidden md:table-cell">Email</TableHead>
+                  <TableHead className="hidden lg:table-cell">Phone</TableHead>
                   <TableHead className="hidden sm:table-cell">Gender</TableHead>
                   <TableHead className="hidden lg:table-cell">Age</TableHead>
                   <TableHead className="hidden xl:table-cell">
@@ -129,7 +130,7 @@ export default function Patients() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center py-12 text-muted-foreground"
                     >
                       Loading patients…
@@ -138,7 +139,7 @@ export default function Patients() {
                 ) : patients.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center py-12 text-muted-foreground"
                     >
                       No patients found.
@@ -161,6 +162,9 @@ export default function Patients() {
                           {fullName}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                          {patient.email ?? "—"}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                           {patient.phone}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">

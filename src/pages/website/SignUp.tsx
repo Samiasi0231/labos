@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation } from "@/hooks/use-api";
-import { endpoints } from "@/api/endpoints/auth";
+import endpoint from "@/api/endpoints";
 import { signUpSchema, type SignUpValues } from "@/lib/validations/auth";
 import type { RegisterPayload, RegisterResponse } from "@/api/types/auth";
 
@@ -48,7 +48,7 @@ export default function SignUp() {
   });
 
   const registerMutation = useMutation<RegisterResponse, RegisterPayload>(
-    endpoints.register,
+    endpoint.auth.register,
     {
       skipErrorHandling: true,
       onSuccess: () => setDone(true),

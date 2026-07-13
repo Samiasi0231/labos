@@ -39,6 +39,9 @@ import {
 } from "@/hooks/use-results";
 import { asPopulated, refId } from "@/lib/pouplated-ref";
 import { useToast } from "@/hooks/use-toast";
+import { useMyPermissions } from "@/hooks/use-permissions";
+import endpoint from "@/api/endpoints";
+import { downloadPDF } from "@/lib/download-pdf";
 import type { LabResult, ResultStatus } from "@/api/types/results";
 const STATUS_CONFIG: Record<ResultStatus, { label: string; cls: string }> = {
   draft: { label: "Draft", cls: "bg-muted text-muted-foreground border" },
@@ -117,7 +120,9 @@ export default function Results() {
   const [viewOpen, setViewOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnComment, setReturnComment] = useState("");
+  const [downloading, setDownloading] = useState(false);
   const { toast } = useToast();
+  const { can } = useMyPermissions();
 
   const { results, isLoading, listUrl } = useResultsList({
     status: activeTab === "All" ? undefined : activeTab,
@@ -127,7 +132,6 @@ export default function Results() {
   const { returnResult } = useReturnResult([listUrl]);
   const { release } = useReleaseResult([listUrl]);
 
-  const tabCounts = TABS.map((t) => ({ t, count: results.length })); 
 
   const handleApprove = async (result: LabResult) => {
     try {
@@ -167,6 +171,24 @@ export default function Results() {
     setSelected(result);
     setReturnComment("");
     setReturnOpen(true);
+  };
+
+  const handleDownload = async (result: LabResult) => {
+    setDownloading(true);
+    try {
+      await downloadPDF(
+        endpoint.lab.results.download(result._id),
+        `result-${result._id}.pdf`,
+      );
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Could not download the PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleReturn = async () => {
@@ -310,29 +332,29 @@ export default function Results() {
                             >
                               View
                             </Button>
-                            {result.status === "submitted" && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs gap-1 text-success border-success/30 hover:bg-success/10"
-                                  onClick={() => handleApprove(result)}
-                                >
-                                  <ThumbsUp className="w-3.5 h-3.5" />
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
-                                  onClick={() => openReturn(result)}
-                                >
-                                  <Undo2 className="w-3.5 h-3.5" />
-                                  Return
-                                </Button>
-                              </>
+                            {result.status === "submitted" && can("results.approve") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs gap-1 text-success border-success/30 hover:bg-success/10"
+                                onClick={() => handleApprove(result)}
+                              >
+                                <ThumbsUp className="w-3.5 h-3.5" />
+                                Approve
+                              </Button>
                             )}
-                            {result.status === "approved" && (
+                            {result.status === "submitted" && can("results.return") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                onClick={() => openReturn(result)}
+                              >
+                                <Undo2 className="w-3.5 h-3.5" />
+                                Return
+                              </Button>
+                            )}
+                            {result.status === "approved" && can("results.release") && (
                               <Button
                                 size="sm"
                                 className="h-7 text-xs gap-1"
@@ -492,32 +514,38 @@ export default function Results() {
             })()}
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={selected?.status !== "released" || downloading}
+              onClick={() => selected && handleDownload(selected)}
+            >
               <Download className="w-3.5 h-3.5" />
-              Download PDF
+              {downloading ? "Downloading…" : "Download PDF"}
             </Button>
-            {selected?.status === "submitted" && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
-                  onClick={() => selected && openReturn(selected)}
-                >
-                  <Undo2 className="w-3.5 h-3.5" />
-                  Return
-                </Button>
-                <Button
-                  size="sm"
-                  className="gap-1.5 bg-success hover:bg-success/90 text-success-foreground"
-                  onClick={() => selected && handleApprove(selected)}
-                >
-                  <ThumbsUp className="w-3.5 h-3.5" />
-                  Approve Result
-                </Button>
-              </>
+            {selected?.status === "submitted" && can("results.return") && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => selected && openReturn(selected)}
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+                Return
+              </Button>
             )}
-            {selected?.status === "approved" && (
+            {selected?.status === "submitted" && can("results.approve") && (
+              <Button
+                size="sm"
+                className="gap-1.5 bg-success hover:bg-success/90 text-success-foreground"
+                onClick={() => selected && handleApprove(selected)}
+              >
+                <ThumbsUp className="w-3.5 h-3.5" />
+                Approve Result
+              </Button>
+            )}
+            {selected?.status === "approved" && can("results.release") && (
               <Button
                 size="sm"
                 className="gap-1.5"

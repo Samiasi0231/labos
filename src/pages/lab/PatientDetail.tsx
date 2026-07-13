@@ -463,6 +463,7 @@ export default function PatientDetail() {
                 />
                 <Row label="Age" value={calculateAge(patient.dob)} />
                 <Row label="Phone" value={patient.phone} />
+                <Row label="Email" value={patient.email ?? "—"} />
                 <Row
                   label="Address"
                   value={

@@ -23,34 +23,23 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertTriangle,
   CheckCircle,
+  Download,
   Eye,
   RefreshCw,
   Clock,
   FileText,
   ThumbsUp,
-  MessageSquare,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
-import {
-  useResultsList,
-  useApproveResult,
-  useReturnResult,
-  useReleaseResult,
-} from "@/hooks/use-results";
+import { useResultsList } from "@/hooks/use-results";
+import endpoint from "@/api/endpoints";
+import { downloadPDF } from "@/lib/download-pdf";
 import type {
   LabResult,
   ResultStatus,
   PopulatedRef,
 } from "@/api/types/results";
-
-// ── Helpers for PopulatedRef<T> = string | (T & { _id }) ──────────
-// Same defensive pattern used elsewhere in this app (TestOrder.patient,
-// TestOrderItem[]) since this backend inconsistently populates refs
-// across endpoints. Confirm against a live /results response whether
-// these are actually populated before trusting the "else" branches below.
 
 function getRefId<T>(ref: PopulatedRef<T>): string {
   return typeof ref === "string" ? ref : ref._id;
@@ -75,7 +64,7 @@ function getTestName(ref: LabResult["testOrderItem"]): string {
 
 function getSampleType(ref: LabResult["testOrderItem"]): string {
   if (!isPopulated(ref)) return "";
-  return ref.sampleType ?? "";
+  return ref.samples?.join(", ") ?? "";
 }
 
 const TABS: (ResultStatus | "All")[] = [
@@ -134,6 +123,7 @@ function StatusPill({ status }: { status: ResultStatus }) {
     </Badge>
   );
 }
+
 function refId(ref: string | { _id: string } | undefined | null) {
   if (!ref) return "";
   return typeof ref === "string" ? ref : ref._id;
@@ -143,14 +133,29 @@ export default function PendingReviews() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { results, isLoading, error, refetch } = useResultsList({ limit: 100 });
-  const { approve, isLoading: isApproving } = useApproveResult();
-  const { returnResult, isLoading: isReturning } = useReturnResult();
-  const { release, isLoading: isReleasing } = useReleaseResult();
   const [activeTab, setActiveTab] = useState<ResultStatus | "All">("All");
   const [selected, setSelected] = useState<LabResult | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
-  const [returnNote, setReturnNote] = useState("");
-  const [returnOpen, setReturnOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async (result: LabResult) => {
+    setDownloading(true);
+    try {
+      await downloadPDF(
+        endpoint.lab.results.download(result._id),
+        `result-${result._id}.pdf`,
+      );
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Could not download the PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const reviewable = useMemo(
     () => results.filter((r) => r.status !== "draft"),
     [results],
@@ -169,46 +174,6 @@ export default function PendingReviews() {
   );
 
   const isAbnormal = (r: LabResult) => r.values.some((v) => v.isAbnormal);
-
-  const handleApprove = async (result: LabResult) => {
-    try {
-      await approve(result._id);
-      await refetch();
-      toast({ title: "Result approved" });
-      setViewOpen(false);
-    } catch {
-      toast({ title: "Failed to approve result", variant: "destructive" });
-    }
-  };
-
-  const handleRelease = async (result: LabResult) => {
-    try {
-      await release(result._id);
-      await refetch();
-      toast({ title: "Result released to patient" });
-      setViewOpen(false);
-    } catch {
-      toast({ title: "Failed to release result", variant: "destructive" });
-    }
-  };
-
-  const submitReturn = async () => {
-    if (!selected || !returnNote.trim()) return;
-    try {
-      await returnResult(selected._id, returnNote.trim());
-      await refetch();
-      setReturnOpen(false);
-      setViewOpen(false);
-      setReturnNote("");
-      toast({
-        title: "Result returned",
-        description:
-          "The result has been returned for correction with your notes.",
-      });
-    } catch {
-      toast({ title: "Failed to return result", variant: "destructive" });
-    }
-  };
 
   const goCorrect = (result: LabResult) => {
     navigate("/lab/result-entry", {
@@ -427,7 +392,7 @@ export default function PendingReviews() {
         </CardContent>
       </Card>
 
-      {/* Detail Dialog */}
+      {/* Detail Dialog — read-only tracking view */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -529,40 +494,7 @@ export default function PendingReviews() {
               )}
             </div>
           )}
-          <DialogFooter className="flex-wrap gap-2">
-            {selected?.status === "submitted" && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10"
-                  onClick={() => setReturnOpen(true)}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  Request Correction
-                </Button>
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  disabled={isApproving}
-                  onClick={() => selected && handleApprove(selected)}
-                >
-                  <ThumbsUp className="w-3.5 h-3.5" />
-                  {isApproving ? "Approving…" : "Approve"}
-                </Button>
-              </>
-            )}
-            {selected?.status === "approved" && (
-              <Button
-                size="sm"
-                className="gap-1.5"
-                disabled={isReleasing}
-                onClick={() => selected && handleRelease(selected)}
-              >
-                <CheckCircle className="w-3.5 h-3.5" />
-                {isReleasing ? "Releasing…" : "Release to Patient"}
-              </Button>
-            )}
+          <DialogFooter>
             <Button
               variant="outline"
               size="sm"
@@ -570,47 +502,15 @@ export default function PendingReviews() {
             >
               Close
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Return dialog */}
-      <Dialog open={returnOpen} onOpenChange={setReturnOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Request Correction</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-sm text-muted-foreground">
-              Returning result for{" "}
-              <span className="font-medium text-foreground">
-                {selected && getPatientName(selected.patient)} –{" "}
-                {selected && getTestName(selected.testOrderItem)}
-              </span>
-              . Please add notes for correction.
-            </p>
-            <div className="space-y-1.5">
-              <Label>
-                Correction Notes <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                placeholder="Describe what needs to be corrected..."
-                value={returnNote}
-                onChange={(e) => setReturnNote(e.target.value)}
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReturnOpen(false)}>
-              Cancel
-            </Button>
             <Button
-              variant="destructive"
-              onClick={submitReturn}
-              disabled={!returnNote.trim() || isReturning}
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={selected?.status !== "released" || downloading}
+              onClick={() => selected && handleDownload(selected)}
             >
-              {isReturning ? "Returning…" : "Return for Correction"}
+              <Download className="w-3.5 h-3.5" />
+              {downloading ? "Downloading…" : "Download PDF"}
             </Button>
           </DialogFooter>
         </DialogContent>

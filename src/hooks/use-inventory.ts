@@ -1,5 +1,5 @@
 import { useApi, useMutation } from "@/hooks/use-api";
-import { inventoryEndpoints } from "@/api/endpoints/inventory";
+import endpoint from "@/api/endpoints";
 import type {
   InventoryItem,
   InventoryListResponse,
@@ -22,7 +22,7 @@ function buildListUrl(query: InventoryListQuery = {}): string {
   if (query.expiringBefore) params.set("expiringBefore", query.expiringBefore);
   params.set("page", String(query.page ?? 1));
   params.set("limit", String(query.limit ?? 100));
-  return `${inventoryEndpoints.list}?${params.toString()}`;
+  return `${endpoint.lab.inventory.list}?${params.toString()}`;
 }
 
 export function useInventoryList(query: InventoryListQuery = {}) {
@@ -50,13 +50,13 @@ export function useInventoryList(query: InventoryListQuery = {}) {
 
 export function useInventoryItem(itemId: string | null) {
   const { data, error, isLoading, mutate } = useApi<InventoryItem>(
-    itemId ? inventoryEndpoints.get(itemId) : null
+    itemId ? endpoint.lab.inventory.get(itemId) : null
   );
   return { item: data?.data ?? null, error, isLoading, refetch: mutate };
 }
 
-export function useCreateInventoryItem(invalidate: string[] = [inventoryEndpoints.list]) {
-  const mutation = useMutation<InventoryItem, CreateInventoryItemPayload>(inventoryEndpoints.create, {
+export function useCreateInventoryItem(invalidate: string[] = [endpoint.lab.inventory.list]) {
+  const mutation = useMutation<InventoryItem, CreateInventoryItemPayload>(endpoint.lab.inventory.create, {
     skipErrorHandling: true,
     invalidate,
   });
@@ -70,7 +70,7 @@ export function useCreateInventoryItem(invalidate: string[] = [inventoryEndpoint
   return { createItem, isLoading: mutation.isLoading };
 }
 
-export function useUpdateInventoryItem(invalidate: string[] = [inventoryEndpoints.list]) {
+export function useUpdateInventoryItem(invalidate: string[] = [endpoint.lab.inventory.list]) {
   const mutation = useMutation<InventoryItem, UpdateInventoryItemPayload>("inventory/update", {
     method: "PATCH",
     skipErrorHandling: true,
@@ -78,7 +78,7 @@ export function useUpdateInventoryItem(invalidate: string[] = [inventoryEndpoint
   });
 
   const updateItem = async (itemId: string, payload: UpdateInventoryItemPayload) => {
-    const res = await mutation.trigger(payload, inventoryEndpoints.update(itemId));
+    const res = await mutation.trigger(payload, endpoint.lab.inventory.update(itemId));
     if (!res) throw new Error("Failed to update inventory item");
     return res.data;
   };
@@ -86,7 +86,7 @@ export function useUpdateInventoryItem(invalidate: string[] = [inventoryEndpoint
   return { updateItem, isLoading: mutation.isLoading };
 }
 
-export function useRemoveInventoryItem(invalidate: string[] = [inventoryEndpoints.list]) {
+export function useRemoveInventoryItem(invalidate: string[] = [endpoint.lab.inventory.list]) {
   const mutation = useMutation<unknown, void>("inventory/remove", {
     method: "DELETE",
     skipErrorHandling: true,
@@ -94,7 +94,7 @@ export function useRemoveInventoryItem(invalidate: string[] = [inventoryEndpoint
   });
 
   const removeItem = async (itemId: string) => {
-    const res = await mutation.trigger(undefined, inventoryEndpoints.remove(itemId));
+    const res = await mutation.trigger(undefined, endpoint.lab.inventory.remove(itemId));
     if (!res) throw new Error("Failed to delete inventory item");
   };
 
@@ -102,14 +102,14 @@ export function useRemoveInventoryItem(invalidate: string[] = [inventoryEndpoint
 }
 
 /** NOTE: response is { item, movement }, not the bare item. */
-export function useRestockItem(invalidate: string[] = [inventoryEndpoints.list]) {
+export function useRestockItem(invalidate: string[] = [endpoint.lab.inventory.list]) {
   const mutation = useMutation<StockMutationResponse, RestockPayload>("inventory/restock", {
     skipErrorHandling: true,
     invalidate,
   });
 
   const restock = async (itemId: string, payload: RestockPayload) => {
-    const res = await mutation.trigger(payload, inventoryEndpoints.restock(itemId));
+    const res = await mutation.trigger(payload, endpoint.lab.inventory.restock(itemId));
     if (!res) throw new Error("Failed to restock item");
     return res.data;
   };
@@ -117,14 +117,14 @@ export function useRestockItem(invalidate: string[] = [inventoryEndpoints.list])
   return { restock, isLoading: mutation.isLoading };
 }
 
-export function useAdjustStock(invalidate: string[] = [inventoryEndpoints.list]) {
+export function useAdjustStock(invalidate: string[] = [endpoint.lab.inventory.list]) {
   const mutation = useMutation<StockMutationResponse, AdjustStockPayload>("inventory/adjust", {
     skipErrorHandling: true,
     invalidate,
   });
 
   const adjust = async (itemId: string, payload: AdjustStockPayload) => {
-    const res = await mutation.trigger(payload, inventoryEndpoints.adjust(itemId));
+    const res = await mutation.trigger(payload, endpoint.lab.inventory.adjust(itemId));
     if (!res) throw new Error("Failed to adjust stock");
     return res.data; 
   };
@@ -140,7 +140,7 @@ function buildMovementsUrl(query: StockMovementListQuery = {}): string {
   if (query.end_date) params.set("end_date", query.end_date);
   params.set("page", String(query.page ?? 1));
   params.set("limit", String(query.limit ?? 50));
-  return `${inventoryEndpoints.movements}?${params.toString()}`;
+  return `${endpoint.lab.inventory.movements}?${params.toString()}`;
 }
 
 export function useStockMovements(query: StockMovementListQuery = {}) {

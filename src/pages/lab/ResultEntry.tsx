@@ -268,7 +268,7 @@ const returnInfo =
               </div>
             </div>
             <div className="space-y-2.5">
-              <ContextRow label="Sample" value={form?.item.sampleType ?? "—"} />
+              <ContextRow label="Sample" value={form?.item.samples?.join(", ") ?? "—"} />
               <ContextRow label="Priority" value={state.priority} />
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Status</span>
