@@ -22,15 +22,27 @@ export interface TestCatalogParameter {
   price?: number;
 }
 
+export interface CatalogMaterial {
+  _id: string;
+  inventoryItem: {
+    _id: string;
+    name: string;
+    unit: string;
+    quantityOnHand: number;
+  };
+  phase: "collection" | "analysis";
+}
+
 export interface TestCatalogEntry {
   _id: string;
   lab: string;
   name: string;
   code: string;
   category: string;
-  turnaroundTime: number; 
-  sampleType: string;
+  turnaroundTime: number;
+  samples: string[];
   parameters: TestCatalogParameter[];
+  materials?: CatalogMaterial[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -48,7 +60,7 @@ export interface TestCatalogListResponse {
 export interface TestCatalogListQuery {
   search?: string;
   category?: string;
-  sampleType?: string;
+  samples?: string;
   isActive?: boolean;
   page?: number;
   limit?: number;
@@ -76,15 +88,16 @@ export interface CreateTestCatalogPayload {
   code: string;
   category: string;
   turnaroundTime: number;
-  sampleType: string;
+  samples: string[];
   parameters?: CreateParameterPayload[];
+  materials?: { inventoryItem: string; phase: "collection" | "analysis" }[];
 }
 
 export interface UpdateTestCatalogPayload {
   name?: string;
   category?: string;
   turnaroundTime?: number;
-  sampleType?: string;
+  samples?: string[];
 }
 
 export interface UpdateTestCatalogStatusPayload {

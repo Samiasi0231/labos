@@ -1,4 +1,3 @@
-// Shared Lab Test Catalog — used by TestCatalog.tsx and InitiateTestOrder.tsx
 
 export type TestCategory =
   | "Haematology"

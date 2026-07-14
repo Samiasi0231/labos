@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { useMutation } from "@/hooks/use-api";
 
 import { setStoredAuth } from "@/api/client";
-import { labEndpoints } from "@/api/endpoints/lab";
+import endpoint from "@/api/endpoints";
 
 import { createLabSchema, type CreateLabValues } from "@/lib/validations/auth";
 import type { AuthTokens } from "@/api/types/auth";
@@ -68,7 +68,7 @@ export default function CreateLab() {
   });
 
   const createLabMutation = useMutation<AuthTokens, CreateLabPayload>(
-    labEndpoints.create,
+    endpoint.lab.create,
     {
       skipErrorHandling: true,
 

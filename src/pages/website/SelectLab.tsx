@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useMutation } from "@/hooks/use-api";
 import { getStoredAuth, setStoredAuth } from "@/api/client";
-import { endpoints } from "@/api/endpoints/auth";
+import endpoint from "@/api/endpoints";
 import type { SwitchTokens, SwitchLabPayload } from "@/api/types/auth";
 import type { UserLabItem } from "@/api/types/user";
 
@@ -37,7 +37,7 @@ export default function SelectLab() {
   const labs: UserLabItem[] = (stored as any)?.labs ?? [];
 
   const switchMutation = useMutation<SwitchTokens, SwitchLabPayload>(
-    endpoints.switch,
+    endpoint.auth.switch,
     {
       skipErrorHandling: true,
       onSuccess: (res) => {

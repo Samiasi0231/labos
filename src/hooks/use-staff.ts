@@ -1,5 +1,5 @@
 import { useApi, useMutation } from "@/hooks/use-api";
-import { staffEndpoints } from "@/api/endpoints/staff";
+import endpoint from "@/api/endpoints";
 import type {
   StaffMember,
   StaffListResponse,
@@ -21,7 +21,7 @@ function buildStaffListUrl(query: StaffListQuery = {}): string {
   params.set("page", String(query.page ?? 1));
   params.set("limit", String(query.limit ?? 20));
   const qs = params.toString();
-  return qs ? `${staffEndpoints.list}?${qs}` : staffEndpoints.list;
+  return qs ? `${endpoint.lab.staff.list}?${qs}` : endpoint.lab.staff.list;
 }
 
 export function useStaffList(query: StaffListQuery = {}) {
@@ -48,15 +48,25 @@ export function useStaffList(query: StaffListQuery = {}) {
   };
 }
 
+export function useStaffSearch(q: string) {
+  const trimmed = q.trim();
+  const url =
+    trimmed.length >= 1
+      ? `${endpoint.lab.staff.search}?q=${encodeURIComponent(trimmed)}`
+      : null;
+  const { data, isLoading } = useApi<StaffMember[]>(url);
+  return { staff: data?.data ?? [], isLoading };
+}
+
 export function useStaffMember(membershipId: string | null) {
   const { data, error, isLoading, mutate } = useApi<StaffMember>(
-    membershipId ? staffEndpoints.get(membershipId) : null
+    membershipId ? endpoint.lab.staff.get(membershipId) : null
   );
   return { staffMember: data?.data ?? null, error, isLoading, refetch: mutate };
 }
 
-export function useInviteStaff(invalidate: string[] = [staffEndpoints.list]) {
-  const mutation = useMutation<InviteStaffResponse, InviteStaffPayload>(staffEndpoints.invite, {
+export function useInviteStaff(invalidate: string[] = [endpoint.lab.staff.list]) {
+  const mutation = useMutation<InviteStaffResponse, InviteStaffPayload>(endpoint.lab.staff.invite, {
     skipErrorHandling: true,
     invalidate,
   });
@@ -70,14 +80,14 @@ export function useInviteStaff(invalidate: string[] = [staffEndpoints.list]) {
   return { invite, isLoading: mutation.isLoading };
 }
 
-export function useUpdateStaffRole(invalidate: string[] = [staffEndpoints.list]) {
+export function useUpdateStaffRole(invalidate: string[] = [endpoint.lab.staff.list]) {
   const mutation = useMutation<UpdateStaffRoleResponse, UpdateStaffRolePayload>(
     "staff/update-role",
     { method: "PATCH", skipErrorHandling: true, invalidate }
   );
 
   const updateRole = async (membershipId: string, role: StaffRole) => {
-    const res = await mutation.trigger({ role }, staffEndpoints.updateRole(membershipId));
+    const res = await mutation.trigger({ role }, endpoint.lab.staff.updateRole(membershipId));
     if (!res) throw new Error("Failed to update role");
     return res.data;
   };
@@ -85,14 +95,14 @@ export function useUpdateStaffRole(invalidate: string[] = [staffEndpoints.list])
   return { updateRole, isLoading: mutation.isLoading };
 }
 
-export function useUpdateStaffStatus(invalidate: string[] = [staffEndpoints.list]) {
+export function useUpdateStaffStatus(invalidate: string[] = [endpoint.lab.staff.list]) {
   const mutation = useMutation<UpdateStaffStatusResponse, UpdateStaffStatusPayload>(
     "staff/update-status",
     { method: "PATCH", skipErrorHandling: true, invalidate }
   );
 
   const updateStatus = async (membershipId: string, status: StaffStatus) => {
-    const res = await mutation.trigger({ status }, staffEndpoints.updateStatus(membershipId));
+    const res = await mutation.trigger({ status }, endpoint.lab.staff.updateStatus(membershipId));
     if (!res) throw new Error("Failed to update status");
     return res.data;
   };
@@ -100,7 +110,7 @@ export function useUpdateStaffStatus(invalidate: string[] = [staffEndpoints.list
   return { updateStatus, isLoading: mutation.isLoading };
 }
 
-export function useRemoveStaff(invalidate: string[] = [staffEndpoints.list]) {
+export function useRemoveStaff(invalidate: string[] = [endpoint.lab.staff.list]) {
   const mutation = useMutation<unknown, void>("staff/remove", {
     method: "DELETE",
     skipErrorHandling: true,
@@ -108,7 +118,7 @@ export function useRemoveStaff(invalidate: string[] = [staffEndpoints.list]) {
   });
 
   const remove = async (membershipId: string) => {
-    const res = await mutation.trigger(undefined, staffEndpoints.remove(membershipId));
+    const res = await mutation.trigger(undefined, endpoint.lab.staff.remove(membershipId));
     if (!res) throw new Error("Failed to remove staff member");
   };
 

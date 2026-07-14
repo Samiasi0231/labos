@@ -7,6 +7,7 @@ export * from "./pagination";
 export * from "./enums";
 export * from "./test-order";
 export * from "./test-catalog";
-export * from "./results"; 
-export * from "./doctors" 
-export * from "./inventory"
+export * from "./results";
+export * from "./doctors";
+export * from "./inventory";
+export * from "./patient-portal";

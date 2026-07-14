@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@/hooks/use-api";
-import { authEndpoints } from "@/api/endpoints/auth";
+import endpoint from "@/api/endpoints";
 import type { LogoutPayload } from "@/api/types/auth";
 import { getStoredAuth, clearStoredAuth } from "@/api/client"
 
 export function useLogout() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const mutation = useMutation<unknown, LogoutPayload>(authEndpoints.logout, {
+  const mutation = useMutation<unknown, LogoutPayload>(endpoint.auth.logout, {
     method: "POST",
     skipErrorHandling: true,
   });
@@ -25,7 +25,7 @@ export function useLogout() {
     } finally {
       clearStoredAuth();
       setIsLoading(false);
-      navigate("/login", { replace: true });
+      navigate("/signin", { replace: true });
     }
   };
 

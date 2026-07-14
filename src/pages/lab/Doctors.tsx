@@ -33,7 +33,7 @@ import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
 import { useToast } from "@/hooks/use-toast";
 import { useDoctorsList, useCreateDoctor } from "@/hooks/use-doctor";
 import { usePortalAccess } from "@/hooks/use-portal-access";
-import { derivePortalAccess } from "@/lib/portal-access";
+import { derivePortalAccess } from "@/lib/utils";
 
 const SPECIALTIES = [
   "Internal Medicine",

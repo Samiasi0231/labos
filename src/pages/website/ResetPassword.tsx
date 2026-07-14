@@ -16,7 +16,7 @@ import {
 import { FlaskConical, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation } from "@/hooks/use-api";
-import { endpoints } from "@/api/endpoints/auth";
+import endpoint from "@/api/endpoints";
 import {
   resetPasswordSchema,
   type ResetPasswordValues,
@@ -36,7 +36,7 @@ export default function ResetPassword() {
   });
 
   const resetMutation = useMutation<null, ResetPasswordPayload>(
-    endpoints.resetPassword,
+    endpoint.auth.resetPassword,
     {
       skipErrorHandling: true,
       onSuccess: () => {

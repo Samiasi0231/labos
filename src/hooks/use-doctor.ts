@@ -1,5 +1,5 @@
 import { useApi, useMutation } from "@/hooks/use-api";
-import { doctorEndpoints } from "@/api/endpoints/doctors";
+import endpoint from "@/api/endpoints";
 import type {
   Doctor,
   DoctorListResponse,
@@ -17,7 +17,7 @@ function buildDoctorListUrl(query: DoctorListQuery = {}): string {
   if (query.specialty) params.set("specialty", query.specialty);
   params.set("page", String(query.page ?? 1));
   params.set("limit", String(query.limit ?? 20));
-  return `${doctorEndpoints.list}?${params.toString()}`;
+  return `${endpoint.lab.doctors.list}?${params.toString()}`;
 }
 
 export function useDoctorsList(query: DoctorListQuery = {}) {
@@ -45,13 +45,13 @@ export function useDoctorsList(query: DoctorListQuery = {}) {
 
 export function useDoctor(doctorId: string | null) {
   const { data, error, isLoading, mutate } = useApi<Doctor>(
-    doctorId ? doctorEndpoints.get(doctorId) : null
+    doctorId ? endpoint.lab.doctors.get(doctorId) : null
   );
   return { doctor: data?.data ?? null, error, isLoading, refetch: mutate };
 }
 
-export function useCreateDoctor(invalidate: string[] = [doctorEndpoints.list]) {
-  const mutation = useMutation<Doctor, CreateDoctorPayload>(doctorEndpoints.create, {
+export function useCreateDoctor(invalidate: string[] = [endpoint.lab.doctors.list]) {
+  const mutation = useMutation<Doctor, CreateDoctorPayload>(endpoint.lab.doctors.create, {
     skipErrorHandling: true,
     invalidate,
   });
@@ -65,7 +65,7 @@ export function useCreateDoctor(invalidate: string[] = [doctorEndpoints.list]) {
   return { createDoctor, isLoading: mutation.isLoading };
 }
 
-export function useUpdateDoctor(invalidate: string[] = [doctorEndpoints.list]) {
+export function useUpdateDoctor(invalidate: string[] = [endpoint.lab.doctors.list]) {
   const mutation = useMutation<Doctor, UpdateDoctorPayload>("doctors/update", {
     method: "PATCH",
     skipErrorHandling: true,
@@ -73,7 +73,7 @@ export function useUpdateDoctor(invalidate: string[] = [doctorEndpoints.list]) {
   });
 
   const updateDoctor = async (doctorId: string, payload: UpdateDoctorPayload) => {
-    const res = await mutation.trigger(payload, doctorEndpoints.update(doctorId));
+    const res = await mutation.trigger(payload, endpoint.lab.doctors.update(doctorId));
     if (!res) throw new Error("Failed to update doctor");
     return res.data;
   };
@@ -81,7 +81,7 @@ export function useUpdateDoctor(invalidate: string[] = [doctorEndpoints.list]) {
   return { updateDoctor, isLoading: mutation.isLoading };
 }
 
-export function useUpdateDoctorStatus(invalidate: string[] = [doctorEndpoints.list]) {
+export function useUpdateDoctorStatus(invalidate: string[] = [endpoint.lab.doctors.list]) {
   const mutation = useMutation<Doctor, UpdateDoctorStatusPayload>("doctors/update-status", {
     method: "PATCH",
     skipErrorHandling: true,
@@ -89,7 +89,7 @@ export function useUpdateDoctorStatus(invalidate: string[] = [doctorEndpoints.li
   });
 
   const updateStatus = async (doctorId: string, status: DoctorStatus) => {
-    const res = await mutation.trigger({ status }, doctorEndpoints.updateStatus(doctorId));
+    const res = await mutation.trigger({ status }, endpoint.lab.doctors.updateStatus(doctorId));
     if (!res) throw new Error("Failed to update doctor status");
     return res.data;
   };
@@ -97,7 +97,7 @@ export function useUpdateDoctorStatus(invalidate: string[] = [doctorEndpoints.li
   return { updateStatus, isLoading: mutation.isLoading };
 }
 
-export function useRemoveDoctor(invalidate: string[] = [doctorEndpoints.list]) {
+export function useRemoveDoctor(invalidate: string[] = [endpoint.lab.doctors.list]) {
   const mutation = useMutation<unknown, void>("doctors/remove", {
     method: "DELETE",
     skipErrorHandling: true,
@@ -105,7 +105,7 @@ export function useRemoveDoctor(invalidate: string[] = [doctorEndpoints.list]) {
   });
 
   const removeDoctor = async (doctorId: string) => {
-    const res = await mutation.trigger(undefined, doctorEndpoints.remove(doctorId));
+    const res = await mutation.trigger(undefined, endpoint.lab.doctors.remove(doctorId));
     if (!res) throw new Error("Failed to remove doctor");
   };
 

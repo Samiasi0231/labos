@@ -6,6 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { useLogout } from "@/hooks/use-auth";
 
 interface PatientHeaderProps {
   onMenuClick: () => void;
@@ -20,6 +21,7 @@ const notifications = [
 
 export function PatientHeader({ onMenuClick, pageTitle }: PatientHeaderProps) {
   const unread = notifications.filter(n => n.unread).length;
+  const { logout, isLoading: loggingOut } = useLogout();
 
   return (
     <header className="h-16 border-b border-border bg-card flex items-center gap-4 px-4 md:px-6 flex-shrink-0">
@@ -72,7 +74,13 @@ export function PatientHeader({ onMenuClick, pageTitle }: PatientHeaderProps) {
           <DropdownMenuItem>My Profile</DropdownMenuItem>
           <DropdownMenuItem>Download Records</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive">Sign Out</DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive"
+            disabled={loggingOut}
+            onSelect={() => logout()}
+          >
+            {loggingOut ? "Signing out…" : "Sign Out"}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

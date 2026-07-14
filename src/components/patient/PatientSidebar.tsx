@@ -1,20 +1,18 @@
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, FileText, History, CalendarDays,
-  User, ChevronLeft, X, Heart
+  Home, FlaskConical, ClipboardList, CalendarDays,
+  User, ChevronLeft, X, Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const navItems = [
-  { path: "/patient", label: "My Health", icon: LayoutDashboard, exact: true },
-  { path: "/patient/results", label: "Test Results", icon: FileText, badge: 1 },
-  { path: "/patient/history", label: "Health History", icon: History },
+const NAV_ITEMS = [
+  { path: "/patient", label: "Home", icon: Home, exact: true },
+  { path: "/patient/results", label: "My Results", icon: FlaskConical },
+  { path: "/patient/orders", label: "My Orders", icon: ClipboardList },
   { path: "/patient/appointments", label: "Appointments", icon: CalendarDays },
-  { path: "/patient/profile", label: "My Profile", icon: User },
+  { path: "/patient/profile", label: "Profile", icon: User },
 ];
 
 interface PatientSidebarProps {
@@ -30,6 +28,7 @@ export function PatientSidebar({ collapsed, onCollapse, mobileOpen, onMobileClos
 
   const isActive = (path: string, exact?: boolean) => {
     if (exact) return location.pathname === path;
+    // results/:id should still highlight "My Results"
     return location.pathname.startsWith(path);
   };
 
@@ -65,31 +64,18 @@ export function PatientSidebar({ collapsed, onCollapse, mobileOpen, onMobileClos
         )}
       </div>
 
-      {/* Patient quick card */}
-      {(!collapsed || isMobile) && (
-        <div className="px-4 py-3 mx-3 mt-3 rounded-xl bg-sidebar-primary/20 border border-sidebar-primary/30">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-sidebar-primary-foreground">AO</span>
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-sidebar-foreground truncate">Amara Okonkwo</p>
-              <p className="text-[10px] text-sidebar-muted">PAT-001 · O+</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         {(!collapsed || isMobile) && (
           <p className="text-xs font-semibold uppercase tracking-wider text-sidebar-muted px-3 mb-3">My Health</p>
         )}
-        {navItems.map(item => {
+        {NAV_ITEMS.map((item) => {
           const active = isActive(item.path, item.exact);
           return (
             <NavLink
-              key={item.path} to={item.path} end={item.exact}
+              key={item.path}
+              to={item.path}
+              end={item.exact}
               onClick={isMobile ? onMobileClose : undefined}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
@@ -104,29 +90,12 @@ export function PatientSidebar({ collapsed, onCollapse, mobileOpen, onMobileClos
                 style={{ width: "18px", height: "18px" }}
               />
               {(!collapsed || isMobile) && (
-                <>
-                  <span className="truncate flex-1">{item.label}</span>
-                  {item.badge && item.badge > 0 && (
-                    <Badge className="bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground border-0 text-[10px] h-4 px-1.5 min-w-[18px]">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </>
+                <span className="truncate flex-1">{item.label}</span>
               )}
             </NavLink>
           );
         })}
       </nav>
-
-      {/* Footer */}
-      {(!collapsed || isMobile) && (
-        <div className="px-4 py-4 border-t border-sidebar-border">
-          <p className="text-[11px] text-sidebar-muted text-center leading-relaxed">
-            Powered by <span className="font-semibold text-sidebar-foreground">LabOS</span><br />
-            Your results are secure & private
-          </p>
-        </div>
-      )}
     </div>
   );
 

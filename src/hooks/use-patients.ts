@@ -1,5 +1,5 @@
 import { useApi, useMutation } from "@/hooks/use-api";
-import { patientEndpoints } from "@/api/endpoints/patients";
+import endpoint from "@/api/endpoints";
 import type {
   Patient,
   PatientListResponse,
@@ -17,7 +17,7 @@ function buildPatientListUrl(query: PatientListQuery = {}): string {
   if (query.end_date) params.set("end_date", query.end_date);
   params.set("page", String(query.page ?? 1));
   params.set("limit", String(query.limit ?? 20));
-  return `${patientEndpoints.list}?${params.toString()}`;
+  return `${endpoint.lab.patients.list}?${params.toString()}`;
 }
 
 export function usePatientsList(query: PatientListQuery = {}) {
@@ -44,15 +44,25 @@ export function usePatientsList(query: PatientListQuery = {}) {
   };
 }
 
+export function usePatientSearch(q: string) {
+  const trimmed = q.trim();
+  const url =
+    trimmed.length >= 2
+      ? `${endpoint.lab.patients.search}?q=${encodeURIComponent(trimmed)}`
+      : null;
+  const { data, isLoading } = useApi<Patient[]>(url);
+  return { patients: data?.data ?? [], isLoading };
+}
+
 export function usePatient(patientId: string | null) {
   const { data, error, isLoading, mutate } = useApi<Patient>(
-    patientId ? patientEndpoints.get(patientId) : null
+    patientId ? endpoint.lab.patients.get(patientId) : null
   );
   return { patient: data?.data ?? null, error, isLoading, refetch: mutate };
 }
 
-export function useCreatePatient(invalidate: string[] = [patientEndpoints.list]) {
-  const mutation = useMutation<Patient, CreatePatientPayload>(patientEndpoints.create, {
+export function useCreatePatient(invalidate: string[] = [endpoint.lab.patients.list]) {
+  const mutation = useMutation<Patient, CreatePatientPayload>(endpoint.lab.patients.create, {
     skipErrorHandling: true,
     invalidate,
   });
@@ -66,7 +76,7 @@ export function useCreatePatient(invalidate: string[] = [patientEndpoints.list])
   return { createPatient, isLoading: mutation.isLoading };
 }
 
-export function useUpdatePatient(invalidate: string[] = [patientEndpoints.list]) {
+export function useUpdatePatient(invalidate: string[] = [endpoint.lab.patients.list]) {
   const mutation = useMutation<Patient, UpdatePatientPayload>("patients/update", {
     method: "PATCH",
     skipErrorHandling: true,
@@ -74,7 +84,7 @@ export function useUpdatePatient(invalidate: string[] = [patientEndpoints.list])
   });
 
   const updatePatient = async (patientId: string, payload: UpdatePatientPayload) => {
-    const res = await mutation.trigger(payload, patientEndpoints.update(patientId));
+    const res = await mutation.trigger(payload, endpoint.lab.patients.update(patientId));
     if (!res) throw new Error("Failed to update patient");
     return res.data;
   };
@@ -82,7 +92,7 @@ export function useUpdatePatient(invalidate: string[] = [patientEndpoints.list])
   return { updatePatient, isLoading: mutation.isLoading };
 }
 
-export function useDeletePatient(invalidate: string[] = [patientEndpoints.list]) {
+export function useDeletePatient(invalidate: string[] = [endpoint.lab.patients.list]) {
   const mutation = useMutation<unknown, void>("patients/delete", {
     method: "DELETE",
     skipErrorHandling: true,
@@ -90,7 +100,7 @@ export function useDeletePatient(invalidate: string[] = [patientEndpoints.list])
   });
 
   const deletePatient = async (patientId: string) => {
-    const res = await mutation.trigger(undefined, patientEndpoints.remove(patientId));
+    const res = await mutation.trigger(undefined, endpoint.lab.patients.remove(patientId));
     if (!res) throw new Error("Failed to delete patient");
   };
 

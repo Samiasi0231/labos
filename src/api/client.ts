@@ -2,7 +2,7 @@ import axios, { type AxiosError } from "axios";
 import type { ApiError, ApiResponse, RequestOptions} from "./types/common";
 import type{ AuthTokens,SwitchTokens } from "./types/auth";
 import { STORAGE_KEYS } from "@/lib/contant";
-import { endpoints } from "./endpoints/auth";
+import endpoint from "./endpoints";
 import dayjs from "dayjs";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
@@ -76,7 +76,7 @@ function refreshAccessToken(): Promise<string> {
     }
 
     const { data } = await client.post<ApiResponse<AuthTokens>>(
-      endpoints.refresh,
+      endpoint.auth.refresh,
       { refresh_token: auth.refresh_token },
       { skipAuth: true } as RequestOptions
     );

@@ -1,5 +1,5 @@
 import { useApi, useMutation } from "@/hooks/use-api";
-import { testCatalogEndpoints } from "@/api/endpoints/test-catalog";
+import endpoint from "@/api/endpoints";
 import type {
   TestCatalogEntry,
   TestCatalogListResponse,
@@ -15,11 +15,11 @@ function buildListUrl(query: TestCatalogListQuery = {}): string {
   const params = new URLSearchParams();
   if (query.search) params.set("search", query.search);
   if (query.category) params.set("category", query.category);
-  if (query.sampleType) params.set("sampleType", query.sampleType);
+  if (query.samples) params.set("samples", query.samples);
   if (query.isActive !== undefined) params.set("isActive", String(query.isActive));
   params.set("page", String(query.page ?? 1));
   params.set("limit", String(Math.min(query.limit ?? 100, 100)));
-  return `${testCatalogEndpoints.list}?${params.toString()}`;
+  return `${endpoint.lab.testCatalog.list}?${params.toString()}`;
 }
 
 export function useTestCatalogList(query: TestCatalogListQuery = {}) {
@@ -45,8 +45,8 @@ export function useTestCatalogList(query: TestCatalogListQuery = {}) {
   };
 }
 
-export function useCreateTest(invalidate: string[] = [testCatalogEndpoints.list]) {
-  const mutation = useMutation<TestCatalogEntry, CreateTestCatalogPayload>(testCatalogEndpoints.create, {
+export function useCreateTest(invalidate: string[] = [endpoint.lab.testCatalog.list]) {
+  const mutation = useMutation<TestCatalogEntry, CreateTestCatalogPayload>(endpoint.lab.testCatalog.create, {
     skipErrorHandling: true,
     invalidate,
   });
@@ -60,7 +60,7 @@ export function useCreateTest(invalidate: string[] = [testCatalogEndpoints.list]
   return { createTest, isLoading: mutation.isLoading };
 }
 
-export function useUpdateTest(invalidate: string[] = [testCatalogEndpoints.list]) {
+export function useUpdateTest(invalidate: string[] = [endpoint.lab.testCatalog.list]) {
   const mutation = useMutation<TestCatalogEntry, UpdateTestCatalogPayload>("test-catalog/update", {
     method: "PATCH",
     skipErrorHandling: true,
@@ -68,7 +68,7 @@ export function useUpdateTest(invalidate: string[] = [testCatalogEndpoints.list]
   });
 
   const updateTest = async (testId: string, payload: UpdateTestCatalogPayload) => {
-    const res = await mutation.trigger(payload, testCatalogEndpoints.update(testId));
+    const res = await mutation.trigger(payload, endpoint.lab.testCatalog.update(testId));
     if (!res) throw new Error("Failed to update test");
     return res.data;
   };
@@ -76,7 +76,7 @@ export function useUpdateTest(invalidate: string[] = [testCatalogEndpoints.list]
   return { updateTest, isLoading: mutation.isLoading };
 }
 
-export function useRemoveTest(invalidate: string[] = [testCatalogEndpoints.list]) {
+export function useRemoveTest(invalidate: string[] = [endpoint.lab.testCatalog.list]) {
   const mutation = useMutation<unknown, void>("test-catalog/remove", {
     method: "DELETE",
     skipErrorHandling: true,
@@ -84,14 +84,14 @@ export function useRemoveTest(invalidate: string[] = [testCatalogEndpoints.list]
   });
 
   const removeTest = async (testId: string) => {
-    const res = await mutation.trigger(undefined, testCatalogEndpoints.remove(testId));
+    const res = await mutation.trigger(undefined, endpoint.lab.testCatalog.remove(testId));
     if (!res) throw new Error("Failed to delete test");
   };
 
   return { removeTest, isLoading: mutation.isLoading };
 }
 
-export function useUpdateTestStatus(invalidate: string[] = [testCatalogEndpoints.list]) {
+export function useUpdateTestStatus(invalidate: string[] = [endpoint.lab.testCatalog.list]) {
   const mutation = useMutation<TestCatalogEntry, UpdateTestCatalogStatusPayload>("test-catalog/update-status", {
     method: "PATCH",
     skipErrorHandling: true,
@@ -99,7 +99,7 @@ export function useUpdateTestStatus(invalidate: string[] = [testCatalogEndpoints
   });
 
   const updateStatus = async (testId: string, isActive: boolean) => {
-    const res = await mutation.trigger({ isActive }, testCatalogEndpoints.updateStatus(testId));
+    const res = await mutation.trigger({ isActive }, endpoint.lab.testCatalog.updateStatus(testId));
     if (!res) throw new Error("Failed to update test status");
     return res.data;
   };
@@ -107,14 +107,14 @@ export function useUpdateTestStatus(invalidate: string[] = [testCatalogEndpoints
   return { updateStatus, isLoading: mutation.isLoading };
 }
 
-export function useAddParameter(invalidate: string[] = [testCatalogEndpoints.list]) {
+export function useAddParameter(invalidate: string[] = [endpoint.lab.testCatalog.list]) {
   const mutation = useMutation<TestCatalogEntry, CreateParameterPayload>("test-catalog/add-parameter", {
     skipErrorHandling: true,
     invalidate,
   });
 
   const addParameter = async (testId: string, payload: CreateParameterPayload) => {
-    const res = await mutation.trigger(payload, testCatalogEndpoints.addParameter(testId));
+    const res = await mutation.trigger(payload, endpoint.lab.testCatalog.addParameter(testId));
     if (!res) throw new Error("Failed to add parameter");
     return res.data;
   };
@@ -122,7 +122,7 @@ export function useAddParameter(invalidate: string[] = [testCatalogEndpoints.lis
   return { addParameter, isLoading: mutation.isLoading };
 }
 
-export function useUpdateParameter(invalidate: string[] = [testCatalogEndpoints.list]) {
+export function useUpdateParameter(invalidate: string[] = [endpoint.lab.testCatalog.list]) {
   const mutation = useMutation<TestCatalogEntry, UpdateParameterPayload>("test-catalog/update-parameter", {
     method: "PATCH",
     skipErrorHandling: true,
@@ -130,7 +130,7 @@ export function useUpdateParameter(invalidate: string[] = [testCatalogEndpoints.
   });
 
   const updateParameter = async (testId: string, paramId: string, payload: UpdateParameterPayload) => {
-    const res = await mutation.trigger(payload, testCatalogEndpoints.updateParameter(testId, paramId));
+    const res = await mutation.trigger(payload, endpoint.lab.testCatalog.updateParameter(testId, paramId));
     if (!res) throw new Error("Failed to update parameter");
     return res.data;
   };
@@ -138,7 +138,7 @@ export function useUpdateParameter(invalidate: string[] = [testCatalogEndpoints.
   return { updateParameter, isLoading: mutation.isLoading };
 }
 
-export function useRemoveParameter(invalidate: string[] = [testCatalogEndpoints.list]) {
+export function useRemoveParameter(invalidate: string[] = [endpoint.lab.testCatalog.list]) {
   const mutation = useMutation<TestCatalogEntry, void>("test-catalog/remove-parameter", {
     method: "DELETE",
     skipErrorHandling: true,
@@ -146,7 +146,7 @@ export function useRemoveParameter(invalidate: string[] = [testCatalogEndpoints.
   });
 
   const removeParameter = async (testId: string, paramId: string) => {
-    const res = await mutation.trigger(undefined, testCatalogEndpoints.removeParameter(testId, paramId));
+    const res = await mutation.trigger(undefined, endpoint.lab.testCatalog.removeParameter(testId, paramId));
     if (!res) throw new Error("Failed to remove parameter");
     return res.data;
   };

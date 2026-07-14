@@ -25,7 +25,7 @@ import {
 import { toast } from "sonner";
 import { useMutation } from "@/hooks/use-api";
 import { setStoredAuth } from "@/api/client";
-import { endpoints } from "@/api/endpoints/auth";
+import endpoint from "@/api/endpoints";
 import {
   signInSchema,
   type SignInValues,
@@ -55,7 +55,11 @@ function getRoleRedirect(role: string): string {
   }
 }
 
-export default function SignIn() {
+interface SignInProps {
+  accessType?: "staff" | "patient";
+}
+
+export default function SignIn({ accessType = "staff" }: SignInProps) {
   const navigate = useNavigate();
   const [showPass, setShowPass] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
@@ -72,34 +76,31 @@ export default function SignIn() {
     defaultValues: { email: "" },
   });
 
- const loginMutation = useMutation<LoginResponse, LoginPayload>(
-   endpoints.login,
-   {
-     skipErrorHandling: true,
-     onSuccess: (res) => {
-       const data = res.data;
-       if (!data) return;
+  const loginMutation = useMutation<LoginResponse, LoginPayload>(
+    endpoint.auth.login,
+    {
+      skipErrorHandling: true,
+      onSuccess: (res) => {
+        const data = res.data;
+        if (!data) return;
+        setStoredAuth({ ...data, access_type: accessType });
 
-       if (data.nextAction === "create_lab") {
-         setStoredAuth(data);
-         navigate("/create-lab");
-         return;
-       }
-       if (data.nextAction === "select_lab") {
-         setStoredAuth(data);
-         navigate("/select-lab");
-         return;
-       }
-       setStoredAuth(data);
-       toast.success("Welcome back!");
-       navigate(getRoleRedirect(data.role));
-     },
-     onError: (err) => toast.error(err.message || "Invalid email or password"),
-   },
- );
+        toast.success("Welcome back!");
+        if (accessType === "staff") {
+          if (data.nextAction === "create_lab") { navigate("/create-lab"); return; }
+          if (data.nextAction === "select_lab") { navigate("/select-lab"); return; }
+          navigate(getRoleRedirect(data.role));
+        }
+        if (accessType === "patient") {
+          navigate("/patient");
+        }
+      },
+      onError: (err) => toast.error(err.message || "Invalid email or password"),
+    },
+  );
 
   const forgotMutation = useMutation<unknown, ForgotPasswordPayload>(
-    endpoints.forgotPassword,
+    endpoint.auth.forgotPassword,
     {
       skipErrorHandling: true,
       onSuccess: () => setResetSent(true),
@@ -111,7 +112,7 @@ export default function SignIn() {
     loginMutation.trigger({
       email: values.email.trim().toLowerCase(),
       password: values.password,
-      access_type: "staff",
+      access_type: accessType,
     });
   };
 
@@ -139,7 +140,9 @@ export default function SignIn() {
           <p className="text-muted-foreground text-sm mt-1">
             {forgotMode
               ? "Enter your email to receive a password reset link"
-              : "Access your laboratory management dashboard"}
+              : accessType === "patient"
+                ? "Access your patient portal"
+                : "Access your laboratory management dashboard"}
           </p>
         </div>
 
@@ -230,41 +233,6 @@ export default function SignIn() {
                       </>
                     )}
                   </Button>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <Separator />
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="bg-card px-3 text-xs text-muted-foreground">
-                        or
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Demo access */}
-                  <div className="space-y-2">
-                    <p className="text-xs text-center text-muted-foreground font-medium">
-                      Quick Portal Access (Demo)
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { label: "Lab Portal", path: "/lab" },
-                        { label: "Patient Portal", path: "/patient" },
-                      ].map((p) => (
-                        <Link
-                          key={p.label}
-                          to={p.path}
-                          className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 border border-border rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-colors text-muted-foreground hover:text-primary"
-                        >
-                          {p.label} <ArrowRight className="w-3 h-3" />
-                        </Link>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-center text-muted-foreground">
-                      Demo portals — no login required
-                    </p>
-                  </div>
                 </form>
               </Form>
             ) : resetSent ? (
@@ -345,13 +313,21 @@ export default function SignIn() {
 
         {!forgotMode && (
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{" "}
-            <Link
-              to="/signup"
-              className="text-primary font-medium hover:underline"
-            >
-              Register your lab free
-            </Link>
+            {accessType === "patient" ? (
+              <>
+                Lab staff?{" "}
+                <Link to="/signin" className="text-primary font-medium hover:underline">
+                  Sign in to Lab Portal
+                </Link>
+              </>
+            ) : (
+              <>
+                Don't have an account?{" "}
+                <Link to="/signup" className="text-primary font-medium hover:underline">
+                  Register your lab free
+                </Link>
+              </>
+            )}
           </p>
         )}
 

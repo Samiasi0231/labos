@@ -1,5 +1,5 @@
 import { useApi, useMutation } from "@/hooks/use-api";
-import { userEndpoints } from "@/api/endpoints/users";
+import endpoint from "@/api/endpoints";
 import type {
   CurrentUser,
   UpdateUserProfilePayload,
@@ -9,19 +9,19 @@ import type {
 } from "@/api/types/user";
 
 export function useCurrentUser() {
-  const { data, error, isLoading, mutate } = useApi<CurrentUser>(userEndpoints.me);
+  const { data, error, isLoading, mutate } = useApi<CurrentUser>(endpoint.user.me);
   return { user: data?.data ?? null, error, isLoading, refetch: mutate };
 }
 
 export function useUserLabs() {
-  const { data, error, isLoading, mutate } = useApi<UserAccessibleLab[]>(userEndpoints.myLabs);
+  const { data, error, isLoading, mutate } = useApi<UserAccessibleLab[]>(endpoint.user.myLabs);
   return { labs: data?.data ?? [], error, isLoading, refetch: mutate };
 }
 
 export function useUpdateProfile() {
   const mutation = useMutation<UpdateUserProfileResponse, UpdateUserProfilePayload>(
-    userEndpoints.updateProfile,
-    { method: "PATCH", skipErrorHandling: true, invalidate: [userEndpoints.me] }
+    endpoint.user.updateProfile,
+    { method: "PATCH", skipErrorHandling: true, invalidate: [endpoint.user.me] }
   );
 
   const updateProfile = async (payload: UpdateUserProfilePayload) => {
@@ -34,7 +34,7 @@ export function useUpdateProfile() {
 }
 
 export function useChangePassword() {
-  const mutation = useMutation<unknown, ChangePasswordPayload>(userEndpoints.changePassword, {
+  const mutation = useMutation<unknown, ChangePasswordPayload>(endpoint.user.changePassword, {
     method: "PATCH",
     skipErrorHandling: true,
   });

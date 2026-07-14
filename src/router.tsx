@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { RequireAuth } from "./components/RequireAuth";
 
 import { WebsiteLayout } from "./components/website/WebsiteLayout";
 import Home from "./pages/website/Home";
@@ -11,7 +12,7 @@ import SignUp from "./pages/website/SignUp";
 import SignIn from "./pages/website/SignIn";
 import ResetPassword from "./pages/website/ResetPassword";
 import VerifyEmail from "./pages/website/VerifyEmail";
-import CreateLab from "./pages/website/CreateLab";  
+import CreateLab from "./pages/website/CreateLab";
 import AcceptInvite from "./pages/website/AcceptInvite";
 
 import { AdminLayout } from "./components/admin/AdminLayout";
@@ -26,40 +27,40 @@ import TestPermissions from "./pages/admin/TestPermissions";
 
 import { LabLayout } from "./components/lab/LabLayout";
 import LabDashboard from "./pages/lab/LabDashboard";
-import Patients from "./pages/lab/Patients";
-import PatientDetail from "./pages/lab/PatientDetail";
-import Tests from "./pages/lab/Tests";
-import Results from "./pages/lab/Results";
+import Patients from "./pages/lab/patient";
+import PatientDetail from "./pages/lab/patient/details";
+import Tests from "./pages/lab/order";
+import TestOrderDetail from "./pages/lab/order/details";
+import Results from "./pages/lab/result";
 import Doctors from "./pages/lab/Doctors";
 import Inventory from "./pages/lab/Inventory";
 import Finance from "./pages/lab/Finance";
-import Staff from "./pages/lab/Staff";
+import Staff from "./pages/lab/staff";
 import Branches from "./pages/lab/Branches";
 import Settings from "./pages/lab/Settings";
 import TestCatalog from "./pages/lab/TestCatalog";
-import InitiateTestOrder from "./pages/lab/InitiateTestOrder";
 
-// Reception pages — now live under /lab/*
-import PatientRegistration from "./pages/reception/PatientRegistration";
-import Appointments from "./pages/reception/Appointments";
-import Billing from "./pages/reception/Billing";
-import SampleCollection from "./pages/reception/SampleCollection";
-
-// Scientist pages — now live under /lab/*
-import AssignedTests from "./pages/scientist/AssignedTests";
-import ResultEntry from "./pages/scientist/ResultEntry";
-import PendingReviews from "./pages/scientist/PendingReviews";
+import PatientRegistration from "./pages/lab/patient/registration";
+import Appointments from "./pages/lab/Appointments";
+import Billing from "./pages/lab/Billing";
+import AssignedTests from "./pages/lab/AssignedTests";
+import ResultEntry from "./pages/lab/result/entry";
+import LabResultDetail from "./pages/lab/result/detail";
+import PendingReviews from "./pages/lab/result/pending-reviews";
+import ActivityLog from "./pages/lab/activities";
 
 import { PatientLayout } from "./components/patient/PatientLayout";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 import MyResults from "./pages/patient/MyResults";
-import HealthHistory from "./pages/patient/HealthHistory";
+import ResultDetail from "./pages/patient/ResultDetail";
+import MyOrders from "./pages/patient/MyOrders";
 import MyAppointments from "./pages/patient/MyAppointments";
 import PatientProfile from "./pages/patient/PatientProfile";
 
 import NotFound from "./pages/NotFound";
 
 export const routers = [
+  // ── Public / website routes ───────────────────────────────────────────────
   {
     path: "/",
     element: <WebsiteLayout />,
@@ -72,71 +73,91 @@ export const routers = [
       { path: "privacy", element: <Privacy /> },
       { path: "signup", element: <SignUp /> },
       { path: "signin", element: <SignIn /> },
+      { path: "patient/signin", element: <SignIn accessType="patient" /> },
       { path: "reset-password", element: <ResetPassword /> },
       { path: "verify-email", element: <VerifyEmail /> },
       { path: "create-lab", element: <CreateLab /> },
       { path: "accept-invite", element: <AcceptInvite /> },
     ],
   },
+
+  // ── Lab portal — staff only ───────────────────────────────────────────────
   {
-    path: "/lab",
-    element: <LabLayout />,
+    element: <RequireAuth portal="lab" />,
     children: [
-      // ── Lab Owner pages ──────────────────────────
-      { index: true, element: <LabDashboard /> },
-      { path: "patients", element: <Patients /> },
-      { path: "patients/:patientId", element: <PatientDetail /> },
-      { path: "tests", element: <Tests /> },
-      { path: "results", element: <Results /> },
-      { path: "doctors", element: <Doctors /> },
-      { path: "inventory", element: <Inventory /> },
-      { path: "finance", element: <Finance /> },
-      { path: "staff", element: <Staff /> },
-      { path: "branches", element: <Branches /> },
-      { path: "settings", element: <Settings /> },
-      { path: "test-catalog", element: <TestCatalog /> },
-      { path: "test-order/:patientId", element: <InitiateTestOrder /> },
-      // ── Receptionist pages ───────────────────────
-      { path: "register", element: <PatientRegistration /> },
-      { path: "appointments", element: <Appointments /> },
-      { path: "billing", element: <Billing /> },
-      { path: "samples", element: <SampleCollection /> },
-      // ── Scientist pages ──────────────────────────
-      { path: "assigned", element: <AssignedTests /> },
-      { path: "result-entry", element: <ResultEntry /> },
-      { path: "reviews", element: <PendingReviews /> },
+      {
+        path: "/lab",
+        element: <LabLayout />,
+        children: [
+          // Lab Owner pages
+          { index: true, element: <LabDashboard /> },
+          { path: "patients", element: <Patients /> },
+          { path: "patients/:patientId", element: <PatientDetail /> },
+          { path: "tests", element: <Tests /> },
+          { path: "tests/:orderId", element: <TestOrderDetail /> },
+          { path: "results", element: <Results /> },
+          { path: "results/:resultId", element: <LabResultDetail /> },
+          { path: "doctors", element: <Doctors /> },
+          { path: "inventory", element: <Inventory /> },
+          { path: "finance", element: <Finance /> },
+          { path: "staff", element: <Staff /> },
+          { path: "branches", element: <Branches /> },
+          { path: "settings", element: <Settings /> },
+          { path: "test-catalog", element: <TestCatalog /> },
+          // Receptionist pages
+          { path: "register", element: <PatientRegistration /> },
+          { path: "appointments", element: <Appointments /> },
+          { path: "billing", element: <Billing /> },
+          // Scientist pages
+          { path: "assigned", element: <AssignedTests /> },
+          { path: "result-entry", element: <ResultEntry /> },
+          { path: "reviews", element: <PendingReviews /> },
+          { path: "activity", element: <ActivityLog /> },
+        ],
+      },
     ],
   },
+
+  // ── Admin portal ──────────────────────────────────────────────────────────
   {
-    path: "/admin",
-    element: <AdminLayout />,
+    element: <RequireAuth portal="admin" />,
     children: [
-      { index: true, element: <AdminDashboard /> },
-      { path: "labs", element: <Labs /> },
-      { path: "subscriptions", element: <Subscriptions /> },
-      { path: "users", element: <AllUsers /> },
-      { path: "reports", element: <Reports /> },
-      { path: "api", element: <ApiManagement /> },
-      { path: "settings", element: <SystemSettings /> },
-      { path: "test-permissions", element: <TestPermissions /> },
+      {
+        path: "/admin",
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminDashboard /> },
+          { path: "labs", element: <Labs /> },
+          { path: "subscriptions", element: <Subscriptions /> },
+          { path: "users", element: <AllUsers /> },
+          { path: "reports", element: <Reports /> },
+          { path: "api", element: <ApiManagement /> },
+          { path: "settings", element: <SystemSettings /> },
+          { path: "test-permissions", element: <TestPermissions /> },
+        ],
+      },
     ],
   },
+
+  // ── Patient portal ────────────────────────────────────────────────────────
   {
-    path: "/patient",
-    element: <PatientLayout />,
+    element: <RequireAuth portal="patient" />,
     children: [
-      { index: true, element: <PatientDashboard /> },
-      { path: "results", element: <MyResults /> },
-      { path: "history", element: <HealthHistory /> },
-      { path: "appointments", element: <MyAppointments /> },
-      { path: "profile", element: <PatientProfile /> },
+      {
+        path: "/patient",
+        element: <PatientLayout />,
+        children: [
+          { index: true, element: <PatientDashboard /> },
+          { path: "results", element: <MyResults /> },
+          { path: "results/:resultId", element: <ResultDetail /> },
+          { path: "orders", element: <MyOrders /> },
+          { path: "appointments", element: <MyAppointments /> },
+          { path: "profile", element: <PatientProfile /> },
+        ],
+      },
     ],
   },
-  // Redirect old portal URLs to the unified lab portal
-  { path: "/reception", element: <Navigate to="/lab" replace /> },
-  { path: "/reception/*", element: <Navigate to="/lab" replace /> },
-  { path: "/scientist", element: <Navigate to="/lab" replace /> },
-  { path: "/scientist/*", element: <Navigate to="/lab" replace /> },
+
   { path: "*", element: <NotFound /> },
 ];
 
