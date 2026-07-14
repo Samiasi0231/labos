@@ -23,7 +23,7 @@ import { PortalAccessBadge } from "@/components/lab/PortalAccessBadge";
 import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
 import { usePatientsList } from "@/hooks/use-patients";
 import { usePortalAccess } from "@/hooks/use-portal-access";
-import { derivePortalAccess } from "@/lib/portal-access";
+import { derivePortalAccess } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import type { PatientGender } from "@/api/types/patients";
 
@@ -201,7 +201,6 @@ export default function Patients() {
                                 navigate(`/lab/patients/${patient._id}`)
                               }
                             >
-                              <Eye className="w-3 h-3" />
                               View
                             </Button>
                             <PortalActionMenu

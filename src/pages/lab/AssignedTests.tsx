@@ -30,13 +30,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useApi } from "@/hooks/use-api";
-import { useAssignments, useStartTest } from "@/hooks/use-testorder";
+import { useApi, useMutation } from "@/hooks/use-api";
 import { useMyPermissions } from "@/hooks/use-permissions";
 import type {
   AssignmentItem,
+  AssignmentListResponse,
+  TestOrderItem,
   TestOrderItemStatus,
   TestOrderPriority,
+  StartTestPayload,
 } from "@/api/types/test-order";
 import type { TestCatalogEntry } from "@/api/types/test-catalog";
 import endpoint from "@/api/endpoints";
@@ -300,15 +302,26 @@ export default function AssignedTests() {
   const [startTestItem, setStartTestItem] = useState<AssignmentItem | null>(null);
   const [materialQtys, setMaterialQtys] = useState<Record<string, string>>({});
 
-  const { items, pagination, isLoading, error, refetch } = useAssignments({
-    status: tab === "all" ? undefined : tab,
-    page,
-    limit: 20,
-  });
+  const assignmentsParams = new URLSearchParams({ page: String(page), limit: "20" });
+  if (tab !== "all") assignmentsParams.set("status", tab);
+  const { data: assignmentsData, error, isLoading, mutate: refetch } = useApi<AssignmentListResponse>(
+    `${endpoint.lab.testOrders.assignments}?${assignmentsParams}`,
+  );
+  const items = assignmentsData?.data?.docs ?? [];
+  const pagination = assignmentsData?.data
+    ? {
+        totalDocs: assignmentsData.data.totalDocs,
+        page: assignmentsData.data.page,
+        totalPages: assignmentsData.data.totalPages,
+        hasNextPage: assignmentsData.data.hasNextPage,
+        hasPrevPage: assignmentsData.data.hasPrevPage,
+      }
+    : null;
 
-  const { startTest, isLoading: isStarting } = useStartTest([
-    endpoint.lab.testOrders.assignments,
-  ]);
+  const { trigger: startTest, isLoading: isStarting } = useMutation<TestOrderItem, StartTestPayload>(
+    "test-orders/start-test",
+    { skipErrorHandling: true, invalidate: [endpoint.lab.testOrders.assignments] },
+  );
 
   // Fetch analysis materials for the selected test catalog when dialog opens
   const { data: catalogData, isLoading: isLoadingCatalog } = useApi<TestCatalogEntry>(
@@ -330,7 +343,10 @@ export default function AssignedTests() {
       .filter((m) => m.quantity > 0);
 
     try {
-      await startTest(startTestItem.testOrder._id, startTestItem._id, { materials });
+      await startTest(
+        { materials },
+        endpoint.lab.testOrders.startTest(startTestItem.testOrder._id, startTestItem._id),
+      );
       await refetch();
       setStartTestItem(null);
       setMaterialQtys({});

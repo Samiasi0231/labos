@@ -31,19 +31,19 @@ import {
   FlaskConical,
 } from "lucide-react";
 
-import { useApi } from "@/hooks/use-api";
-import { useTestOrder } from "@/hooks/use-testorder";
-import {
-  useCancelTestOrder,
-  useAssignTestOrderItem,
-  useStartTest,
-  useUpdateTestOrderItemStatus,
-} from "@/hooks/use-testorder";
+import { useApi, useMutation } from "@/hooks/use-api";
 import { useStaffSearch } from "@/hooks/use-staff";
 import { useMyPermissions } from "@/hooks/use-permissions";
 import endpoint from "@/api/endpoints";
-import { downloadPDF } from "@/lib/download-pdf";
-import type { TestOrderItem, TestOrderPriority } from "@/api/types/test-order";
+import { downloadPDF } from "@/lib/utils";
+import type {
+  TestOrder,
+  TestOrderItem,
+  TestOrderPriority,
+  AssignTestOrderItemPayload,
+  StartTestPayload,
+  UpdateTestOrderItemStatusPayload,
+} from "@/api/types/test-order";
 import type { TestCatalogEntry } from "@/api/types/test-catalog";
 import { useToast } from "@/hooks/use-toast";
 
@@ -122,29 +122,32 @@ export default function TestOrderDetail() {
 
   const { can } = useMyPermissions();
 
-  const {
-    order,
-    isLoading,
-    refetch,
-  } = useTestOrder(orderId ?? null);
+  const invalidate = [
+    endpoint.lab.testOrders.list,
+    ...(orderId ? [endpoint.lab.testOrders.get(orderId)] : []),
+  ];
 
-  const { cancelTestOrder, isLoading: isCancelling } = useCancelTestOrder([
-    endpoint.lab.testOrders.list,
-    ...(orderId ? [endpoint.lab.testOrders.get(orderId)] : []),
-  ]);
-  const { assignTestOrderItem, isLoading: isAssigning } = useAssignTestOrderItem([
-    endpoint.lab.testOrders.list,
-    ...(orderId ? [endpoint.lab.testOrders.get(orderId)] : []),
-  ]);
-  const { startTest, isLoading: isStarting } = useStartTest([
-    endpoint.lab.testOrders.list,
-    ...(orderId ? [endpoint.lab.testOrders.get(orderId)] : []),
-  ]);
-  const { updateTestOrderItemStatus, isLoading: isMarkingComplete } =
-    useUpdateTestOrderItemStatus([
-      endpoint.lab.testOrders.list,
-      ...(orderId ? [endpoint.lab.testOrders.get(orderId)] : []),
-    ]);
+  const { data: orderData, isLoading, mutate: refetch } = useApi<TestOrder>(
+    orderId ? endpoint.lab.testOrders.get(orderId) : null,
+  );
+  const order = orderData?.data;
+
+  const { trigger: cancelOrder, isLoading: isCancelling } = useMutation<TestOrder, void>(
+    "test-orders/cancel",
+    { skipErrorHandling: true, invalidate },
+  );
+  const { trigger: assignTestOrderItem, isLoading: isAssigning } = useMutation<TestOrderItem, AssignTestOrderItemPayload>(
+    "test-orders/assign-item",
+    { method: "PATCH", skipErrorHandling: true, invalidate },
+  );
+  const { trigger: startTest, isLoading: isStarting } = useMutation<TestOrderItem, StartTestPayload>(
+    "test-orders/start-test",
+    { skipErrorHandling: true, invalidate },
+  );
+  const { trigger: updateItemStatus, isLoading: isMarkingComplete } = useMutation<
+    TestOrderItem,
+    UpdateTestOrderItemStatusPayload
+  >("test-orders/update-item-status", { method: "PATCH", skipErrorHandling: true, invalidate });
 
   // ── Assign dialog ──────────────────────────────────────────────────────────
   const [assignItem, setAssignItem] = useState<TestOrderItem | null>(null);
@@ -173,7 +176,10 @@ export default function TestOrderDetail() {
   const handleAssign = async () => {
     if (!order || !assignItem || !assignScientist) return;
     try {
-      await assignTestOrderItem(order._id, assignItem._id, { assignedTo: assignScientist });
+      await assignTestOrderItem(
+        { assignedTo: assignScientist },
+        endpoint.lab.testOrders.assignItem(order._id, assignItem._id),
+      );
       await refetch();
       const sci = scientists.find((s) => s._id === assignScientist);
       setAssignItem(null);
@@ -197,7 +203,7 @@ export default function TestOrderDetail() {
       }))
       .filter((m) => m.quantity > 0);
     try {
-      await startTest(order._id, startTestItem._id, { materials });
+      await startTest({ materials }, endpoint.lab.testOrders.startTest(order._id, startTestItem._id));
       await refetch();
       setStartTestItem(null);
       setMaterialQtys({});
@@ -210,7 +216,10 @@ export default function TestOrderDetail() {
   const handleMarkComplete = async () => {
     if (!order || !completeItem) return;
     try {
-      await updateTestOrderItemStatus(order._id, completeItem._id, { status: "completed" });
+      await updateItemStatus(
+        { status: "completed" },
+        endpoint.lab.testOrders.updateItemStatus(order._id, completeItem._id),
+      );
       await refetch();
       setCompleteItem(null);
       toast({ title: "Item marked complete" });
@@ -222,7 +231,7 @@ export default function TestOrderDetail() {
   const handleCancel = async () => {
     if (!order) return;
     try {
-      await cancelTestOrder(order._id);
+      await cancelOrder(undefined, endpoint.lab.testOrders.cancel(order._id));
       navigate("/lab/tests");
       toast({ title: "Order cancelled" });
     } catch {

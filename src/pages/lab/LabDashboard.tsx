@@ -1,217 +1,480 @@
-import { useState } from "react";
-import { StatCard } from "@/components/lab/StatCard";
-import { StatusBadge } from "@/components/lab/StatusBadge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DollarSign, FlaskConical, Clock, Package, Users,
-  Plus, ArrowRight, Activity, CheckCircle, AlertTriangle
-} from "lucide-react";
-import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
-} from "recharts";
-import { revenueChartData, testsByTypeData, activities, tests, patients } from "@/data/mockData";
 import { useNavigate } from "react-router-dom";
+import { UserPlus, Plus, Users, ClipboardList, IdCard, CheckCircle2 } from "lucide-react";
+import { useApi } from "@/hooks/use-api";
+import { useMyPermissions } from "@/hooks/use-permissions";
+import endpoint from "@/api/endpoints";
+import type {
+  DashboardData,
+  DashboardWorkListItem,
+  DashboardResultUpdate,
+  DashboardActivityItem,
+  LabTestOrders,
+  ScientistTestOrders,
+} from "@/api/types/dashboard";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtCurrency(n: number): string {
+  if (n >= 1_000_000) return `₦${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `₦${(n / 1_000).toFixed(0)}k`;
+  return `₦${n.toLocaleString()}`;
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} minute${mins === 1 ? "" : "s"} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function actorName(item: DashboardActivityItem): string {
+  if (typeof item.actor === "object") {
+    return `${item.actor.firstName} ${item.actor.lastName}`.trim();
+  }
+  return "Unknown";
+}
+
+function personName(ref: DashboardWorkListItem["patient"] | DashboardResultUpdate["patient"]): string {
+  if (typeof ref === "object") return `${ref.firstName} ${ref.lastName}`.trim();
+  return "—";
+}
+
+function itemTestName(ref: DashboardResultUpdate["testOrderItem"]): string {
+  if (typeof ref === "object") return ref.testName;
+  return "—";
+}
+
+function returnedNote(item: DashboardResultUpdate): string | null {
+  const entry = [...(item.timelines ?? [])].reverse().find((t) => t.status === "returned");
+  return entry?.note ?? null;
+}
+
+function todayLabel(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric", year: "numeric",
+  });
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+function Skel({ w = "100%", h = "14px" }: { w?: string; h?: string }) {
+  return (
+    <div
+      style={{ width: w, height: h, borderRadius: 4 }}
+      className="bg-muted animate-pulse"
+    />
+  );
+}
+
+// ── Status config ─────────────────────────────────────────────────────────────
+
+const WORKLIST_STATUS: Record<string, { label: string; cls: string; dotCls: string }> = {
+  pending: { label: "Pending", cls: "bg-muted text-muted-foreground border", dotCls: "bg-muted-foreground/40" },
+  assigned: { label: "Assigned", cls: "bg-info/15 text-info border-info/30 border", dotCls: "bg-info" },
+  in_progress: { label: "In Progress", cls: "bg-primary/10 text-primary border border-primary/30", dotCls: "bg-warning" },
+  completed: { label: "Completed", cls: "bg-success/15 text-success border-success/30 border", dotCls: "bg-success" },
+};
+
+const RESULT_UPDATE_STATUS: Record<string, { label: string; cls: string }> = {
+  returned: { label: "Returned", cls: "bg-destructive/15 text-destructive border-destructive/30 border" },
+  draft: { label: "Draft", cls: "bg-muted text-muted-foreground border" },
+};
+
+// ── Breakdown definitions ─────────────────────────────────────────────────────
+
+const ORDERS_MANAGER = [
+  { key: "pending", label: "Pending", tint: null },
+  { key: "sampleCollected", label: "Sample Collected", tint: "info" },
+  { key: "inProgress", label: "In Progress", tint: "primary" },
+  { key: "completed", label: "Completed", tint: "success" },
+  { key: "cancelled", label: "Cancelled", tint: "destructive" },
+] as const;
+
+const ORDERS_SCIENTIST = [
+  { key: "pending", label: "Pending", tint: null },
+  { key: "assigned", label: "Assigned", tint: "info" },
+  { key: "inProgress", label: "In Progress", tint: "primary" },
+  { key: "completed", label: "Completed", tint: "success" },
+] as const;
+
+const RESULTS_MANAGER = [
+  { key: "submitted", label: "Submitted", tint: "warning" },
+  { key: "returned", label: "Returned", tint: "destructive" },
+  { key: "approved", label: "Approved", tint: "primary" },
+  { key: "released", label: "Released", tint: "success" },
+] as const;
+
+// ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function LabDashboard() {
   const navigate = useNavigate();
+  const { can, role, isLoading: isPermLoading } = useMyPermissions();
 
-  const pendingTests = tests.filter(t => t.status === 'Pending').length;
-  const inProgressTests = tests.filter(t => t.status === 'In Progress').length;
-  const todayRevenue = revenueChartData[revenueChartData.length - 1].revenue;
-  const todayTests = revenueChartData[revenueChartData.length - 1].tests;
+  const { data: dashRes, isLoading: isDashLoading } = useApi<DashboardData>(endpoint.lab.dashboard);
+  const dash = dashRes?.data;
+  const isLoading = isPermLoading || isDashLoading;
 
+  // ── Permission flags ─────────────────────────────────────────────────────────
+  const isScientist = can("tests.read_own") && !can("tests.read");
+  const showBannerActions = can("patients.create");
+  const showStatCards = can("patients.read");
+  const showScientistCards = isScientist;
+  const showTestOrdersCard = can("tests.read");
+  const showResultsCard = can("results.read");
+  const showAppointments = can("appointments.read");
+  const showInventory = can("inventory.read");
+  const showFinance = can("finance.read");
+  const showActivity = can("activity.read");
+
+  // ── Role summary line ────────────────────────────────────────────────────────
+  const roleSummaryLine = (() => {
+    if (isScientist) {
+      const orders = dash?.testOrders as ScientistTestOrders | undefined;
+      return `You have ${orders?.pending ?? 0} pending tests and ${orders?.inProgress ?? 0} in progress today.`;
+    }
+    if (role === "receptionist") {
+      const appt = dash?.appointments;
+      return `You have ${appt?.todayTotal ?? 0} appointments today and ${appt?.upcoming ?? 0} upcoming this week.`;
+    }
+    const orders = dash?.testOrders as LabTestOrders | undefined;
+    const active = (orders?.pending ?? 0) + (orders?.inProgress ?? 0);
+    return `${active} test orders are active across the lab today.`;
+  })();
+
+  // ── Stat cards ───────────────────────────────────────────────────────────────
+  const statCards = (() => {
+    const overview = dash?.overview;
+    if (!overview) return [];
+    const cards: { label: string; value: string; icon: React.ReactNode }[] = [];
+    cards.push({ label: "Total Patients", value: overview.totalPatients.toLocaleString(), icon: <Users className="w-5 h-5 text-primary" /> });
+    if (overview.totalTestOrders !== undefined)
+      cards.push({ label: "Total Test Orders", value: overview.totalTestOrders.toLocaleString(), icon: <ClipboardList className="w-5 h-5 text-primary" /> });
+    if (overview.activeStaff !== undefined)
+      cards.push({ label: "Active Staff", value: overview.activeStaff.toLocaleString(), icon: <IdCard className="w-5 h-5 text-primary" /> });
+    return cards;
+  })();
+
+  // ── Test orders breakdown rows ───────────────────────────────────────────────
+  const ordersBreakdown = (() => {
+    const orders = dash?.testOrders;
+    if (!orders) return [];
+    const defs = isScientist ? ORDERS_SCIENTIST : ORDERS_MANAGER;
+    const vals = defs.map((d) => (orders as Record<string, number>)[d.key] ?? 0);
+    const max = Math.max(...vals, 1);
+    return defs.map((d, i) => ({
+      label: d.label,
+      count: vals[i],
+      pct: (vals[i] / max) * 100,
+      color: d.tint ? `hsl(var(--${d.tint}))` : "hsl(var(--muted-foreground) / 0.4)",
+    }));
+  })();
+
+  // ── Results breakdown rows ───────────────────────────────────────────────────
+  const resultsBreakdown = (() => {
+    const results = dash?.results;
+    if (!results) return [];
+    return RESULTS_MANAGER.map((d) => ({
+      label: d.label,
+      count: (results as Record<string, number>)[d.key] ?? 0,
+      color: `hsl(var(--${d.tint}))`,
+    }));
+  })();
+
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Welcome banner */}
-      <div className="gradient-hero rounded-xl p-6 text-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-white/70 text-sm font-medium">Tuesday, June 17, 2024</p>
-            <h2 className="text-2xl font-bold mt-1">Good morning, Dr. Okafor</h2>
-            <p className="text-white/70 text-sm mt-1">
-              You have <span className="text-white font-semibold">{pendingTests} pending tests</span> and{' '}
-              <span className="text-white font-semibold">{inProgressTests} in progress</span> today.
-            </p>
+    <div className="space-y-5 animate-fade-in">
+
+      {/* Welcome Banner */}
+      <div className="gradient-hero rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-white">
+        <div>
+          <p className="text-[12px] font-medium text-white/80 mb-1">{todayLabel()}</p>
+          <p className="text-[22px] font-bold">Good morning, {dash?.greeting?.firstName ?? "…"}</p>
+          <p className="mt-1 text-[13.5px] text-white/90">{roleSummaryLine}</p>
+        </div>
+        {showBannerActions && (
+          <div className="flex gap-2.5 flex-shrink-0">
+            <button
+              onClick={() => navigate("/lab/register")}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-4 py-2 rounded-lg border border-white/50 bg-white/10 text-white hover:bg-white/20 transition-colors"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Register Patient
+            </button>
+            <button
+              onClick={() => navigate("/lab/tests")}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold px-4 py-2 rounded-lg border border-white/50 bg-white/10 text-white hover:bg-white/20 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New Test
+            </button>
           </div>
-          <div className="flex gap-3">
-            <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30" onClick={() => navigate('/lab/register')}>
-              <Plus className="w-4 h-4 mr-2" />Register Patient
-            </Button>
-            <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30" onClick={() => navigate('/lab/tests')}>
-              <FlaskConical className="w-4 h-4 mr-2" />New Test
-            </Button>
+        )}
+      </div>
+
+      {/* Stat Cards */}
+      {showStatCards && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-[18px]">
+                <Skel h="44px" />
+              </div>
+            ))
+            : statCards.map((card) => (
+              <div key={card.label} className="rounded-xl border border-border bg-card p-[18px] flex items-center gap-3.5">
+                <span className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  {card.icon}
+                </span>
+                <div>
+                  <p className="text-[24px] font-bold leading-none tracking-tight">{card.value}</p>
+                  <p className="mt-1 text-[12px] text-muted-foreground">{card.label}</p>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {/* Scientist: My Worklist + Result Updates */}
+      {showScientistCards && (
+        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 items-start">
+
+          {/* My Worklist */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold">My Worklist</p>
+              <button
+                onClick={() => navigate("/lab/assigned")}
+                className="text-[12.5px] font-semibold text-primary hover:underline"
+              >
+                View All →
+              </button>
+            </div>
+            {isLoading ? (
+              <div className="flex flex-col gap-3"><Skel /><Skel w="92%" /><Skel w="96%" /></div>
+            ) : !dash?.workList?.length ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No items in your worklist.</p>
+            ) : (
+              <div className="flex flex-col divide-y divide-border">
+                {dash.workList.map((item) => {
+                  const cfg = WORKLIST_STATUS[item.status] ?? WORKLIST_STATUS.pending;
+                  return (
+                    <div key={item._id} className="flex items-center gap-3 py-2.5">
+                      <span className={`w-[22px] h-[22px] rounded-full flex-shrink-0 ${cfg.dotCls}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13.5px] font-semibold truncate">{personName(item.patient)}</p>
+                        <p className="text-[12px] text-muted-foreground truncate">{item.testName}</p>
+                      </div>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap flex-shrink-0 ${cfg.cls}`}>
+                        {cfg.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Result Updates */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-sm font-semibold mb-3">Result Updates</p>
+            {isLoading ? (
+              <div className="flex flex-col gap-3"><Skel w="95%" /><Skel w="88%" /></div>
+            ) : !dash?.resultUpdates?.length ? (
+              <div className="flex flex-col items-center gap-2 py-6 text-center text-muted-foreground">
+                <CheckCircle2 className="w-6 h-6 text-success" />
+                <p className="text-[13px]">No results need attention</p>
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-border">
+                {dash.resultUpdates.map((item) => {
+                  const cfg = RESULT_UPDATE_STATUS[item.status] ?? RESULT_UPDATE_STATUS.draft;
+                  const note = returnedNote(item);
+                  return (
+                    <div key={item._id} className="py-2.5">
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-semibold truncate">{personName(item.patient)}</p>
+                          <p className="text-[12px] text-muted-foreground truncate">{itemTestName(item.testOrderItem)}</p>
+                        </div>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap flex-shrink-0 ${cfg.cls}`}>
+                          {cfg.label}
+                        </span>
+                      </div>
+                      {note && (
+                        <p className="mt-1.5 text-[11.5px] italic text-muted-foreground">"{note}"</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-        <StatCard
-          title="Today's Revenue"
-          value={`₦${(todayRevenue / 1000).toFixed(0)}k`}
-          subtitle="vs ₦385k yesterday"
-          icon={DollarSign}
-          trend={32}
-          variant="success"
-        />
-        <StatCard
-          title="Tests Today"
-          value={todayTests}
-          subtitle="22 completed"
-          icon={FlaskConical}
-          trend={14}
-          variant="info"
-        />
-        <StatCard
-          title="Pending Results"
-          value={pendingTests + inProgressTests}
-          subtitle={`${pendingTests} pending, ${inProgressTests} in progress`}
-          icon={Clock}
-          trend={-8}
-          variant="warning"
-        />
-        <StatCard
-          title="Low Stock Items"
-          value={3}
-          subtitle="Reagents need reorder"
-          icon={Package}
-          trend={undefined}
-          variant="destructive"
-        />
-        <StatCard
-          title="Active Staff"
-          value={5}
-          subtitle="1 on leave"
-          icon={Users}
-          trend={undefined}
-          variant="primary"
-        />
-      </div>
+      {/* Section Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <Card className="lg:col-span-2 shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold">Revenue & Tests (Last 7 Days)</CardTitle>
-                <CardDescription>Daily revenue and test volume</CardDescription>
+        {/* Test Orders */}
+        {showTestOrdersCard && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-sm font-semibold mb-3.5">Test Orders</p>
+            {isLoading ? (
+              <div className="flex flex-col gap-2.5"><Skel /><Skel w="90%" /><Skel w="95%" /></div>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {ordersBreakdown.map((row) => (
+                  <div key={row.label} className="flex items-center gap-2.5">
+                    <span className="text-[12.5px] text-muted-foreground w-[130px] flex-shrink-0">{row.label}</span>
+                    <div className="flex-1 h-[7px] rounded-full bg-muted overflow-hidden">
+                      <div style={{ width: `${row.pct}%`, height: "100%", background: row.color, borderRadius: 999 }} />
+                    </div>
+                    <span className="text-[13px] font-bold w-6 text-right">{row.count}</span>
+                  </div>
+                ))}
               </div>
-              <Badge variant="outline" className="text-xs">This Week</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={revenueChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(174, 62%, 35%)" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="hsl(174, 62%, 35%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₦${(v/1000).toFixed(0)}k`} />
-                <Tooltip
-                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                  formatter={(v: number) => [`₦${v.toLocaleString()}`, 'Revenue']}
-                />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(174, 62%, 35%)" strokeWidth={2.5} fill="url(#revGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        )}
 
-        {/* Tests by Type */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">Tests by Type</CardTitle>
-            <CardDescription>This month's breakdown</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={testsByTypeData} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="type" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
-                <Tooltip
-                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                />
-                <Bar dataKey="count" fill="hsl(152, 69%, 45%)" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Results */}
+        {showResultsCard && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-sm font-semibold mb-3.5">Results</p>
+            {isLoading ? (
+              <div className="flex flex-col gap-2.5"><Skel /><Skel w="85%" /></div>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {resultsBreakdown.map((row) => (
+                  <div key={row.label} className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-[13px]">
+                      <span style={{ width: 8, height: 8, borderRadius: 999, background: row.color, display: "inline-block", flexShrink: 0 }} />
+                      {row.label}
+                    </span>
+                    <span className="text-[13px] font-bold">{row.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-              <Activity className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {activities.map((act) => (
-              <div key={act.id} className="flex items-start gap-3 py-2.5 border-b border-border last:border-0">
-                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                  act.type === 'result' ? 'bg-success' :
-                  act.type === 'patient' ? 'bg-primary' :
-                  act.type === 'payment' ? 'bg-accent' :
-                  act.type === 'test' ? 'bg-info' : 'bg-muted-foreground'
-                }`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground">
-                    <span className="font-medium">{act.user}</span>{' '}
-                    <span className="text-muted-foreground">{act.action}</span>{' '}
-                    <span className="font-medium">{act.subject}</span>
+        {/* Appointments */}
+        {showAppointments && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-sm font-semibold mb-3.5">Appointments</p>
+            {isLoading ? (
+              <div className="grid grid-cols-3 gap-2.5"><Skel h="56px" /><Skel h="56px" /><Skel h="56px" /></div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="bg-primary/[0.08] border border-primary/25 rounded-lg p-2.5 text-center">
+                  <span className="inline-flex text-[9.5px] font-bold uppercase tracking-wide text-primary bg-primary/15 rounded-full px-1.5 py-[1px] mb-1.5">
+                    Today
+                  </span>
+                  <p className="text-[20px] font-bold leading-none">{dash?.appointments?.todayTotal ?? 0}</p>
+                  <p className="text-[10.5px] text-muted-foreground mt-0.5">Total</p>
+                </div>
+                <div className="border border-border rounded-lg p-2.5 text-center">
+                  <p className="text-[20px] font-bold text-success leading-none mt-3">{dash?.appointments?.todayConfirmed ?? 0}</p>
+                  <p className="text-[10.5px] text-muted-foreground mt-0.5">Confirmed</p>
+                </div>
+                <div className="border border-border rounded-lg p-2.5 text-center">
+                  <p className="text-[20px] font-bold leading-none mt-3">{dash?.appointments?.upcoming ?? 0}</p>
+                  <p className="text-[10.5px] text-muted-foreground mt-0.5">Upcoming (7d)</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Inventory Alerts */}
+        {showInventory && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-sm font-semibold mb-3.5">Inventory Alerts</p>
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-2.5"><Skel h="52px" /><Skel h="52px" /></div>
+            ) : dash?.inventory?.lowStock === 0 && dash?.inventory?.outOfStock === 0 ? (
+              <p className="text-[13px] text-muted-foreground">
+                All stock levels are healthy — nothing needs attention.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-warning/[0.08] border border-warning/30 rounded-lg p-3">
+                  <p className="text-[22px] font-bold leading-none" style={{ color: "hsl(var(--warning-foreground))" }}>
+                    {dash?.inventory?.lowStock ?? 0}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{act.time}</p>
+                  <p className="text-[11.5px] text-muted-foreground mt-0.5">Low Stock</p>
+                </div>
+                <div className="bg-destructive/[0.08] border border-destructive/30 rounded-lg p-3">
+                  <p className="text-[22px] font-bold text-destructive leading-none">
+                    {dash?.inventory?.outOfStock ?? 0}
+                  </p>
+                  <p className="text-[11.5px] text-muted-foreground mt-0.5">Out of Stock</p>
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        )}
 
-        {/* Today's Tests */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Today's Tests</CardTitle>
-              <Button variant="link" className="h-auto py-0 px-0 text-[12px] gap-1" onClick={() => navigate('/lab/tests')}>
-                View All <ArrowRight className="w-3 h-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {tests.slice(0, 5).map((test) => (
-              <div key={test.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    test.priority === 'Urgent' ? 'bg-destructive/15' : 'bg-muted'
-                  }`}>
-                    {test.priority === 'Urgent'
-                      ? <AlertTriangle className="w-4 h-4 text-destructive" />
-                      : <CheckCircle className="w-4 h-4 text-muted-foreground" />
-                    }
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{test.patientName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{test.testType}</p>
-                  </div>
+        {/* Finance */}
+        {showFinance && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-sm font-semibold mb-3.5">Finance — This Month</p>
+            {isLoading ? (
+              <div className="grid grid-cols-3 gap-2.5"><Skel h="50px" /><Skel h="50px" /><Skel h="50px" /></div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <p className="text-[17px] font-bold leading-none">{fmtCurrency(dash?.finance?.revenue ?? 0)}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Revenue</p>
                 </div>
-                <StatusBadge status={test.status} />
+                <div>
+                  <p className="text-[17px] font-bold leading-none">{fmtCurrency(dash?.finance?.expenses ?? 0)}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Expenses</p>
+                </div>
+                <div>
+                  <p className={`text-[17px] font-bold leading-none ${(dash?.finance?.net ?? 0) >= 0 ? "text-success" : "text-destructive"}`}>
+                    {fmtCurrency(dash?.finance?.net ?? 0)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Net</p>
+                </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            )}
+          </div>
+        )}
+
+        {/* Recent Activity — spans full width */}
+        {showActivity && (
+          <div className="rounded-xl border border-border bg-card p-5 sm:col-span-2 xl:col-span-3">
+            <p className="text-sm font-semibold mb-3.5">Recent Activity</p>
+            {isLoading ? (
+              <div className="flex flex-col gap-3"><Skel w="80%" /><Skel w="70%" /><Skel w="75%" /></div>
+            ) : !dash?.recentActivity?.length ? (
+              <p className="text-[13px] text-muted-foreground">No recent activity.</p>
+            ) : (
+              <div className="flex flex-col divide-y divide-border">
+                {dash.recentActivity.map((item) => (
+                  <div key={item._id} className="flex gap-2.5 py-2.5">
+                    <span className="w-[7px] h-[7px] rounded-full bg-primary flex-shrink-0 mt-[6px]" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px]">
+                        <b>{actorName(item)}</b>{" "}
+                        <span className="text-muted-foreground">
+                          {item.details ?? `${item.action} ${item.resource}`}
+                        </span>
+                      </p>
+                      <p className="text-[11.5px] text-muted-foreground mt-0.5">{relativeTime(item.createdAt)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

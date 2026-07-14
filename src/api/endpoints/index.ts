@@ -20,6 +20,7 @@ const labEndpoints = {
   update: "/labs",
   me: "/labs/me",
   updateLogo: "/labs/logo",
+  dashboard: "/labs/dashboard",
   invite: "/labs/invite",
   resendInvite: "/labs/resend-invite",
   revokeInvite: (accessType: PortalAccessType, identifier: string) =>

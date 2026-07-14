@@ -27,27 +27,27 @@ import TestPermissions from "./pages/admin/TestPermissions";
 
 import { LabLayout } from "./components/lab/LabLayout";
 import LabDashboard from "./pages/lab/LabDashboard";
-import Patients from "./pages/lab/Patients";
-import PatientDetail from "./pages/lab/PatientDetail";
-import Tests from "./pages/lab/Tests";
-import TestOrderDetail from "./pages/lab/TestOrderDetail";
-import Results from "./pages/lab/Results";
+import Patients from "./pages/lab/patient";
+import PatientDetail from "./pages/lab/patient/details";
+import Tests from "./pages/lab/order";
+import TestOrderDetail from "./pages/lab/order/details";
+import Results from "./pages/lab/result";
 import Doctors from "./pages/lab/Doctors";
 import Inventory from "./pages/lab/Inventory";
 import Finance from "./pages/lab/Finance";
-import Staff from "./pages/lab/Staff";
+import Staff from "./pages/lab/staff";
 import Branches from "./pages/lab/Branches";
 import Settings from "./pages/lab/Settings";
 import TestCatalog from "./pages/lab/TestCatalog";
-import InitiateTestOrder from "./pages/lab/InitiateTestOrder";
 
-import PatientRegistration from "./pages/lab/PatientRegistration";
+import PatientRegistration from "./pages/lab/patient/registration";
 import Appointments from "./pages/lab/Appointments";
 import Billing from "./pages/lab/Billing";
 import AssignedTests from "./pages/lab/AssignedTests";
-import ResultEntry from "./pages/lab/ResultEntry";
-import PendingReviews from "./pages/lab/PendingReviews";
-import ActivityLog from "./pages/lab/ActivityLog";
+import ResultEntry from "./pages/lab/result/entry";
+import LabResultDetail from "./pages/lab/result/detail";
+import PendingReviews from "./pages/lab/result/pending-reviews";
+import ActivityLog from "./pages/lab/activities";
 
 import { PatientLayout } from "./components/patient/PatientLayout";
 import PatientDashboard from "./pages/patient/PatientDashboard";
@@ -96,6 +96,7 @@ export const routers = [
           { path: "tests", element: <Tests /> },
           { path: "tests/:orderId", element: <TestOrderDetail /> },
           { path: "results", element: <Results /> },
+          { path: "results/:resultId", element: <LabResultDetail /> },
           { path: "doctors", element: <Doctors /> },
           { path: "inventory", element: <Inventory /> },
           { path: "finance", element: <Finance /> },
@@ -103,7 +104,6 @@ export const routers = [
           { path: "branches", element: <Branches /> },
           { path: "settings", element: <Settings /> },
           { path: "test-catalog", element: <TestCatalog /> },
-          { path: "test-order/:patientId", element: <InitiateTestOrder /> },
           // Receptionist pages
           { path: "register", element: <PatientRegistration /> },
           { path: "appointments", element: <Appointments /> },

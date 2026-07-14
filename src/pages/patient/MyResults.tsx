@@ -11,7 +11,7 @@ import { FlaskConical, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePatientResults } from "@/hooks/use-patient-portal";
 import endpoint from "@/api/endpoints";
-import { downloadPDF } from "@/lib/download-pdf";
+import { downloadPDF } from "@/lib/utils";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

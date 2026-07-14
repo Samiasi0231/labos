@@ -8,7 +8,7 @@ import { ArrowLeft, Download, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePatientResult } from "@/hooks/use-patient-portal";
 import endpoint from "@/api/endpoints";
-import { downloadPDF } from "@/lib/download-pdf";
+import { downloadPDF } from "@/lib/utils";
 import type { ResultFlag } from "@/api/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

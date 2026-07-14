@@ -5,6 +5,7 @@ export interface Activity {
   action: string;
   resource: string;
   resourceId?: string;
+  details?: string;
   metadata?: Record<string, unknown>;
   ip?: string;
   userAgent?: string;

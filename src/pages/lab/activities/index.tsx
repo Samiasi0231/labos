@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -11,12 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+
 import {
   Table,
   TableBody,
@@ -35,13 +29,13 @@ import {
   RefreshCw,
   Search,
   X,
-  Copy,
-  Check,
   Inbox,
   Loader2,
 } from "lucide-react";
 import { useActivityList } from "@/hooks/use-activity";
 import type { Activity, ActivityListQuery } from "@/api/types/activity";
+import { ActionBadge, ActorAvatar, actorName, fullDate, metaLabel } from "./components";
+import ActivityDrawer from "./details";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -50,87 +44,6 @@ const ACTION_OPTIONS = [
   "Created", "Updated", "Deleted", "Approved", "Released",
   "Returned", "Assigned", "Restocked", "Viewed", "Exported", "Cancelled",
 ];
-
-const VERB_CATEGORY: Record<string, "success" | "info" | "destructive" | "muted"> = {
-  created: "success",
-  approved: "success",
-  released: "success",
-  updated: "info",
-  assigned: "info",
-  restocked: "info",
-  deleted: "destructive",
-  returned: "destructive",
-  cancelled: "destructive",
-  viewed: "muted",
-  exported: "muted",
-};
-
-const BADGE_CLS: Record<"success" | "info" | "destructive" | "muted", string> = {
-  success: "bg-success/15 text-success border-success/30 border",
-  info: "bg-info/15 text-info border-info/30 border",
-  destructive: "bg-destructive/15 text-destructive border-destructive/30 border",
-  muted: "bg-muted text-muted-foreground border",
-};
-
-const META_LABELS: Record<string, string> = {
-  patientName: "Patient",
-  quantity: "Qty",
-  testName: "Test",
-  previousStatus: "From",
-  newStatus: "To",
-  product: "Item",
-  role: "Role",
-  scientist: "Assigned To",
-  reorderLevel: "Reorder At",
-  phone: "Phone",
-  branch: "Branch",
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function actorName(actor: Activity["actor"]): string {
-  if (typeof actor === "string") return actor;
-  return (
-    [actor.firstName, actor.lastName].filter(Boolean).join(" ") ||
-    actor.email ||
-    "Unknown"
-  );
-}
-
-function actorInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function verbOf(action: string): string {
-  return action.split(".")[1] ?? action;
-}
-
-function actionLabel(action: string): string {
-  const [res, verb] = action.split(".");
-  const titleCase = (s: string) =>
-    s.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
-  return [res, verb].filter(Boolean).map(titleCase).join(" ");
-}
-
-function verbCategory(action: string): "success" | "info" | "destructive" | "muted" {
-  return VERB_CATEGORY[verbOf(action)] ?? "muted";
-}
-
-function metaLabel(key: string): string {
-  return META_LABELS[key] ?? key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
-}
-
-function metaInline(meta: Record<string, unknown> | undefined, max = 2): string {
-  if (!meta) return "—";
-  const entries = Object.entries(meta).slice(0, max);
-  if (entries.length === 0) return "—";
-  return entries.map(([k, v]) => `${metaLabel(k)}: ${v}`).join(" · ");
-}
 
 function metaExtraCount(meta: Record<string, unknown> | undefined): number {
   if (!meta) return 0;
@@ -168,40 +81,6 @@ function relTime(dateStr: string): string {
   return `${days} days ago`;
 }
 
-function fullDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("en-NG", {
-    year: "numeric", month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function ActorAvatar({ name, size = 30 }: { name: string; size?: number }) {
-  return (
-    <div
-      style={{ width: size, height: size }}
-      className="rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0"
-    >
-      <span
-        style={{ fontSize: size * 0.37 }}
-        className="font-bold text-primary leading-none"
-      >
-        {actorInitials(name)}
-      </span>
-    </div>
-  );
-}
-
-function ActionBadge({ action }: { action: string }) {
-  const cat = verbCategory(action);
-  return (
-    <Badge className={`text-xs whitespace-nowrap ${BADGE_CLS[cat]}`}>
-      {actionLabel(action)}
-    </Badge>
-  );
-}
-
 function PageButton({
   label,
   active,
@@ -225,145 +104,12 @@ function PageButton({
       onClick={onClick}
       disabled={disabled}
       className={`h-8 min-w-[32px] px-2 rounded-md border text-sm font-semibold transition-colors ${active
-          ? "bg-primary text-primary-foreground border-primary"
-          : "bg-card text-foreground border-border hover:bg-muted/40 disabled:opacity-40 disabled:cursor-not-allowed"
+        ? "bg-primary text-primary-foreground border-primary"
+        : "bg-card text-foreground border-border hover:bg-muted/40 disabled:opacity-40 disabled:cursor-not-allowed"
         }`}
     >
       {label}
     </button>
-  );
-}
-
-// ── Detail Drawer ─────────────────────────────────────────────────────────────
-
-function ActivityDrawer({
-  activity,
-  open,
-  onClose,
-}: {
-  activity: Activity | null;
-  open: boolean;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const copyId = () => {
-    if (!activity?.resourceId) return;
-    navigator.clipboard.writeText(activity.resourceId).catch(() => { });
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  if (!activity) return null;
-
-  const name = actorName(activity.actor);
-  const meta = activity.metadata ? Object.entries(activity.metadata) : [];
-
-  return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="right" className="w-[460px] sm:w-[460px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Activity Detail</SheetTitle>
-        </SheetHeader>
-
-        <div className="flex flex-col gap-5 mt-4">
-          {/* Actor */}
-          <div className="flex items-center gap-3">
-            <ActorAvatar name={name} size={40} />
-            <div>
-              <p className="font-bold text-[15px]">{name}</p>
-              <p className="text-xs text-muted-foreground">Actor</p>
-            </div>
-          </div>
-
-          {/* Action */}
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
-              Action
-            </p>
-            <ActionBadge action={activity.action} />
-            <p className="mt-2 text-xs font-mono text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-md">
-              {activity.action}
-            </p>
-          </div>
-
-          {/* Resource */}
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
-              Resource
-            </p>
-            <div className="flex items-center justify-between gap-2 border border-border rounded-lg px-3 py-2.5">
-              <div>
-                <p className="text-sm font-semibold">{activity.resource}</p>
-                {activity.resourceId && (
-                  <p className="text-xs font-mono text-muted-foreground mt-0.5">
-                    {activity.resourceId}
-                  </p>
-                )}
-              </div>
-              {activity.resourceId && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 flex-shrink-0"
-                  onClick={copyId}
-                >
-                  {copied ? (
-                    <Check className="w-3.5 h-3.5 text-success" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Metadata */}
-          {meta.length > 0 && (
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-                Metadata
-              </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                {meta.map(([k, v]) => (
-                  <div key={k}>
-                    <p className="text-[11px] text-muted-foreground">{metaLabel(k)}</p>
-                    <p className="text-sm font-medium break-all">{String(v)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Request info */}
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-              Request Info
-            </p>
-            <div className="flex flex-col gap-2 text-sm">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">IP Address</span>
-                <span className="font-mono text-xs">{activity.ip ?? "—"}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">User Agent</span>
-                <p className="mt-1 text-xs break-all text-foreground/80">
-                  {activity.userAgent ?? "—"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Timestamp */}
-          <div className="border-t border-border pt-4">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Timestamp
-            </p>
-            <p className="mt-1 text-sm font-medium">{fullDate(activity.createdAt)}</p>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
 
@@ -643,7 +389,7 @@ export default function ActivityLog() {
                         {/* Details */}
                         <TableCell className="min-w-[200px] max-w-[280px]">
                           <span className="text-sm">
-                            {metaInline(a.metadata)}
+                            {a?.details}
                           </span>
                           {extraCount > 0 && (
                             <Tooltip>

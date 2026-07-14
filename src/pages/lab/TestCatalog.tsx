@@ -58,7 +58,7 @@ import {
   useRemoveParameter,
 } from "@/hooks/use-test-catalog";
 import { useInventoryList } from "@/hooks/use-inventory";
-import { unslugify } from "@/lib/slug";
+import { unslugify } from "@/lib/utils";
 import type {
   TestCatalogEntry,
   ParamType,

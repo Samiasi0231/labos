@@ -45,7 +45,7 @@ const ALL_NAV: NavGroup[] = [
       { path: "/lab/tests", label: "Test Orders", icon: FlaskConical, requires: "tests.read" },
       { path: "/lab/assigned", label: "Assigned Tests", icon: ClipboardList, requires: "tests.read" },
       { path: "/lab/results", label: "Results", icon: FileText, requires: "results.read" },
-      { path: "/lab/reviews", label: "Pending Reviews", icon: Clock, requires: "results.approve" },
+      { path: "/lab/reviews", label: "Pending Reviews", icon: Clock, requires: "results.read_own" },
       { path: "/lab/appointments", label: "Appointments", icon: CalendarDays, requires: "appointments.read" },
       { path: "/lab/billing", label: "Billing", icon: ReceiptText, requires: "finance.read" }
     ],
@@ -189,24 +189,6 @@ export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }:
           ))
         )}
       </nav>
-
-      {/* ── Quick links to other portals ──────────── */}
-      {(!collapsed || isMobile) && (
-        <div className="px-3 pb-2 space-y-1">
-          <NavLink
-            to="/admin"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-          >
-            <ShieldCheck className="w-4 h-4" /><span>Admin Portal</span>
-          </NavLink>
-          <NavLink
-            to="/patient"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-          >
-            <Heart className="w-4 h-4" /><span>Patient Portal</span>
-          </NavLink>
-        </div>
-      )}
 
       {/* ── User footer ───────────────────────────── */}
       <div className="px-3 pb-4 pt-2 border-t border-sidebar-border">

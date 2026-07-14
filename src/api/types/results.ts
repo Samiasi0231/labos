@@ -12,20 +12,23 @@ export interface ResultValue {
 
 
 export type PopulatedRef<T> = string | (T & { _id: string });
+export interface TimelineEntry {
+  status: ResultStatus;
+  at: string;
+  by: PopulatedRef<{ role?: string; user?: PopulatedRef<{ firstName?: string; lastName?: string }> }>;
+  note?: string;
+}
+
 export interface LabResult {
   _id: string;
   lab: string;
   testOrder: PopulatedRef<{ code?: string }>;
   testOrderItem: PopulatedRef<{ testName?: string; samples?: string[] }>;
   patient: PopulatedRef<{ firstName?: string; lastName?: string; code?: string }>;
-  values: ResultValue[]; status: ResultStatus;
-  submittedBy?: PopulatedRef<{ user?: PopulatedRef<{ firstName?: string; lastName?: string }>; role?: string }>;
-  reviewedBy?: PopulatedRef<{ user?: PopulatedRef<{ firstName?: string; lastName?: string }>; role?: string }>;
-  approvedBy?: PopulatedRef<{ user?: PopulatedRef<{ firstName?: string; lastName?: string }>; role?: string }>;
-  comments?: string;
-  submittedAt?: string;
-  approvedAt?: string;
-  releasedAt?: string;
+  values: ResultValue[];
+  status: ResultStatus;
+  notes?: string;
+  timelines: TimelineEntry[];
   createdAt: string;
   updatedAt: string;
 }
@@ -85,10 +88,11 @@ export interface SaveResultDraftValue {
 
 export interface SaveResultDraftPayload {
   values: SaveResultDraftValue[];
+  notes?: string;
 }
 
 export interface ReturnResultPayload {
-  comments: string;
+  note: string;
 }
 
 // ── Patient portal result types ───────────────────────────────────────────────
@@ -106,19 +110,14 @@ export interface PatientResultValue {
   flag: ResultFlag;
 }
 
-/** Result shape returned by GET /patient/results (list item — no values/signatories) */
-export interface PatientResult extends Omit<LabResult, "values" | "submittedBy" | "reviewedBy" | "approvedBy"> {
+/** Result shape returned by GET /patient/results (list item — no values) */
+export interface PatientResult extends Omit<LabResult, "values"> {
   values?: never;
-  submittedBy?: never;
-  reviewedBy?: never;
-  approvedBy?: never;
 }
 
 /** Result shape returned by GET /patient/results/:id (full detail) */
-export interface PatientResultDetail extends Omit<LabResult, "values" | "submittedBy" | "reviewedBy" | "approvedBy"> {
+export interface PatientResultDetail extends Omit<LabResult, "values"> {
   values: PatientResultValue[];
-  submittedBy?: { _id: string; role: string; user: { firstName?: string; lastName?: string } };
-  approvedBy?:  { _id: string; role: string; user: { firstName?: string; lastName?: string } };
 }
 
 export interface PatientResultListResponse {

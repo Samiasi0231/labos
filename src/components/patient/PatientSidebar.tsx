@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const NAV_ITEMS = [
-  { path: "/patient",              label: "Home",            icon: Home,         exact: true },
-  { path: "/patient/results",      label: "My Results",      icon: FlaskConical               },
-  { path: "/patient/orders",       label: "My Orders",       icon: ClipboardList              },
-  { path: "/patient/appointments", label: "Appointments",    icon: CalendarDays               },
-  { path: "/patient/profile",      label: "Profile",         icon: User                       },
+  { path: "/patient", label: "Home", icon: Home, exact: true },
+  { path: "/patient/results", label: "My Results", icon: FlaskConical },
+  { path: "/patient/orders", label: "My Orders", icon: ClipboardList },
+  { path: "/patient/appointments", label: "Appointments", icon: CalendarDays },
+  { path: "/patient/profile", label: "Profile", icon: User },
 ];
 
 interface PatientSidebarProps {
@@ -96,16 +96,6 @@ export function PatientSidebar({ collapsed, onCollapse, mobileOpen, onMobileClos
           );
         })}
       </nav>
-
-      {/* Footer */}
-      {(!collapsed || isMobile) && (
-        <div className="px-4 py-4 border-t border-sidebar-border">
-          <p className="text-[11px] text-sidebar-muted text-center leading-relaxed">
-            Powered by <span className="font-semibold text-sidebar-foreground">LabOS</span><br />
-            Your results are secure &amp; private
-          </p>
-        </div>
-      )}
     </div>
   );
 

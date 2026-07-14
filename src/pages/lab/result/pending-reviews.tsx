@@ -32,12 +32,13 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import { useResultsList } from "@/hooks/use-results";
+import { useApi } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import { downloadPDF } from "@/lib/download-pdf";
+import { downloadPDF } from "@/lib/utils";
 import type {
   LabResult,
   ResultStatus,
+  ResultListResponse,
   PopulatedRef,
 } from "@/api/types/results";
 
@@ -132,7 +133,10 @@ function refId(ref: string | { _id: string } | undefined | null) {
 export default function PendingReviews() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { results, isLoading, error, refetch } = useResultsList({ limit: 100 });
+  const listUrl = `${endpoint.lab.results.list}?page=1&limit=100`;
+  const { data: resultsData, isLoading, error, mutate: refetch } =
+    useApi<ResultListResponse>(listUrl);
+  const results = resultsData?.data?.docs ?? [];
   const [activeTab, setActiveTab] = useState<ResultStatus | "All">("All");
   const [selected, setSelected] = useState<LabResult | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
@@ -453,7 +457,9 @@ export default function PendingReviews() {
                 <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
                   <RefreshCw className="w-4 h-4 flex-shrink-0" />
                   <span>
-                    {selected.comments ||
+                    {[...(selected.timelines ?? [])].reverse().find(
+                      (t) => t.status === "returned",
+                    )?.note ||
                       "This result was returned for correction. Please review and resubmit."}
                   </span>
                 </div>

@@ -7,7 +7,7 @@ import { ChevronRight, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePatientOrders } from "@/hooks/use-patient-portal";
 import endpoint from "@/api/endpoints";
-import { downloadPDF } from "@/lib/download-pdf";
+import { downloadPDF } from "@/lib/utils";
 import type { TestOrderStatus, TestOrderPriority } from "@/api/types";
 
 // ── Config ────────────────────────────────────────────────────────────────────
