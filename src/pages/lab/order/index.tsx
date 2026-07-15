@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 
 import { OrderTable } from "@/components/lab/OrderTable";
 import { CreateOrderSheet } from "./create";
-import { useMyPermissions } from "@/hooks/use-permissions";
+import { useMyPermissions } from "@/hooks/use-api";
 
 export default function Tests() {
   const { can } = useMyPermissions();
@@ -31,18 +31,15 @@ export default function Tests() {
           <h2 className="text-xl font-semibold">Test Orders</h2>
           <p className="text-sm text-muted-foreground">Manage and track lab test orders</p>
         </div>
+        {can("tests.create") && (
+          <Button className="gap-2" onClick={() => { setInitialState({}); setShowCreate(true); }}>
+            <Plus className="w-4 h-4" />
+            New Order
+          </Button>
+        )}
       </div>
 
-      <OrderTable
-        action={
-          can("tests.create") ? (
-            <Button className="gap-2" onClick={() => { setInitialState({}); setShowCreate(true); }}>
-              <Plus className="w-4 h-4" />
-              New Order
-            </Button>
-          ) : undefined
-        }
-      />
+      <OrderTable />
 
       <CreateOrderSheet
         open={showCreate}

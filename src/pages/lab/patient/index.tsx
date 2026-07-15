@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +18,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Filter, Eye } from "lucide-react";
+import { Search, Plus, Filter } from "lucide-react";
 import { PortalAccessBadge } from "@/components/lab/PortalAccessBadge";
 import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
-import { usePatientsList } from "@/hooks/use-patients";
+import { useApi } from "@/hooks/use-api";
 import { usePortalAccess } from "@/hooks/use-portal-access";
 import { derivePortalAccess } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import type { PatientGender } from "@/api/types/patients";
+import endpoint from "@/api/endpoints";
+import type { PatientGender, PatientListResponse } from "@/api/types/patients";
 
 function calculateAge(dob: string): string {
   if (!dob) return "—";
@@ -43,11 +44,15 @@ export default function Patients() {
   );
   const navigate = useNavigate();
 
-  const { patients, isLoading, listUrl } = usePatientsList({
-    search: search || undefined,
-    gender: genderFilter === "All" ? undefined : genderFilter,
-    limit: 100,
-  });
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams({ limit: "100" });
+    if (search) params.set("search", search);
+    if (genderFilter !== "All") params.set("gender", genderFilter);
+    return `${endpoint.lab.patients.list}?${params.toString()}`;
+  }, [search, genderFilter]);
+
+  const { data: patientsData, isLoading } = useApi<PatientListResponse>(listUrl);
+  const patients = patientsData?.data?.docs ?? [];
 
   const { grant, resend, revoke } = usePortalAccess("patient", [listUrl]);
 

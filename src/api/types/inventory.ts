@@ -17,6 +17,7 @@ export interface InventoryItem {
   supplier?: string;
   expiryDate?: string;
   status: InventoryStatus;
+  presetId?: number;
   createdAt: string;
   updatedAt: string;
 }

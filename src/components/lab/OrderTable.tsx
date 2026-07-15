@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,19 +19,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Search,
-  Zap,
-  Flame,
-  Eye,
-  ClipboardList,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Eye, ClipboardList, Zap, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
+import { GlobalSearchSelect } from "@/components/lab/GlobalSearchSelect";
 import endpoint from "@/api/endpoints";
 import type { TestOrder, TestOrderStatus, TestOrderPriority, TestOrderListResponse } from "@/api/types/test-order";
+import type { SearchHit } from "@/api/types/search";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -42,21 +35,21 @@ const PRIORITY_LABEL: Record<TestOrderPriority, string> = {
   stat: "STAT",
 };
 
+const STATUS_OPTIONS: { value: TestOrderStatus | "All"; label: string }[] = [
+  { value: "All", label: "All Statuses" },
+  { value: "pending", label: "Pending" },
+  { value: "sample_collected", label: "Sample Collected" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
 const ORDER_STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   pending: { label: "Pending", cls: "bg-muted/80 text-muted-foreground border" },
   sample_collected: { label: "Sample Collected", cls: "bg-info/15 text-info border-info/30 border" },
   in_progress: { label: "In Progress", cls: "bg-warning/15 text-warning border-warning/30 border" },
   completed: { label: "Completed", cls: "bg-success/15 text-success border-success/30 border" },
-  cancelled: { label: "Cancelled", cls: "bg-muted/50 text-muted-foreground border line-through" },
-};
-
-const STATUS_TABS = ["All", "sample_collected", "in_progress", "completed", "cancelled"] as const;
-const TAB_LABEL: Record<string, string> = {
-  All: "All",
-  sample_collected: "Sample Collected",
-  in_progress: "In Progress",
-  completed: "Completed",
-  cancelled: "Cancelled",
+  cancelled: { label: "Cancelled", cls: "bg-muted/50 text-muted-foreground border" },
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -84,10 +77,7 @@ function PriorityBadge({ priority }: { priority: TestOrderPriority }) {
 }
 
 function OrderStatusBadge({ status }: { status: string }) {
-  const cfg = ORDER_STATUS_CONFIG[status] ?? {
-    label: status,
-    cls: "bg-muted/50 text-muted-foreground border",
-  };
+  const cfg = ORDER_STATUS_CONFIG[status] ?? { label: status, cls: "bg-muted/50 text-muted-foreground border" };
   return (
     <Badge variant="outline" className={`text-xs ${cfg.cls}`}>
       {cfg.label}
@@ -100,64 +90,58 @@ function OrderStatusBadge({ status }: { status: string }) {
 function getPatientName(order: TestOrder): string {
   if (typeof order.patient === "string") return order.patient;
   if (!order.patient) return "Unknown";
-  const { firstName, lastName } = order.patient as {
-    firstName?: string;
-    lastName?: string;
-  };
-  return [firstName, lastName].filter(Boolean).join(" ") || "Unknown";
+  const p = order.patient as { firstName?: string; lastName?: string; name?: string };
+  if (p.name) return p.name;
+  return [p.firstName, p.lastName].filter(Boolean).join(" ") || "Unknown";
 }
 
-function getAssignedNames(order: TestOrder): string[] {
-  const seen = new Set<string>();
-  const names: string[] = [];
-  for (const item of order.items) {
-    if (!item.assignedTo) continue;
-    const u = item.assignedTo.user;
-    const id = typeof u === "string" ? u : u._id;
-    if (seen.has(id)) continue;
-    seen.add(id);
-    names.push(typeof u === "string" ? "—" : u.firstName);
-  }
-  return names;
+function getPatientCode(order: TestOrder): string {
+  if (typeof order.patient === "string") return "";
+  const p = order.patient as { code?: string };
+  return p.code ?? "";
 }
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
 export interface OrderTableProps {
+  /** Pre-set filters when embedded in patient profile */
   filters?: {
     patient?: string;
     start_date?: string;
     end_date?: string;
   };
-  /** Hide the status tab bar */
-  hideTabs?: boolean;
-  /** Element rendered in the filter row's right slot */
-  action?: React.ReactNode;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export function OrderTable({ filters, hideTabs, action }: OrderTableProps) {
+export function OrderTable({ filters }: OrderTableProps) {
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<string>("All");
-  const [search, setSearch] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState<SearchHit | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TestOrderStatus | "All">("All");
   const [priority, setPriority] = useState<"All" | TestOrderPriority>("All");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
+
+  const isPatientView = Boolean(filters?.patient);
 
   useEffect(() => {
     setPage(1);
-  }, [tab, search, priority, filters?.patient]);
+  }, [selectedPatient, statusFilter, priority, dateFrom, dateTo, filters?.patient]);
 
   const listUrl = useMemo(() => {
     const params = new URLSearchParams({ page: String(page), limit: "20" });
-    if (filters?.patient) params.set("patient", filters.patient);
-    if (tab !== "All") params.set("status", tab);
+    const patientId = filters?.patient ?? selectedPatient?.id;
+    if (patientId) params.set("patient", patientId);
+    if (statusFilter !== "All") params.set("status", statusFilter);
     if (priority !== "All") params.set("priority", priority);
-    if (filters?.start_date) params.set("start_date", filters.start_date);
-    if (filters?.end_date) params.set("end_date", filters.end_date);
+    const from = filters?.start_date ?? dateFrom;
+    const to = filters?.end_date ?? dateTo;
+    if (from) params.set("start_date", from);
+    if (to) params.set("end_date", to);
     return `${endpoint.lab.testOrders.list}?${params}`;
-  }, [filters?.patient, filters?.start_date, filters?.end_date, tab, priority, page]);
+  }, [filters?.patient, filters?.start_date, filters?.end_date, selectedPatient, statusFilter, priority, dateFrom, dateTo, page]);
 
   const { data, isLoading } = useApi<TestOrderListResponse>(listUrl);
   const orders = data?.data?.docs ?? [];
@@ -171,113 +155,92 @@ export function OrderTable({ filters, hideTabs, action }: OrderTableProps) {
       }
     : null;
 
-  const isPatientView = Boolean(filters?.patient);
-
-  const filtered = useMemo(
-    () =>
-      search.trim()
-        ? orders.filter((o) =>
-          getPatientName(o).toLowerCase().includes(search.toLowerCase()),
-        )
-        : orders,
-    [orders, search],
-  );
-
-  const tabCounts = STATUS_TABS.map((t) => ({
-    t,
-    count:
-      t === "All"
-        ? (pagination?.totalDocs ?? orders.length)
-        : orders.filter((o) => o.status === t).length,
-  }));
-
   return (
     <Card className="shadow-card">
-      {/* Status tabs */}
-      {!hideTabs && (
-        <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="flex-wrap h-auto gap-1">
-              {tabCounts.map(({ t, count }) => (
-                <TabsTrigger key={t} value={t} className="gap-1.5 text-xs">
-                  {TAB_LABEL[t]}
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] h-4 px-1.5 min-w-[20px]"
-                  >
-                    {count}
-                  </Badge>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </CardHeader>
-      )}
-
       <CardContent className="p-0">
         {/* Filter row */}
-        <div
-          className={`flex flex-col sm:flex-row gap-3 px-4 sm:px-6 ${!hideTabs ? "py-3 border-t border-border" : "pt-4 pb-3"
-            }`}
-        >
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder={isPatientView ? "Search orders…" : "Search patient name…"}
-              className="pl-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+        <div className="flex flex-wrap items-center gap-3 px-4 sm:px-6 pt-4 pb-4">
+          {/* Patient search — hidden in patient-profile embed */}
+          {!isPatientView && (
+            <GlobalSearchSelect
+              types={["patients"]}
+              placeholder="Search patient…"
+              emptyMessage="No patients found"
+              value={selectedPatient}
+              onSelect={(h) => { setSelectedPatient(h); setPage(1); }}
+              onClear={() => { setSelectedPatient(null); setPage(1); }}
+              className="w-52"
             />
-          </div>
-          <Select
-            value={priority}
-            onValueChange={(v) => setPriority(v as "All" | TestOrderPriority)}
-          >
-            <SelectTrigger className="w-36">
+          )}
+
+          {/* Status dropdown */}
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TestOrderStatus | "All")}>
+            <SelectTrigger className="w-44 h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Priority dropdown */}
+          <Select value={priority} onValueChange={(v) => setPriority(v as "All" | TestOrderPriority)}>
+            <SelectTrigger className="w-36 h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All Priorities</SelectItem>
               {PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {PRIORITY_LABEL[p]}
-                </SelectItem>
+                <SelectItem key={p} value={p}>{PRIORITY_LABEL[p]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {action && <div className="shrink-0">{action}</div>}
+
+          {/* Date range — hidden in patient-profile embed (parent controls dates) */}
+          {!isPatientView && (
+            <>
+              <Input
+                type="date"
+                className="w-36 h-9 text-sm"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+              />
+              <span className="text-xs text-muted-foreground">to</span>
+              <Input
+                type="date"
+                className="w-36 h-9 text-sm"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+              />
+            </>
+          )}
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border-t border-border">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
-                {isPatientView ? (
-                  <TableHead className="pl-6">Order ID</TableHead>
-                ) : (
-                  <TableHead className="pl-6">Patient</TableHead>
-                )}
+                <TableHead className="pl-6">Patient</TableHead>
+                <TableHead>Order ID</TableHead>
                 <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead className="hidden sm:table-cell">Tests</TableHead>
-                <TableHead className="hidden md:table-cell">Assigned</TableHead>
+                <TableHead className="hidden md:table-cell">Date</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">Total</TableHead>
-                <TableHead className="hidden lg:table-cell">Date</TableHead>
-                <TableHead className="pr-6 text-right">Action</TableHead>
+                <TableHead className="pr-6 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center py-12 text-muted-foreground text-sm"
-                  >
+                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground text-sm">
                     Loading orders…
                   </TableCell>
                 </TableRow>
-              ) : filtered.length === 0 ? (
+              ) : orders.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="py-14">
                     <div className="flex flex-col items-center gap-2 text-center">
@@ -289,119 +252,63 @@ export function OrderTable({ filters, hideTabs, action }: OrderTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((order) => {
+                orders.map((order) => {
                   const patientName = getPatientName(order);
-                  const assignedNames = getAssignedNames(order);
-                  const shownNames = assignedNames.slice(0, 2);
-                  const overflow = assignedNames.length - 2;
+                  const patientCode = getPatientCode(order);
 
                   return (
                     <TableRow
                       key={order._id}
-                      className={`hover:bg-muted/20 transition-colors cursor-pointer ${order.priority === "stat"
+                      className={`hover:bg-muted/20 transition-colors cursor-pointer ${
+                        order.priority === "stat"
                           ? "border-l-2 border-l-destructive"
                           : order.priority === "urgent"
-                            ? "border-l-2 border-l-warning"
-                            : ""
-                        }`}
+                          ? "border-l-2 border-l-warning"
+                          : ""
+                      }`}
                       onClick={() => navigate(`/lab/tests/${order._id}`)}
                     >
-                      {isPatientView ? (
-                        <TableCell className="pl-6 font-mono text-xs text-muted-foreground">
-                          #{order._id.slice(-8)}
-                        </TableCell>
-                      ) : (
-                        <TableCell className="pl-6">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              <span className="text-xs font-bold text-primary">
-                                {patientName
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")
-                                  .slice(0, 2)}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium">{patientName}</p>
-                              <p className="text-xs text-muted-foreground font-mono">
-                                {order._id.slice(-8)}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                      )}
+                      <TableCell className="pl-6">
+                        <p className="text-sm font-semibold leading-tight">{patientName}</p>
+                        {patientCode && (
+                          <p className="text-xs font-mono text-muted-foreground mt-0.5">{patientCode}</p>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        #{order._id.slice(-8).toUpperCase()}
+                      </TableCell>
 
                       <TableCell>
                         <PriorityBadge priority={order.priority} />
+                      </TableCell>
+
+                      <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                        {order.items.length}
+                      </TableCell>
+
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {new Date(order.date).toLocaleDateString()}
                       </TableCell>
 
                       <TableCell>
                         <OrderStatusBadge status={order.status} />
                       </TableCell>
 
-                      <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                        {order.items.length} test
-                        {order.items.length !== 1 ? "s" : ""}
-                      </TableCell>
-
-                      <TableCell className="hidden md:table-cell">
-                        {assignedNames.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        ) : (
-                          <div className="flex flex-wrap gap-1">
-                            {shownNames.map((name) => (
-                              <Badge
-                                key={name}
-                                variant="secondary"
-                                className="text-[11px] px-2 font-normal"
-                              >
-                                {name}
-                              </Badge>
-                            ))}
-                            {overflow > 0 && (
-                              <Badge
-                                variant="outline"
-                                className="text-[11px] px-2 text-muted-foreground"
-                              >
-                                +{overflow}
-                              </Badge>
-                            )}
-                          </div>
-                        )}
-                      </TableCell>
-
-                      <TableCell className="hidden md:table-cell text-sm font-semibold">
+                      <TableCell className="hidden md:table-cell text-sm font-bold">
                         ₦{(order.totalPrice ?? 0).toLocaleString()}
                       </TableCell>
 
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                        {new Date(order.date).toLocaleDateString()}
-                      </TableCell>
-
-                      <TableCell className="pr-6 text-right">
+                      <TableCell className="pr-6 text-right" onClick={(e) => e.stopPropagation()}>
                         <Button
-                          variant="link"
-                          className="h-auto py-0 px-1 text-[12px] gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/lab/tests/${order._id}`);
-                          }}
-                        >
-                          View
-                        </Button>
-                        {/* <Button
+                          variant="ghost"
                           size="sm"
-                          variant="outline"
-                          className="h-7 text-xs gap-1.5"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/lab/tests/${order._id}`);
-                          }}
+                          className="h-7 gap-1 text-xs"
+                          onClick={() => navigate(`/lab/tests/${order._id}`)}
                         >
                           <Eye className="w-3 h-3" />
                           View
-                        </Button> */}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -415,8 +322,7 @@ export function OrderTable({ filters, hideTabs, action }: OrderTableProps) {
         {pagination && pagination.totalPages > 1 && (
           <div className="px-6 py-3 border-t border-border flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
-              Page {pagination.page} of {pagination.totalPages} ·{" "}
-              {pagination.totalDocs} order
+              Page {pagination.page} of {pagination.totalPages} · {pagination.totalDocs} order
               {pagination.totalDocs !== 1 ? "s" : ""}
             </span>
             <div className="flex gap-1.5">

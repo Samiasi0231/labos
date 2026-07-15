@@ -133,14 +133,18 @@ function refId(ref: string | { _id: string } | undefined | null) {
 export default function PendingReviews() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const listUrl = `${endpoint.lab.results.list}?page=1&limit=100`;
-  const { data: resultsData, isLoading, error, mutate: refetch } =
-    useApi<ResultListResponse>(listUrl);
-  const results = resultsData?.data?.docs ?? [];
+
   const [activeTab, setActiveTab] = useState<ResultStatus | "All">("All");
   const [selected, setSelected] = useState<LabResult | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const listUrl = `${endpoint.lab.results.list}?page=1`;
+
+  const { data: resultsData, isLoading, error, mutate: refetch } =
+    useApi<ResultListResponse>(listUrl);
+
+  const results = resultsData?.data?.docs ?? [];
 
   const handleDownload = async (result: LabResult) => {
     setDownloading(true);
@@ -322,11 +326,10 @@ export default function PendingReviews() {
                   filtered.map((result) => (
                     <TableRow
                       key={result._id}
-                      className={`hover:bg-muted/20 transition-colors ${
-                        result.status === "returned"
-                          ? "border-l-2 border-l-destructive"
-                          : ""
-                      }`}
+                      className={`hover:bg-muted/20 transition-colors ${result.status === "returned"
+                        ? "border-l-2 border-l-destructive"
+                        : ""
+                        }`}
                     >
                       <TableCell className="pl-6 font-medium">
                         {getPatientName(result.patient)}
