@@ -31,7 +31,9 @@ import {
   Printer,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useCreatePatient } from "@/hooks/use-patients";
+import { useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { Patient, CreatePatientPayload } from "@/api/types/patients";
 import {
   patientRegistrationSchema,
   type PatientRegistrationValues,
@@ -39,7 +41,15 @@ import {
 
 export default function PatientRegistration() {
   const { toast } = useToast();
-  const { createPatient, isLoading: isSubmitting } = useCreatePatient();
+  const { trigger, isLoading: isSubmitting } = useMutation<Patient, CreatePatientPayload>(
+    endpoint.lab.patients.create,
+    { skipErrorHandling: true, invalidate: [endpoint.lab.patients.list] },
+  );
+  const createPatient = async (payload: CreatePatientPayload) => {
+    const res = await trigger(payload);
+    if (!res) throw new Error("Failed to register patient");
+    return res.data;
+  };
   const [submitted, setSubmitted] = useState(false);
   const [patientCode, setPatientCode] = useState("");
   const [submittedValues, setSubmittedValues] =

@@ -3,7 +3,20 @@ import useSWRMutation from "swr/mutation";
 import { useSWRConfig } from "swr";
 import { fetcher, get, post, put, patch, del } from "@/api/fetcher";
 import type { ApiError, ApiResponse } from "@/api/types/common";
+import type { GlobalSearchResult } from "@/api/types/search";
 import { toast } from "sonner";
+import endpoint from "@/api/endpoints";
+export { default as useDebounce } from "./use-debounce";
+import useDebounce from "./use-debounce";
+
+interface MyPermissionsResponse {
+  role: string;
+  isAdmin: boolean;
+  permissions: {
+    permission: string;
+    description: string;
+  }[];
+}
 
 const TOAST_IDS = {
   AUTH_ERROR: "auth-error",
@@ -140,5 +153,42 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
     error,
     isLoading: isMutating,
     reset,
+  };
+}
+
+export function useMyPermissions() {
+  const { data, isLoading } = useApi<MyPermissionsResponse>(
+    endpoint.lab.staff.myPermissions
+  );
+
+  const isAdmin = data?.data?.isAdmin ?? false;
+  const permissionSet = new Set(
+    (data?.data?.permissions ?? []).map((p) => p.permission)
+  );
+
+  const can = (permission: string): boolean => {
+    if (isAdmin) return true;
+    return permissionSet.has(permission);
+  };
+
+  const role = data?.data?.role ?? null;
+
+  return { can, isAdmin, role, isLoading };
+}
+
+export function useGlobalSearch(q: string, types?: string[]) {
+  const debounced = useDebounce(q.trim(), 350);
+  const params = new URLSearchParams();
+  if (debounced) params.set("q", debounced);
+  if (types?.length) params.set("types", types.join(","));
+  params.set("limit", "5");
+
+  const url = debounced.length >= 2 ? `/labs/search?${params.toString()}` : null;
+  const { data, isLoading } = useApi<GlobalSearchResult>(url, { keepPreviousData: true } as any);
+
+  return {
+    results: data?.data ?? null,
+    isLoading,
+    hasQuery: debounced.length >= 2,
   };
 }

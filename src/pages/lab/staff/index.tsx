@@ -112,7 +112,6 @@ export default function Staff() {
     }
   };
 
- 
   const handleResend = async (id: string) => {
     await resend(id);
   };

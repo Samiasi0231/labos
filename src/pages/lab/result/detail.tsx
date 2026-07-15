@@ -23,7 +23,7 @@ import {
 import { useApi, useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import { useToast } from "@/hooks/use-toast";
-import { useMyPermissions } from "@/hooks/use-permissions";
+import { useMyPermissions } from "@/hooks/use-api";
 import { downloadPDF, asPopulated, refId } from "@/lib/utils";
 import type {
   LabResult,
@@ -81,13 +81,6 @@ function testName(result: LabResult): string {
   return item?.testName ?? refId(result.testOrderItem);
 }
 
-function orderId(result: LabResult): string {
-  const order = asPopulated(result.testOrder);
-  if (typeof order === "object" && order !== null && "code" in order) {
-    return (order as { code?: string }).code ?? refId(result.testOrder);
-  }
-  return refId(result.testOrder);
-}
 
 function timelineActor(entry: TimelineEntry): { name: string; role: string } {
   const by = entry.by;
@@ -245,7 +238,7 @@ export default function LabResultDetail() {
               to={`/lab/tests/${refId(result.testOrder)}`}
               className="text-primary hover:underline"
             >
-              Order {orderId(result)}
+              #{refId(result.testOrder).slice(-8).toUpperCase()}
             </Link>
           </p>
         </div>

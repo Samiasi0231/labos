@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useMyPermissions } from "@/hooks/use-permissions";
+import { useMyPermissions } from "@/hooks/use-api";
 
 // ─── Nav item / group types ─────────────────────────────────────
 
