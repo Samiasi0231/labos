@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 
 import {
@@ -17,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { useNigeriaLocation } from "@/hooks/use-nigeria-location";
+import { NIGERIA_STATES, getLgasByStateName } from "@/data/nigeria/index";
 
 interface Props<T extends FieldValues & { state?: string; city?: string }> {
   form: UseFormReturn<T>;
@@ -26,16 +25,8 @@ interface Props<T extends FieldValues & { state?: string; city?: string }> {
 export function StateLgaFields<
   T extends FieldValues & { state?: string; city?: string },
 >({ form }: Props<T>) {
-  const { states, lgas, loadingStates, loadingLgas, fetchLgas } =
-    useNigeriaLocation();
-
-  const selectedState = form.watch("state" as Path<T>);
-
-  useEffect(() => {
-    if (selectedState) {
-      fetchLgas(selectedState as string);
-    }
-  }, [selectedState]);
+  const selectedState = form.watch("state" as Path<T>) as string | undefined;
+  const lgas = selectedState ? getLgasByStateName(selectedState) : [];
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -55,18 +46,14 @@ export function StateLgaFields<
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      loadingStates ? "Loading states..." : "Select State"
-                    }
-                  />
+                  <SelectValue placeholder="Select State" />
                 </SelectTrigger>
               </FormControl>
 
               <SelectContent>
-                {states.map((state) => (
-                  <SelectItem key={state} value={state}>
-                    {state}
+                {NIGERIA_STATES.map((state) => (
+                  <SelectItem key={state.id} value={state.name}>
+                    {state.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -87,17 +74,13 @@ export function StateLgaFields<
             <Select
               value={field.value}
               onValueChange={field.onChange}
-              disabled={!selectedState || loadingLgas}
+              disabled={!selectedState}
             >
               <FormControl>
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
-                      !selectedState
-                        ? "Select State first"
-                        : loadingLgas
-                          ? "Loading LGAs..."
-                          : "Select LGA"
+                      !selectedState ? "Select State first" : "Select LGA"
                     }
                   />
                 </SelectTrigger>
@@ -121,3 +104,4 @@ export function StateLgaFields<
 }
 
 export default StateLgaFields;
+

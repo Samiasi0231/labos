@@ -23,7 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, Bell, Shield, Printer, Camera, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type UpdateLabPayload } from "@/api/types/lab";
-import { useUpdateLab, useUpdateLabLogo, useLab } from "@/hooks/use-lab"; 
+import { useUpdateLab, useUpdateLabLogo, useLab } from "@/hooks/use-lab";
+import { NIGERIA_STATES, getLgasByStateName } from "@/data/nigeria/index";
 
 interface LabFormState {
   name: string;
@@ -66,6 +67,8 @@ export default function Settings() {
       country: lab.address?.country ?? "NG",
     });
   }, [lab]);
+
+  const lgaOptions = labForm.state ? getLgasByStateName(labForm.state) : [];
 
   const [notifications, setNotifications] = useState({
     emailResults: true,
@@ -295,23 +298,60 @@ export default function Settings() {
                         }
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label>City</Label>
-                      <Input
-                        value={labForm.city}
-                        onChange={(e) =>
-                          setLabForm((p) => ({ ...p, city: e.target.value }))
-                        }
-                      />
-                    </div>
+
+                    {/* State — Select from static Nigeria states list */}
                     <div className="space-y-1.5">
                       <Label>State</Label>
-                      <Input
+                      <Select
                         value={labForm.state}
-                        onChange={(e) =>
-                          setLabForm((p) => ({ ...p, state: e.target.value }))
+                        onValueChange={(value) =>
+                          setLabForm((p) => ({
+                            ...p,
+                            state: value,
+                            city: "", // reset LGA when state changes
+                          }))
                         }
-                      />
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select State" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {NIGERIA_STATES.map((state) => (
+                            <SelectItem key={state.id} value={state.name}>
+                              {state.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* LGA — depends on selected state */}
+                    <div className="space-y-1.5">
+                      <Label>Local Government</Label>
+                      <Select
+                        value={labForm.city}
+                        onValueChange={(value) =>
+                          setLabForm((p) => ({ ...p, city: value }))
+                        }
+                        disabled={!labForm.state}
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              !labForm.state
+                                ? "Select State first"
+                                : "Select LGA"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lgaOptions.map((lga) => (
+                            <SelectItem key={lga} value={lga}>
+                              {lga}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="flex justify-end">

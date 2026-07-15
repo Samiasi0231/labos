@@ -18,9 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Pencil, Save } from "lucide-react";
-import { useUpdatePatient } from "@/hooks/use-patients";
+import { useMutation } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
-import type { Patient, PatientGender } from "@/api/types/patients";
+import endpoint from "@/api/endpoints";
+import type { Patient, PatientGender, UpdatePatientPayload } from "@/api/types/patients";
 
 const NG_STATES = [
   "Lagos", "Abuja", "Rivers", "Kano", "Oyo",
@@ -67,7 +68,15 @@ export function EditPatientSheet({
   onSuccess,
 }: EditPatientSheetProps) {
   const { toast } = useToast();
-  const { updatePatient, isLoading } = useUpdatePatient();
+  const { trigger, isLoading } = useMutation<Patient, UpdatePatientPayload>(
+    "patients/update",
+    { method: "PATCH", skipErrorHandling: true, invalidate: [endpoint.lab.patients.list] },
+  );
+  const updatePatient = async (patientId: string, payload: UpdatePatientPayload) => {
+    const res = await trigger(payload, endpoint.lab.patients.update(patientId));
+    if (!res) throw new Error("Failed to update patient");
+    return res.data;
+  };
 
   const [form, setForm] = useState<EditForm>(() => toForm(patient));
 

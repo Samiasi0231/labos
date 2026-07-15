@@ -20,11 +20,11 @@ import {
 } from "lucide-react";
 import { PortalAccessBadge } from "@/components/lab/PortalAccessBadge";
 import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
-import { usePatient } from "@/hooks/use-patients";
 import { usePortalAccess } from "@/hooks/use-portal-access";
 import { derivePortalAccess } from "@/lib/utils";
 import { useApi } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
+import type { Patient } from "@/api/types/patients";
 import type { TestOrderListResponse } from "@/api/types/test-order";
 import { OrderTable } from "@/components/lab/OrderTable";
 import { EditPatientSheet } from "./edit-sheet";
@@ -43,7 +43,10 @@ export default function PatientDetail() {
   const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
 
-  const { patient, isLoading, refetch } = usePatient(patientId ?? null);
+  const { data: patientData, isLoading, mutate: refetch } = useApi<Patient>(
+    patientId ? endpoint.lab.patients.get(patientId) : null,
+  );
+  const patient = patientData?.data ?? null;
   const { data: patientOrdersData } = useApi<TestOrderListResponse>(
     patientId ? `${endpoint.lab.testOrders.list}?patient=${patientId}&page=1` : null,
   );

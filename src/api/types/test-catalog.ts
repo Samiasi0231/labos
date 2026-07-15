@@ -44,6 +44,7 @@ export interface TestCatalogEntry {
   parameters: TestCatalogParameter[];
   materials?: CatalogMaterial[];
   isActive: boolean;
+  presetId?: number;
   createdAt: string;
   updatedAt: string;
 }

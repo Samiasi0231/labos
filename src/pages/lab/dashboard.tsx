@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { UserPlus, Plus, Users, ClipboardList, IdCard, CheckCircle2 } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
-import { useMyPermissions } from "@/hooks/use-permissions";
+import { useMyPermissions } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type {
   DashboardData,

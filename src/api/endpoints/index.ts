@@ -52,6 +52,7 @@ const patientEndpoints = {
   get: (patientId: string) => `/patients/${patientId}`,
   update: (patientId: string) => `/patients/${patientId}`,
   remove: (patientId: string) => `/patients/${patientId}`,
+  activitySummary: (patientId: string) => `/patients/${patientId}/activity-summary`,
 } as const;
 
 const doctorEndpoints = {
@@ -72,6 +73,8 @@ const inventoryEndpoints = {
   restock: (itemId: string) => `/inventory/items/${itemId}/restock`,
   adjust: (itemId: string) => `/inventory/items/${itemId}/adjust`,
   movements: "/inventory/movements",
+  listPresets: "/inventory/presets",
+  importPresets: "/inventory/presets/import",
 } as const;
 
 const testCatalogEndpoints = {
@@ -84,6 +87,8 @@ const testCatalogEndpoints = {
   addParameter: (testId: string) => `/test-catalog/${testId}/parameters`,
   updateParameter: (testId: string, paramId: string) => `/test-catalog/${testId}/parameters/${paramId}`,
   removeParameter: (testId: string, paramId: string) => `/test-catalog/${testId}/parameters/${paramId}`,
+  listPresets: "/test-catalog/presets",
+  importPresets: "/test-catalog/presets/import",
 } as const;
 
 const resultsEndpoints = {
@@ -131,6 +136,19 @@ const activityEndpoints = {
   list: "/labs/activity-logs",
 } as const;
 
+const appointmentEndpoints = {
+  list: "/appointments",
+  get: (id: string) => `/appointments/${id}`,
+  create: "/appointments",
+  update: (id: string) => `/appointments/${id}`,
+  status: (id: string) => `/appointments/${id}/status`,
+  checkIn: (id: string) => `/appointments/${id}/check-in`,
+} as const;
+
+const searchEndpoints = {
+  global: "/labs/search",
+} as const;
+
 // ── Patient Portal (self-service) ─────────────────────────────────────────────
 
 const patientPortalEndpoints = {
@@ -162,6 +180,8 @@ const endpoint = {
     resultEntry: resultEntryEndpoints,
     testOrders: testOrderEndpoints,
     activity: activityEndpoints,
+    appointments: appointmentEndpoints,
+    search: searchEndpoints,
   },
 
   /** Patient portal — self-service endpoints */
