@@ -236,7 +236,7 @@ export default function Staff() {
                   </Label>
                   <Input
                     type="email"
-                    placeholder="email@labos.ng"
+                    placeholder="email@ezralabs.ng"
                     value={form.email}
                     onChange={(e) =>
                       setForm((p) => ({ ...p, email: e.target.value }))

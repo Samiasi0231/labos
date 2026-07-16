@@ -97,10 +97,10 @@ export default function SignUp() {
           <p className="text-xs text-muted-foreground mt-6">
             Need help? Contact{" "}
             
-              href="mailto:hello@labos.ng"
+              href="mailto:hello@ezralabs.ng"
               className="text-primary hover:underline"
             <a>
-              hello@labos.ng
+              hello@ezralabs.ng
             </a>
           </p>
         </div>

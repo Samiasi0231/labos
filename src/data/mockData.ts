@@ -1,4 +1,4 @@
-// LabOS Mock Data
+// Ezralabs Mock Data
 
 export type PatientStatus = 'Active' | 'Inactive';
 export type TestStatus = 'Pending' | 'In Progress' | 'Completed' | 'Approved';
@@ -197,13 +197,13 @@ export const inventory: InventoryItem[] = [
 ];
 
 export const staffMembers: StaffMember[] = [
-  { id: 'STF-001', name: 'Dr. Nnenna Okafor', role: 'Manager',      email: 'n.okafor@labos.ng', phone: '+234 801 100 2001', status: 'Active',   lastActive: '2024-06-17 08:30', testsProcessed: 0 },
-  { id: 'STF-002', name: 'Dr. Chidi Nwosu',   role: 'Scientist',    email: 'c.nwosu@labos.ng',  phone: '+234 802 200 3002', status: 'Active',   lastActive: '2024-06-17 09:45', testsProcessed: 312 },
-  { id: 'STF-003', name: 'Bisi Adeola',        role: 'Scientist',    email: 'b.adeola@labos.ng', phone: '+234 803 300 4003', status: 'Active',   lastActive: '2024-06-17 10:15', testsProcessed: 274 },
-  { id: 'STF-004', name: 'Kemi Adewale',       role: 'Receptionist', email: 'k.adewale@labos.ng',phone: '+234 804 400 5004', status: 'Active',   lastActive: '2024-06-17 08:00', testsProcessed: 0 },
-  { id: 'STF-005', name: 'Ibrahim Yusuf',      role: 'Technician',   email: 'i.yusuf@labos.ng',  phone: '+234 805 500 6005', status: 'Inactive', lastActive: '2024-06-10 17:00', testsProcessed: 188 },
-  { id: 'STF-006', name: 'Grace Akpan',        role: 'Receptionist', email: 'g.akpan@labos.ng',  phone: '+234 806 600 7006', status: 'Active',   lastActive: '2024-06-17 08:15', testsProcessed: 0 },
-  { id: 'STF-007', name: 'Adaeze Okonjo',      role: 'Scientist',    email: 'a.okonjo@labos.ng', phone: '+234 807 700 8007', status: 'Pending',  lastActive: '—',               testsProcessed: 0 },
+  { id: 'STF-001', name: 'Dr. Nnenna Okafor', role: 'Manager',      email: 'n.okafor@ezralabs.ng', phone: '+234 801 100 2001', status: 'Active',   lastActive: '2024-06-17 08:30', testsProcessed: 0 },
+  { id: 'STF-002', name: 'Dr. Chidi Nwosu',   role: 'Scientist',    email: 'c.nwosu@ezralabs.ng',  phone: '+234 802 200 3002', status: 'Active',   lastActive: '2024-06-17 09:45', testsProcessed: 312 },
+  { id: 'STF-003', name: 'Bisi Adeola',        role: 'Scientist',    email: 'b.adeola@ezralabs.ng', phone: '+234 803 300 4003', status: 'Active',   lastActive: '2024-06-17 10:15', testsProcessed: 274 },
+  { id: 'STF-004', name: 'Kemi Adewale',       role: 'Receptionist', email: 'k.adewale@ezralabs.ng',phone: '+234 804 400 5004', status: 'Active',   lastActive: '2024-06-17 08:00', testsProcessed: 0 },
+  { id: 'STF-005', name: 'Ibrahim Yusuf',      role: 'Technician',   email: 'i.yusuf@ezralabs.ng',  phone: '+234 805 500 6005', status: 'Inactive', lastActive: '2024-06-10 17:00', testsProcessed: 188 },
+  { id: 'STF-006', name: 'Grace Akpan',        role: 'Receptionist', email: 'g.akpan@ezralabs.ng',  phone: '+234 806 600 7006', status: 'Active',   lastActive: '2024-06-17 08:15', testsProcessed: 0 },
+  { id: 'STF-007', name: 'Adaeze Okonjo',      role: 'Scientist',    email: 'a.okonjo@ezralabs.ng', phone: '+234 807 700 8007', status: 'Pending',  lastActive: '—',               testsProcessed: 0 },
 ];
 
 export const branches: Branch[] = [

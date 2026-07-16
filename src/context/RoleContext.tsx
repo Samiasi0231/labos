@@ -30,12 +30,12 @@ export const RoleContext = createContext<RoleContextType>({
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<LabRole>(() => {
-    return (localStorage.getItem("labos_role") as LabRole) ?? "lab_owner";
+    return (localStorage.getItem("ezralabs_role") as LabRole) ?? "lab_owner";
   });
 
   const setRole = (r: LabRole) => {
     setRoleState(r);
-    localStorage.setItem("labos_role", r);
+    localStorage.setItem("ezralabs_role", r);
   };
 
   return (

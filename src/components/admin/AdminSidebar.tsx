@@ -66,7 +66,7 @@ export function AdminSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose 
         </div>
         {(!collapsed || isMobile) && (
           <div className="overflow-hidden">
-            <p className="font-bold text-sidebar-foreground text-base leading-tight">LabOS</p>
+            <p className="font-bold text-sidebar-foreground text-base leading-tight">Ezralabs</p>
             <p className="text-xs text-sidebar-muted leading-tight">Super Admin</p>
           </div>
         )}
@@ -156,7 +156,7 @@ export function AdminSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose 
             </div>
             <div className="overflow-hidden flex-1">
               <p className="text-sm font-medium text-sidebar-foreground truncate">System Admin</p>
-              <p className="text-xs text-sidebar-muted truncate">super@labos.ng</p>
+              <p className="text-xs text-sidebar-muted truncate">super@ezralabs.ng</p>
             </div>
             <Badge className="text-[10px] bg-accent/20 text-accent border-0 px-1.5">GOD</Badge>
           </div>

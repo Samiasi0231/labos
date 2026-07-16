@@ -110,7 +110,7 @@ export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }:
         </div>
         {(!collapsed || isMobile) && (
           <div className="overflow-hidden">
-            <p className="font-bold text-sidebar-foreground text-base leading-tight">LabOS</p>
+            <p className="font-bold text-sidebar-foreground text-base leading-tight">Ezralabs</p>
             <p className="text-xs text-sidebar-muted leading-tight">Laboratory Management</p>
           </div>
         )}

@@ -113,7 +113,7 @@ const faq = [
   { q: "Is there a free trial?", a: "Yes! All plans include a 30-day free trial. No credit card is required to start. You'll only be billed after the trial period ends if you choose to continue." },
   { q: "Can I change my plan later?", a: "Absolutely. You can upgrade or downgrade your plan at any time from within your account settings. Billing is prorated for mid-cycle changes." },
   { q: "How is payment collected?", a: "We accept bank transfer, card payment, and USSD. Monthly and annual billing cycles are both available. Annual plans come with up to 20% discount." },
-  { q: "Is my patient data safe?", a: "Yes. LabOS is fully NDPR-compliant. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never share patient data with third parties." },
+  { q: "Is my patient data safe?", a: "Yes. Ezralabs is fully NDPR-compliant. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We never share patient data with third parties." },
   { q: "Can I add branches later?", a: "Yes. You can add branches to your existing plan at any time. Branch limits apply per subscription tier — upgrading your plan expands your branch allowance." },
 ];
 

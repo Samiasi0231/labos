@@ -38,7 +38,7 @@ const initialUsers: PlatformUser[] = [
   { id: "USR-007", name: "Fatima Usman", email: "fatima@biotest.ng", role: "Lab Scientist", lab: "BioTest Lagos", status: "Inactive", lastSeen: "5d ago", joinedDate: "2023-03-20" },
   { id: "USR-008", name: "Dr. Ayo Adeleke", email: "ayo@citydiag.ng", role: "Doctor", lab: "CityDiag Ikeja", status: "Active", lastSeen: "2h ago", joinedDate: "2022-01-20" },
   { id: "USR-009", name: "Seun Ogun", email: "seun@quickscan.ng", role: "Lab Manager", lab: "QuickScan Ibadan", status: "Suspended", lastSeen: "30d ago", joinedDate: "2022-09-20" },
-  { id: "USR-010", name: "System Admin", email: "super@labos.ng", role: "Super Admin", lab: "—", status: "Active", lastSeen: "Now", joinedDate: "2021-01-01" },
+  { id: "USR-010", name: "System Admin", email: "super@ezralabs.ng", role: "Super Admin", lab: "—", status: "Active", lastSeen: "Now", joinedDate: "2021-01-01" },
 ];
 
 const roleColors: Record<UserRole, string> = {

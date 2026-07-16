@@ -6,16 +6,16 @@ const sections = [
   {
     id: "acceptance",
     title: "1. Acceptance of Terms",
-    content: `By accessing, registering for, or using the LabOS platform ("Service"), you ("User" or "Laboratory") agree to be bound by these Terms and Conditions ("Terms"). If you do not agree to these Terms, you may not access or use the Service.
+    content: `By accessing, registering for, or using the Ezralabs platform ("Service"), you ("User" or "Laboratory") agree to be bound by these Terms and Conditions ("Terms"). If you do not agree to these Terms, you may not access or use the Service.
 
 These Terms apply to all users of the Service, including laboratory owners, managers, scientists, receptionists, doctors, and any other personnel granted access under a registered laboratory account.
 
-LabOS Technologies Ltd. ("LabOS", "we", "us", or "our") reserves the right to update or modify these Terms at any time. We will notify registered users of material changes via email. Continued use of the Service after notification constitutes acceptance of the revised Terms.`,
+Ezralabs Technologies Ltd. ("Ezralabs", "we", "us", or "our") reserves the right to update or modify these Terms at any time. We will notify registered users of material changes via email. Continued use of the Service after notification constitutes acceptance of the revised Terms.`,
   },
   {
     id: "services",
     title: "2. Description of Services",
-    content: `LabOS provides a cloud-based laboratory management platform including, but not limited to:
+    content: `Ezralabs provides a cloud-based laboratory management platform including, but not limited to:
     
 • Patient registration and management tools
 • Test assignment, tracking, and result entry systems
@@ -36,10 +36,10 @@ The Service is made available on a subscription basis as described in our Pricin
 
 • Provide truthful and accurate registration information including laboratory name, owner name, contact details, and address.
 • Maintain the security and confidentiality of your account credentials.
-• Notify LabOS immediately at security@labos.ng of any unauthorized use of your account.
+• Notify Ezralabs immediately at security@ezralabs.ng of any unauthorized use of your account.
 • Accept responsibility for all activities that occur under your account.
 
-LabOS reserves the right to suspend or terminate any account that provides false information or violates these Terms. Each subscription may create multiple user accounts based on plan limits. The Laboratory Owner is responsible for all activity under their subscription.`,
+Ezralabs reserves the right to suspend or terminate any account that provides false information or violates these Terms. Each subscription may create multiple user accounts based on plan limits. The Laboratory Owner is responsible for all activity under their subscription.`,
   },
   {
     id: "payments",
@@ -60,14 +60,14 @@ Late Payment: Accounts with outstanding balances may be suspended after 7 days. 
   {
     id: "data",
     title: "5. Data Ownership & Patient Privacy",
-    content: `All patient data, test data, and laboratory records entered into LabOS remain the property of the subscribing laboratory. LabOS processes such data solely as a Data Processor on your behalf, in accordance with our Privacy Policy and the Nigeria Data Protection Regulation (NDPR) 2019.
+    content: `All patient data, test data, and laboratory records entered into Ezralabs remain the property of the subscribing laboratory. Ezralabs processes such data solely as a Data Processor on your behalf, in accordance with our Privacy Policy and the Nigeria Data Protection Regulation (NDPR) 2019.
 
 You, as the Laboratory Owner, are the Data Controller responsible for:
 • Obtaining patient consent before entering their data into the platform.
 • Ensuring your use of the platform complies with NDPR and applicable healthcare regulations.
 • Notifying patients of how their data is used and stored.
 
-LabOS will not share, sell, or disclose your laboratory's patient data to third parties without your explicit consent, except where required by law. We implement AES-256 encryption at rest and TLS 1.3 in transit for all patient data.`,
+Ezralabs will not share, sell, or disclose your laboratory's patient data to third parties without your explicit consent, except where required by law. We implement AES-256 encryption at rest and TLS 1.3 in transit for all patient data.`,
   },
   {
     id: "restrictions",
@@ -75,11 +75,11 @@ LabOS will not share, sell, or disclose your laboratory's patient data to third 
     content: `You agree NOT to use the Service to:
 
 • Store or transmit fraudulent, inaccurate, or falsified patient or test data.
-• Attempt to gain unauthorized access to other accounts or LabOS systems.
+• Attempt to gain unauthorized access to other accounts or Ezralabs systems.
 • Reverse engineer, decompile, or create derivative works of the platform.
 • Share account credentials with unauthorized personnel.
 • Use the platform for any unlawful purpose or in violation of Nigerian healthcare regulations.
-• Overwhelm LabOS servers with automated requests (scraping, DDoS, etc.).
+• Overwhelm Ezralabs servers with automated requests (scraping, DDoS, etc.).
 • Sublicense, resell, or commercialize access to the platform without written consent.
 
 Violation of these restrictions may result in immediate account termination without refund.`,
@@ -87,7 +87,7 @@ Violation of these restrictions may result in immediate account termination with
   {
     id: "uptime",
     title: "7. Service Availability & SLA",
-    content: `LabOS targets the following uptime service levels based on subscription plan:
+    content: `Ezralabs targets the following uptime service levels based on subscription plan:
 
 • Basic: 99% uptime (approximately 7.3 hours downtime/month maximum)
 • Pro: 99.5% uptime (approximately 3.6 hours downtime/month maximum)
@@ -98,11 +98,11 @@ Scheduled maintenance windows are typically announced 48 hours in advance and do
   {
     id: "disclaimers",
     title: "8. Disclaimers & Limitation of Liability",
-    content: `LabOS provides the platform as a management and administrative tool. It is NOT a diagnostic tool and does not provide medical advice. All clinical decisions, interpretations, and result approvals remain the sole responsibility of qualified medical personnel at your laboratory.
+    content: `Ezralabs provides the platform as a management and administrative tool. It is NOT a diagnostic tool and does not provide medical advice. All clinical decisions, interpretations, and result approvals remain the sole responsibility of qualified medical personnel at your laboratory.
 
 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:
-• LabOS provides the Service "as is" without warranties of any kind.
-• LabOS shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service.
+• Ezralabs provides the Service "as is" without warranties of any kind.
+• Ezralabs shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service.
 • Our total liability to you shall not exceed the fees paid in the 3 months preceding the claim.`,
   },
   {
@@ -111,7 +111,7 @@ TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:
     content: `Either party may terminate this agreement at any time:
 
 • You may cancel your subscription from within your account settings or by contacting support.
-• LabOS may terminate or suspend access immediately if you violate these Terms, fail to pay subscription fees, or engage in fraudulent activity.
+• Ezralabs may terminate or suspend access immediately if you violate these Terms, fail to pay subscription fees, or engage in fraudulent activity.
 
 Upon termination, your access to the platform ceases. You have 30 days to export your data. After 30 days, data is permanently deleted unless required to be retained by law.`,
   },
@@ -122,7 +122,7 @@ Upon termination, your access to the platform ceases. You have 30 days to export
 
 Before initiating legal proceedings, the parties agree to attempt good-faith resolution through direct negotiation for a period of 30 days.
 
-Contact our legal team at: legal@labos.ng`,
+Contact our legal team at: legal@ezralabs.ng`,
   },
 ];
 
@@ -169,7 +169,7 @@ export default function Terms() {
               <FileText className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold mb-1">Please read these Terms carefully</p>
-                <p className="text-sm text-muted-foreground">These Terms & Conditions govern your use of the LabOS platform. By registering or using the Service, you agree to be bound by them. If you have questions, contact us at <a href="mailto:legal@labos.ng" className="text-primary hover:underline">legal@labos.ng</a>.</p>
+                <p className="text-sm text-muted-foreground">These Terms & Conditions govern your use of the Ezralabs platform. By registering or using the Service, you agree to be bound by them. If you have questions, contact us at <a href="mailto:legal@ezralabs.ng" className="text-primary hover:underline">legal@ezralabs.ng</a>.</p>
               </div>
             </div>
 
@@ -186,8 +186,8 @@ export default function Terms() {
             ))}
 
             <div className="text-sm text-muted-foreground">
-              <p>For questions regarding these Terms, contact LabOS Technologies Ltd.:</p>
-              <p className="mt-1"><strong>Email:</strong> legal@labos.ng</p>
+              <p>For questions regarding these Terms, contact Ezralabs Technologies Ltd.:</p>
+              <p className="mt-1"><strong>Email:</strong> legal@ezralabs.ng</p>
               <p><strong>Address:</strong> 14 Admiralty Way, Lekki Phase 1, Lagos, Nigeria</p>
             </div>
           </div>

@@ -20,9 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 export default function SystemSettings() {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
-    platformName: "LabOS",
-    supportEmail: "support@labos.ng",
-    billingEmail: "billing@labos.ng",
+    platformName: "Ezralabs",
+    supportEmail: "support@ezralabs.ng",
+    billingEmail: "billing@ezralabs.ng",
     defaultCurrency: "NGN",
     defaultCountry: "Nigeria",
     maintenanceMode: false,
@@ -40,11 +40,11 @@ export default function SystemSettings() {
     slackWebhook: "",
     smtpHost: "smtp.mailgun.org",
     smtpPort: "587",
-    smtpUser: "postmaster@labos.ng",
+    smtpUser: "postmaster@ezralabs.ng",
     smsProvider: "Termii",
     backupFrequency: "Daily",
     retentionDays: "365",
-    maintenanceMessage: "LabOS is undergoing scheduled maintenance. We'll be back shortly.",
+    maintenanceMessage: "Ezralabs is undergoing scheduled maintenance. We'll be back shortly.",
   });
 
   const save = (tab: string) => toast({ title: `${tab} settings saved`, description: "Configuration updated successfully." });
@@ -59,7 +59,7 @@ export default function SystemSettings() {
     <div className="space-y-6 animate-fade-in max-w-3xl">
       <div>
         <h2 className="text-xl font-semibold">System Settings</h2>
-        <p className="text-sm text-muted-foreground">Platform-wide configuration for LabOS</p>
+        <p className="text-sm text-muted-foreground">Platform-wide configuration for Ezralabs</p>
       </div>
 
       {settings.maintenanceMode && (

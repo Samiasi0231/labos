@@ -9,7 +9,7 @@ const footerLinks = {
     { label: "Sign In", path: "/signin" },
   ],
   Company: [
-    { label: "About LabOS", path: "/" },
+    { label: "About Ezralabs", path: "/" },
     { label: "Contact Us", path: "/contact" },
     { label: "Careers", path: "/contact" },
     { label: "Blog", path: "/" },
@@ -23,7 +23,7 @@ const footerLinks = {
 };
 
 const contactInfo = [
-  { icon: Mail, text: "hello@labos.ng" },
+  { icon: Mail, text: "hello@ezralabs.ng" },
   { icon: Phone, text: "+234 801 234 5678" },
   { icon: MapPin, text: "Victoria Island, Lagos, Nigeria" },
 ];
@@ -83,7 +83,7 @@ export function Footer() {
 
         <div className="mt-12 pt-6 border-t border-sidebar-border flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-sidebar-muted">
-            &copy; {new Date().getFullYear()} LabOS Technologies Ltd. All rights reserved.
+            &copy; {new Date().getFullYear()} Ezralabs Technologies Ltd. All rights reserved.
           </p>
           <p className="text-xs text-sidebar-muted">
             NDPR Compliant · ISO 27001 Ready · MLSCN Approved Standards

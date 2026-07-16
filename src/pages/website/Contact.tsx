@@ -12,7 +12,7 @@ import { Mail, Phone, MapPin, Clock, CheckCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const contactCards = [
-  { icon: Mail, title: "Email Us", value: "hello@labos.ng", sub: "We reply within 24 hours", href: "mailto:hello@labos.ng" },
+  { icon: Mail, title: "Email Us", value: "hello@ezralabs.ng", sub: "We reply within 24 hours", href: "mailto:hello@ezralabs.ng" },
   { icon: Phone, title: "Call Us", value: "+234 801 234 5678", sub: "Mon – Fri, 8 AM – 6 PM WAT", href: "tel:+2348012345678" },
   { icon: MapPin, title: "Visit Us", value: "14 Admiralty Way, Lekki Phase 1", sub: "Lagos, Nigeria", href: "#" },
   { icon: Clock, title: "Office Hours", value: "Mon – Fri: 8 AM – 6 PM", sub: "Sat: 9 AM – 2 PM (Support only)", href: "#" },
@@ -47,7 +47,7 @@ export default function Contact() {
         <div className="max-w-3xl mx-auto px-4">
           <Badge className="mb-6 bg-white/20 text-white border-white/30">Get In Touch</Badge>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-5">We're here to help</h1>
-          <p className="text-lg text-white/70">Have questions about LabOS? Our team is ready to assist you with demos, pricing, technical support, and anything in between.</p>
+          <p className="text-lg text-white/70">Have questions about Ezralabs? Our team is ready to assist you with demos, pricing, technical support, and anything in between.</p>
         </div>
       </section>
 
@@ -142,7 +142,7 @@ export default function Contact() {
                 <div className="space-y-4">
                   {[
                     { step: "1", text: "Our team reviews your message within 2 hours during working hours." },
-                    { step: "2", text: "A dedicated LabOS specialist is assigned to your inquiry." },
+                    { step: "2", text: "A dedicated Ezralabs specialist is assigned to your inquiry." },
                     { step: "3", text: "We reach out via email (or phone if you prefer) with a tailored response." },
                     { step: "4", text: "If you want a demo, we schedule a 30-minute live walkthrough." },
                   ].map(item => (

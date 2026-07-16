@@ -135,7 +135,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
             </span>
           </Link>
           <h1 className="text-2xl font-bold">
-            {forgotMode ? "Reset Password" : "Sign In to LabOS"}
+            {forgotMode ? "Reset Password" : "Sign In to Ezralabs"}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {forgotMode
