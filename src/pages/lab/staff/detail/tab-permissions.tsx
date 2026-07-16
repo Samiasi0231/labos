@@ -46,17 +46,6 @@ export function TabPermissions({ staff, onRoleChanged }: Props) {
   const [revokedOpen, setRevokedOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
 
-  const savePermissions = useMutation<unknown, UpdatePermissionsPayload>(
-    endpoint.lab.staff.updateRole(staff._id).replace(
-      `/${staff._id}`,
-      `/${staff._id}/permissions`,
-    ),
-    {
-      method: "PATCH",
-      successToast: "Permissions saved",
-    },
-  );
-
   // For permission display: is each key granted?
   function isGranted(key: string) {
     if (isManager) return true;
@@ -93,12 +82,10 @@ export function TabPermissions({ staff, onRoleChanged }: Props) {
   const extraCandidates = allKeys.filter((k) => !roleDefaults.includes(k));
   const revokedCandidates = roleDefaults;
 
-  // Permissions endpoint — build it manually since staff endpoints don't expose it
-  const permissionsUrl = `/staff/${staff._id}/permissions`;
-  const savePerms = useMutation<unknown, UpdatePermissionsPayload>(permissionsUrl, {
-    method: "PATCH",
-    successToast: "Permission changes saved",
-  });
+  const savePerms = useMutation<unknown, UpdatePermissionsPayload>(
+    endpoint.lab.staff.updatePermissions(staff._id),
+    { method: "PATCH", successToast: "Permission changes saved" },
+  );
 
   return (
     <>
@@ -158,28 +145,20 @@ export function TabPermissions({ staff, onRoleChanged }: Props) {
                       const granted = isGranted(key);
                       const tag = getTag(key);
                       return (
-                        <div
-                          key={key}
-                          className="flex items-center gap-2.5 py-1.5 px-1"
-                        >
+                        <div key={key} className="flex items-center gap-2.5 py-1.5 px-1">
                           {granted ? (
-                            <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+                            <CheckCircle2 className="w-[15px] h-[15px] text-success flex-shrink-0" />
                           ) : (
-                            <Circle className="w-4 h-4 text-border flex-shrink-0" />
+                            <Circle className="w-[15px] h-[15px] text-border flex-shrink-0" />
                           )}
+                          {/* key — flex:1 pushes everything else to the right */}
                           <span className="flex-1 text-[13px] font-mono text-foreground">
                             {key}
                           </span>
-                          <span className="text-xs text-muted-foreground hidden sm:inline">
-                            {desc}
-                          </span>
+                          {/* desc + tag — right side */}
+                          <span className="text-xs text-muted-foreground">{desc}</span>
                           {tag && (
-                            <span
-                              className={cn(
-                                "text-[10.5px] font-bold rounded-full px-2 py-0.5",
-                                tag.cls,
-                              )}
-                            >
+                            <span className={cn("text-[10.5px] font-bold rounded-full px-2 py-0.5 whitespace-nowrap", tag.cls)}>
                               {tag.label}
                             </span>
                           )}

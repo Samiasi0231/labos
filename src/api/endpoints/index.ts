@@ -35,6 +35,7 @@ const staffEndpoints = {
   get: (membershipId: string) => `/staff/${membershipId}`,
   updateRole: (membershipId: string) => `/staff/${membershipId}`,
   updateStatus: (membershipId: string) => `/staff/${membershipId}/status`,
+  updatePermissions: (membershipId: string) => `/staff/${membershipId}/permissions`,
   remove: (membershipId: string) => `/staff/${membershipId}`,
 } as const;
 

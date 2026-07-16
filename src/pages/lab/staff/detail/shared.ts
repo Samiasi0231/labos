@@ -1,6 +1,7 @@
 import type { StaffRole, StaffStatus } from "@/api/types/enums";
 import type { TestOrderItemStatus } from "@/api/types/test-order";
 import endpoint from "@/api/endpoints";
+import { PERMISSION_CATEGORIES } from "@/lib/permission";
 
 // ── Staff Detail type ─────────────────────────────────────────────────────────
 // Shape returned by GET /staff/:membershipId (getStaff service)
@@ -18,7 +19,11 @@ export interface StaffDetail {
   status: StaffStatus;
   joinedAt?: string;
   createdAt: string;
-  invitedBy?: string; // ObjectId only — not populated by the backend
+  invitedBy?: {
+    _id: string
+    firstName: string
+    lastName: string
+  };
   permissions: string[]; // effective resolved permission strings
   lab: string;
 }
@@ -33,10 +38,10 @@ export const ROLE_LABELS: Record<StaffRole, string> = {
 };
 
 export const ROLE_COLORS: Record<StaffRole, string> = {
-  manager: "bg-primary/12 text-primary border-primary/30",
-  scientist: "bg-success/12 text-success border-success/30",
-  technician: "bg-warning/12 text-warning border-warning/30",
-  receptionist: "bg-info/12 text-info border-info/30",
+  manager: "bg-primary/15 text-primary border-primary/30",
+  scientist: "bg-info/15 text-info border-info/30",
+  technician: "bg-warning/15 text-warning border-warning/30",
+  receptionist: "bg-muted text-muted-foreground border-border",
 };
 
 // ── Status display helpers ────────────────────────────────────────────────────
@@ -94,47 +99,43 @@ export interface PermCatalogEntry {
   desc: string;
 }
 
-export const PERM_CATALOG: Record<string, PermCatalogEntry[]> = {
-  Patients: [
-    { key: "patients.read", desc: "View patient records" },
-    { key: "patients.create", desc: "Register new patients" },
-    { key: "patients.update", desc: "Edit patient details" },
-    { key: "patients.delete", desc: "Remove patients" },
-  ],
-  "Tests & Results": [
-    { key: "tests.read", desc: "View test orders" },
-    { key: "tests.assign", desc: "Assign scientists" },
-    { key: "tests.process", desc: "Process tests" },
-    { key: "results.read", desc: "View results" },
-    { key: "results.create", desc: "Submit results" },
-    { key: "results.approve", desc: "Approve results" },
-  ],
-  Staff: [
-    { key: "staff.read", desc: "View staff" },
-    { key: "staff.create", desc: "Invite staff" },
-  ],
-  Appointments: [
-    { key: "appointments.read", desc: "View appointments" },
-    { key: "appointments.create", desc: "Book appointments" },
-  ],
-  Finance: [
-    { key: "finance.read", desc: "View finance records" },
-    { key: "finance.manage", desc: "Manage billing" },
-  ],
+const CATEGORY_LABELS: Record<string, string> = {
+  patients: "Patients",
+  tests: "Tests",
+  results: "Results",
+  appointments: "Appointments",
+  doctors: "Doctors",
+  inventory: "Inventory",
+  staff: "Staff",
+  branches: "Branches",
+  test_catalog: "Test Catalog",
+  finance: "Finance",
+  activity: "Activity",
+  lab: "Lab",
 };
+
+export const PERM_CATALOG: Record<string, PermCatalogEntry[]> =
+  Object.fromEntries(
+    Object.entries(PERMISSION_CATEGORIES).map(([cat, perms]) => [
+      CATEGORY_LABELS[cat] ?? cat,
+      Object.entries(perms).map(([key, desc]) => ({ key, desc: desc as string })),
+    ]),
+  );
 
 export const ROLE_DEFAULTS: Partial<Record<StaffRole, string[]>> = {
   scientist: [
-    "tests.read",
+    "tests.read_own",
     "tests.process",
-    "results.read",
+    "tests.update_status",
+    "results.read_own",
     "results.create",
     "patients.read",
   ],
   technician: [
-    "tests.read",
+    "tests.read_own",
     "tests.process",
-    "results.read",
+    "tests.update_status",
+    "results.read_own",
     "results.create",
     "patients.read",
   ],
@@ -144,7 +145,9 @@ export const ROLE_DEFAULTS: Partial<Record<StaffRole, string[]>> = {
     "patients.update",
     "appointments.read",
     "appointments.create",
+    "appointments.update",
     "tests.read",
+    "tests.create",
   ],
 };
 

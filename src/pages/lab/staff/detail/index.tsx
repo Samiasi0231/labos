@@ -1,57 +1,44 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChevronRight } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
-import { staffDetailUrl } from "./shared";
+import { staffDetailUrl, staffDetailName } from "./shared";
 import type { StaffDetail } from "./shared";
 import { StaffIdentityCard } from "./identity-card";
 import { TabOverview } from "./tab-overview";
 import { TabPermissions } from "./tab-permissions";
 import { TabActivity } from "./tab-activity";
 import { TabAssignedWork } from "./tab-assigned-work";
-import { cn } from "@/lib/utils";
-
-type Tab = "overview" | "permissions" | "activity" | "assigned";
-
-function baseTabs(): { id: Tab; label: string }[] {
-  return [
-    { id: "overview",     label: "Overview" },
-    { id: "permissions",  label: "Permissions" },
-    { id: "activity",     label: "Activity Log" },
-  ];
-}
 
 export default function StaffDetail() {
   const { membershipId } = useParams<{ membershipId: string }>();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [activeTab, setActiveTab] = useState("overview");
 
   const url = membershipId ? staffDetailUrl(membershipId) : null;
   const { data, isLoading, error, mutate } = useApi<StaffDetail>(url);
   const staff = data?.data ?? null;
 
-  // Only show "Assigned Work" tab for scientist role
-  const tabs = staff
-    ? [
-        ...baseTabs(),
-        ...(staff.role === "scientist" || staff.role === "technician"
-          ? [{ id: "assigned" as Tab, label: "Assigned Work" }]
-          : []),
-      ]
-    : baseTabs();
+  const showAssigned =
+    staff?.role === "scientist" || staff?.role === "technician";
 
   if (isLoading) {
     return (
-      <div className="animate-fade-in grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 items-start max-w-[1100px] mx-auto">
-        <div className="flex flex-col gap-3.5">
-          <Skeleton className="h-[300px] rounded-xl" />
-          <Skeleton className="h-[180px] rounded-xl" />
-        </div>
-        <div className="flex flex-col gap-4">
-          <Skeleton className="h-10 w-80 rounded-lg" />
-          <Skeleton className="h-[200px] rounded-xl" />
-          <Skeleton className="h-[160px] rounded-xl" />
+      <div className="max-w-[1100px] mx-auto space-y-5">
+        {/* Breadcrumb skeleton */}
+        <Skeleton className="h-4 w-48 rounded" />
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 items-start">
+          <div className="flex flex-col gap-3.5">
+            <Skeleton className="h-[300px] rounded-xl" />
+            <Skeleton className="h-[175px] rounded-xl" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-10 rounded-lg" />
+            <Skeleton className="h-[200px] rounded-xl" />
+            <Skeleton className="h-[160px] rounded-xl" />
+          </div>
         </div>
       </div>
     );
@@ -59,7 +46,7 @@ export default function StaffDetail() {
 
   if (error || !staff) {
     return (
-      <div className="max-w-[1100px] mx-auto py-20 text-center text-muted-foreground">
+      <div className="max-w-[1100px] mx-auto py-20 text-center text-muted-foreground text-sm">
         Staff member not found or you don't have access.{" "}
         <button
           className="text-primary underline cursor-pointer bg-transparent border-none"
@@ -72,50 +59,66 @@ export default function StaffDetail() {
   }
 
   return (
-    <div className="animate-fade-in grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 items-start max-w-[1100px] mx-auto">
+    <div className="max-w-[1100px] mx-auto">
 
-      {/* ── LEFT — identity (sticky on desktop) ── */}
-      <div className="lg:sticky lg:top-0">
-        <StaffIdentityCard
-          staff={staff}
-          onRoleChanged={mutate}
-          onStatusChanged={mutate}
-          onRemoved={() => navigate("/lab/staff")}
-        />
-      </div>
+      {/* ── Breadcrumb ── matches design header style */}
+      <p className="text-[13px] text-muted-foreground mb-5">
+        <Link to="/lab/staff" className="hover:text-foreground transition-colors">
+          Staff
+        </Link>
+        <ChevronRight className="inline w-3.5 h-3.5 mx-1.5 opacity-50" />
+        <span className="text-foreground font-semibold">{staffDetailName(staff)}</span>
+      </p>
 
-      {/* ── RIGHT — tabs ── */}
-      <div className="flex flex-col gap-4 min-w-0">
-        {/* Tab bar */}
-        <div className="flex gap-0 border-b border-border">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
-                tab === t.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
+      {/* ── Two-column grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 items-start">
+
+        {/* Left — identity (sticky) */}
+        <div className="lg:sticky lg:top-0">
+          <StaffIdentityCard
+            staff={staff}
+            onRoleChanged={mutate}
+            onStatusChanged={mutate}
+            onRemoved={() => navigate("/lab/staff")}
+          />
         </div>
 
-        {/* Tab content */}
-        {tab === "overview" && (
-          <TabOverview
-            membershipId={staff._id}
-            onViewAllActivity={() => setTab("activity")}
-          />
-        )}
-        {tab === "permissions" && (
-          <TabPermissions staff={staff} onRoleChanged={mutate} />
-        )}
-        {tab === "activity" && <TabActivity membershipId={staff._id} />}
-        {tab === "assigned" && <TabAssignedWork />}
+        {/* Right — tabs */}
+        <div className="min-w-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+
+            {/* Full-width segmented pill control */}
+            <TabsList className="w-full justify-start mb-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="permissions">Permissions</TabsTrigger>
+              <TabsTrigger value="activity">Activity Log</TabsTrigger>
+              {showAssigned && (
+                <TabsTrigger value="assigned">Assigned Work</TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-0">
+              <TabOverview
+                membershipId={staff._id}
+                onViewAllActivity={() => setActiveTab("activity")}
+              />
+            </TabsContent>
+
+            <TabsContent value="permissions" className="mt-0">
+              <TabPermissions staff={staff} onRoleChanged={mutate} />
+            </TabsContent>
+
+            <TabsContent value="activity" className="mt-0">
+              <TabActivity membershipId={staff._id} />
+            </TabsContent>
+
+            {showAssigned && (
+              <TabsContent value="assigned" className="mt-0">
+                <TabAssignedWork />
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
       </div>
     </div>
   );
