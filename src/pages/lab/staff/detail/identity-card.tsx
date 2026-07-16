@@ -92,9 +92,9 @@ export function StaffIdentityCard({ staff, onRoleChanged, onStatusChanged, onRem
               <p className="text-[11.5px] text-muted-foreground">
                 Joined <span className="text-foreground font-semibold">{formatDate(staff.joinedAt ?? staff.createdAt)}</span>
               </p>
-              {staff.invitedBy?.firstName && (
+              {staff?.invitedBy?.firstName && (
                 <p className="text-[11.5px] text-muted-foreground">
-                  Invited by <span className="text-foreground font-semibold">{concatStrings(staff.invitedBy?.firstName, staff.invitedBy?.lastName, " ")}</span>
+                  Invited by <span className="text-foreground font-semibold">{concatStrings(staff?.invitedBy?.firstName, staff?.invitedBy?.lastName, " ")}</span>
                 </p>
               )}
             </div>
