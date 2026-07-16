@@ -36,6 +36,7 @@ import Doctors from "./pages/lab/Doctors";
 import Inventory from "./pages/lab/inventory";
 import Finance from "./pages/lab/Finance";
 import Staff from "./pages/lab/staff";
+import StaffDetail from "./pages/lab/staff/detail";
 import Branches from "./pages/lab/Branches";
 import Settings from "./pages/lab/settings";
 import TestCatalog from "./pages/lab/test-catalog";
@@ -102,6 +103,7 @@ export const routers = [
           { path: "inventory", element: <Inventory /> },
           { path: "finance", element: <Finance /> },
           { path: "staff", element: <Staff /> },
+          { path: "staff/:membershipId", element: <StaffDetail /> },
           { path: "branches", element: <Branches /> },
           { path: "settings", element: <Settings /> },
           { path: "test-catalog", element: <TestCatalog /> },

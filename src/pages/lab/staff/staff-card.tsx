@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -28,6 +29,7 @@ interface StaffCardProps {
 }
 
 export function StaffCard({ member, listUrl }: StaffCardProps) {
+  const navigate = useNavigate();
   const updateRoleMutation = useMutation<
     UpdateStaffRoleResponse,
     UpdateStaffRolePayload
@@ -97,7 +99,10 @@ export function StaffCard({ member, listUrl }: StaffCardProps) {
   const name = staffFullName(member);
 
   return (
-    <Card className="shadow-card hover:shadow-elevated transition-all duration-200">
+    <Card
+      className="shadow-card hover:shadow-elevated transition-all duration-200 cursor-pointer"
+      onClick={() => navigate(`/lab/staff/${member._id}`)}
+    >
       <CardContent className="pt-5 pb-4">
         <div className="flex items-start gap-4">
           <Avatar className="h-12 w-12 flex-shrink-0">
@@ -116,7 +121,10 @@ export function StaffCard({ member, listUrl }: StaffCardProps) {
                   {ROLE_LABELS[member.role]}
                 </Badge>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div
+                className="flex items-center gap-1 flex-shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <StaffMembershipBadge status={member.status} />
                 <StaffActionMenu
                   id={member._id}
