@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreVertical, Shield, UserCheck, UserX, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { initials } from "@/lib/utils";
 
 type UserRole = "Lab Owner" | "Lab Manager" | "Lab Scientist" | "Receptionist" | "Doctor" | "Super Admin";
 type UserStatus = "Active" | "Inactive" | "Suspended";
@@ -86,8 +87,6 @@ export default function AllUsers() {
     { role: "Lab Scientist", count: users.filter(u => u.role === "Lab Scientist").length, icon: UserCheck },
     { role: "Receptionist", count: users.filter(u => u.role === "Receptionist").length, icon: UserCheck },
   ];
-
-  const initials = (name: string) => name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <div className="space-y-6 animate-fade-in">

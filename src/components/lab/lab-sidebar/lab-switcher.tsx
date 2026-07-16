@@ -8,7 +8,7 @@ import { notify } from "@/lib/notify";
 import endpoint from "@/api/endpoints";
 import type { SwitchTokens, SwitchLabPayload } from "@/api/types/auth";
 import type { UserLab } from "@/api/types/user";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 
 function getRoleRedirect(role: string): string {
   switch (role) {
@@ -25,18 +25,6 @@ function getRoleRedirect(role: string): string {
     default:
       return "/lab";
   }
-}
-
-/** Strip em-dash suffixes like "Name — Branch" before computing initials */
-function getInitials(name: string): string {
-  const clean = name.replace(/[—–].*/, "").trim();
-  return clean
-    .split(" ")
-    .filter(Boolean)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 function RolePill({ role }: { role: string }) {
@@ -122,9 +110,8 @@ export function LabSwitcher({ collapsed, isMobile }: LabSwitcherProps) {
 
   const currentName = lab?.name ?? "Select Lab";
   const currentCode = lab?.code ?? "";
-  const currentInitials = getInitials(currentName);
+  const currentInitials = initials(currentName);
 
-  // ── Collapsed (icon-only) trigger ────────────────────────────
   if (collapsed && !isMobile) {
     return (
       <div ref={containerRef} className="relative">
@@ -235,7 +222,6 @@ function DropdownPanel({
           labs.map((item) => {
             const isActive = item._id === auth?.labId;
             const isSwitching = switchingId === item.identifier;
-            const initials = getInitials(item.name);
 
             return (
               <button
@@ -256,7 +242,7 @@ function DropdownPanel({
                     className="font-bold text-primary"
                     style={{ fontSize: "10.5px" }}
                   >
-                    {initials}
+                    {initials(item.name)}
                   </span>
                 </div>
 

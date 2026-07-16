@@ -189,12 +189,3 @@ export function groupPermissions(perms: string[]): PermGroup[] {
   }));
 }
 
-// ── Name helpers ──────────────────────────────────────────────────────────────
-
-export function staffDetailName(staff: StaffDetail): string {
-  return `${staff.user.firstName} ${staff.user.lastName}`.trim();
-}
-
-export function staffDetailInitials(staff: StaffDetail): string {
-  return `${staff.user.firstName[0] ?? ""}${staff.user.lastName[0] ?? ""}`.toUpperCase();
-}

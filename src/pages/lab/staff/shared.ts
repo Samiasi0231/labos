@@ -25,10 +25,6 @@ export function staffListUrl(search?: string): string {
   return qs ? `${endpoint.lab.staff.list}?${qs}` : endpoint.lab.staff.list;
 }
 
-export function staffInitials(firstName: string, lastName: string): string {
-  return `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
-}
-
 export function staffCounts(staff: StaffMember[]) {
   return {
     active: staff.filter((s) => s.status === "active").length,

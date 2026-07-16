@@ -87,3 +87,15 @@ export const concatStrings = (...args: any[]): string => {
     .filter((str: any) => str && typeof str === 'string' && str.trim() !== '')
     .join(separator || '');
 };
+
+export function initials(name: string) {
+  return (
+    name
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?"
+  );
+}

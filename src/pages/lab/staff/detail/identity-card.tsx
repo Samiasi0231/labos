@@ -4,14 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserCog, Pause, Play, Mail, UserX } from "lucide-react";
-import { cn, concatStrings } from "@/lib/utils";
+import { cn, concatStrings, initials } from "@/lib/utils";
 import {
   ROLE_LABELS,
   ROLE_COLORS,
   STATUS_LABELS,
   STATUS_COLORS,
-  staffDetailName,
-  staffDetailInitials,
 } from "./shared";
 import type { StaffDetail } from "./shared";
 import { ChangeRoleDialog, RemoveDialog } from "./actions";
@@ -53,6 +51,7 @@ export function StaffIdentityCard({ staff, onRoleChanged, onStatusChanged, onRem
     },
   );
 
+  const name = concatStrings(staff.user.firstName, staff.user.lastName, " ");
   const resendInvite = useMutation<unknown, { type: string; identifier: string }>(
     endpoint.lab.resendInvite,
     { successToast: "Invite resent" },
@@ -69,14 +68,14 @@ export function StaffIdentityCard({ staff, onRoleChanged, onStatusChanged, onRem
             {/* Solid-teal avatar — matches design */}
             <Avatar className="h-16 w-16">
               <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xl">
-                {staffDetailInitials(staff)}
+                {initials(name)}
               </AvatarFallback>
             </Avatar>
 
-            <p className="mt-0.5 text-base font-bold leading-tight">{staffDetailName(staff)}</p>
-            <p className="text-[12.5px] text-muted-foreground">{staff.user.email}</p>
+            <p className="mt-0.5 text-base font-bold leading-tight">{name}</p>
+            <p className="text-[12.5px] text-muted-foreground">{staff?.user?.email}</p>
             {staff.user.phone && (
-              <p className="text-[12.5px] text-muted-foreground">{staff.user.phone}</p>
+              <p className="text-[12.5px] text-muted-foreground">{staff?.user?.phone}</p>
             )}
 
             <div className="flex gap-1.5 mt-1">

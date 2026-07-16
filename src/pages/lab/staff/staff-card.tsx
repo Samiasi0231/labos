@@ -20,8 +20,8 @@ import {
   ROLE_COLORS,
   ROLE_LABELS,
   staffFullName,
-  staffInitials,
 } from "./shared";
+import { initials } from "@/lib/utils";
 
 interface StaffCardProps {
   member: StaffMember;
@@ -107,7 +107,7 @@ export function StaffCard({ member, listUrl }: StaffCardProps) {
         <div className="flex items-start gap-4">
           <Avatar className="h-12 w-12 flex-shrink-0">
             <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-              {staffInitials(member.user.firstName, member.user.lastName)}
+              {initials(name)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">

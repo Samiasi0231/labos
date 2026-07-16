@@ -18,6 +18,7 @@ import type {
 } from "@/api/types/test-order";
 import type { TestCatalogEntry } from "@/api/types/test-catalog";
 import endpoint from "@/api/endpoints";
+import { concatStrings } from "@/lib/utils";
 
 interface StartTestDialogProps {
   item: AssignmentItem | null;
@@ -45,7 +46,7 @@ export function StartTestDialog({
       item ? endpoint.lab.testCatalog.get(item.testCatalog) : null,
     );
   const analysisMaterials = (catalogData?.data?.materials ?? []).filter(
-    (m) => m.phase === "analysis",
+    (m) => m.phase === "analysis" && m.inventoryItem != null && typeof m.inventoryItem === "object",
   );
 
   const handleClose = () => {
@@ -89,9 +90,8 @@ export function StartTestDialog({
                 {item.testName}
               </span>
             </p>
-            <p className="text-xs text-muted-foreground">
-              Patient: {item.testOrder.patient.firstName}{" "}
-              {item.testOrder.patient.lastName}
+            <p className="text-xs capitalize text-muted-foreground">
+              Patient: {concatStrings(item?.testOrder?.patient?.firstName, item?.testOrder?.patient?.lastName, " ")}
             </p>
           </div>
         )}

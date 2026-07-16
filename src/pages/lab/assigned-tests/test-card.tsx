@@ -18,8 +18,7 @@ import type {
   TestOrderItemStatus,
   TestOrderPriority,
 } from "@/api/types/test-order";
-
-// ── Config ────────────────────────────────────────────────────────────────────
+import { concatStrings, initials } from "@/lib/utils";
 
 export const TABS: TestOrderItemStatus[] = [
   "assigned",
@@ -83,22 +82,6 @@ export const STATUS_CONFIG: Record<
   },
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-export function initials(name: string) {
-  return (
-    name
-      .split(" ")
-      .filter(Boolean)
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "?"
-  );
-}
-
-// ── TestCard ──────────────────────────────────────────────────────────────────
-
 export function TestCard({
   item,
   canProcess,
@@ -114,7 +97,7 @@ export function TestCard({
 }) {
   const order = item.testOrder;
   const patient = order.patient;
-  const patientName = `${patient.firstName} ${patient.lastName}`.trim();
+  const patientName = concatStrings(patient.firstName, patient.lastName, " ");
   const prio = PRIORITY_CONFIG[order.priority];
   const status = STATUS_CONFIG[item.status];
   const StatusIcon = status.icon;
@@ -184,16 +167,16 @@ export function TestCard({
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Beaker className="w-3 h-3" />
-            Parameters ({(item?.parameters ?? []).filter(Boolean).length})
+            Parameters ({(item?.parameters ?? []).filter((p) => p != null && !!p._id).length})
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {(item?.parameters ?? []).filter(Boolean).map((p) => (
+            {(item?.parameters ?? []).filter((p) => p != null && !!p._id).map((p) => (
               <Badge
                 key={p._id}
                 variant="outline"
                 className="text-[10px] px-2 py-0.5 font-normal text-muted-foreground"
               >
-                {p.name}
+                {p?.name ?? "—"}
               </Badge>
             ))}
           </div>

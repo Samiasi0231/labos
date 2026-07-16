@@ -18,6 +18,7 @@ import type {
   UpdateAppointmentStatusPayload,
 } from "@/api/types/appointments";
 import { STATUS_CONFIG, formatDateTime, patientName } from "./shared";
+import { initials } from "@/lib/utils";
 
 interface DetailSheetProps {
   appointment: Appointment | null;
@@ -27,11 +28,6 @@ interface DetailSheetProps {
 }
 
 type ConfirmFor = "cancel" | "noshow" | null;
-
-function initials(name: string) {
-  const parts = name.split(" ");
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
-}
 
 function orderStatusLabel(status: string) {
   return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");

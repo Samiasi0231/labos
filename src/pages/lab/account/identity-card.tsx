@@ -2,7 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentUser } from "@/hooks/use-api";
 import { useMyPermissions } from "@/hooks/use-api";
-import { getInitials, roleBadgeVariant } from "./shared";
+import { roleBadgeVariant } from "./shared";
+import { concatStrings, initials } from "@/lib/utils";
 
 export function IdentityCard() {
   const { user } = useCurrentUser();
@@ -10,15 +11,14 @@ export function IdentityCard() {
 
   if (!user) return null;
 
-  const initials = getInitials(user.firstName, user.lastName);
-  const fullName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+  const fullName = concatStrings(user.firstName, user.lastName, " ");
 
   return (
     <Card className="shadow-card">
       <CardContent className="pt-6 flex flex-col items-center text-center gap-3">
         {/* Avatar */}
         <div className="w-[72px] h-[72px] rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl font-bold text-primary">{initials}</span>
+          <span className="text-2xl font-bold text-primary">{initials(fullName)}</span>
         </div>
 
         <div>
