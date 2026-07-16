@@ -42,10 +42,7 @@ export interface UpdateLabPayload {
   address?: Partial<Address>;
 }
 
-export interface UpdateLabLogoPayload {
-  logo: string;
-}
-
+/** Response `data` from PATCH /labs/logo (multipart upload). */
 export interface UpdateLabLogoResponse {
   logo: string;
 }

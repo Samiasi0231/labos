@@ -18,10 +18,17 @@ import type { SearchHit } from "@/api/types/search";
 interface BookDialogProps {
   open: boolean;
   onClose: () => void;
+  /** When set, skips patient search and books for this patient */
+  patientId?: string;
+  invalidate?: string[];
 }
 
-export function BookDialog({ open, onClose }: BookDialogProps) {
-
+export function BookDialog({
+  open,
+  onClose,
+  patientId,
+  invalidate = [endpoint.lab.appointments.list],
+}: BookDialogProps) {
   const [selectedPatient, setSelectedPatient] = useState<SearchHit | null>(null);
   const [selectedTests, setSelectedTests] = useState<SearchHit[]>([]);
   const [scheduledDate, setScheduledDate] = useState("");
@@ -34,7 +41,7 @@ export function BookDialog({ open, onClose }: BookDialogProps) {
     CreateAppointmentPayload
   >(endpoint.lab.appointments.create, {
     successToast: "Appointment booked",
-    invalidate: [endpoint.lab.appointments.list]
+    invalidate,
   });
 
   const reset = () => {
@@ -50,8 +57,10 @@ export function BookDialog({ open, onClose }: BookDialogProps) {
     if (!open) reset();
   }, [open]);
 
+  const resolvedPatientId = patientId ?? selectedPatient?.id;
+
   const handleBook = async () => {
-    if (!selectedPatient || !scheduledDate || selectedTests.length === 0) {
+    if (!resolvedPatientId || !scheduledDate || selectedTests.length === 0) {
       setError("Patient, date, and at least one test are required.");
       return;
     }
@@ -62,7 +71,7 @@ export function BookDialog({ open, onClose }: BookDialogProps) {
       : new Date(`${scheduledDate}T00:00:00`).toISOString();
 
     const res = await createAppointment({
-      patient: selectedPatient.id,
+      patient: resolvedPatientId,
       testCatalogs: selectedTests.map((t) => t.id),
       scheduledAt,
       notes: notes || undefined,
@@ -76,7 +85,10 @@ export function BookDialog({ open, onClose }: BookDialogProps) {
   };
 
   const canBook =
-    !!selectedPatient && selectedTests.length > 0 && !!scheduledDate && !isBooking;
+    !!resolvedPatientId &&
+    selectedTests.length > 0 &&
+    !!scheduledDate &&
+    !isBooking;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -87,19 +99,21 @@ export function BookDialog({ open, onClose }: BookDialogProps) {
 
         <div className="flex flex-col gap-4 py-1">
           {/* Patient */}
-          <div className="space-y-1.5">
-            <Label>
-              Patient <span className="text-destructive">*</span>
-            </Label>
-            <GlobalSearchSelect
-              types={["patients"]}
-              placeholder="Search patient by name or code…"
-              emptyMessage="No patients found"
-              value={selectedPatient}
-              onSelect={setSelectedPatient}
-              onClear={() => setSelectedPatient(null)}
-            />
-          </div>
+          {!patientId && (
+            <div className="space-y-1.5">
+              <Label>
+                Patient <span className="text-destructive">*</span>
+              </Label>
+              <GlobalSearchSelect
+                types={["patients"]}
+                placeholder="Search patient by name or code…"
+                emptyMessage="No patients found"
+                value={selectedPatient}
+                onSelect={setSelectedPatient}
+                onClear={() => setSelectedPatient(null)}
+              />
+            </div>
+          )}
 
           {/* Tests */}
           <div className="space-y-1.5">

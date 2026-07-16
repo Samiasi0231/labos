@@ -19,8 +19,7 @@ import { FlaskConical, Building2, ArrowRight, Phone } from "lucide-react";
 import { notify } from "@/lib/notify";
 
 import { useMutation } from "@/hooks/use-api";
-
-import { setStoredAuth } from "@/api/client";
+import { useStore } from "@/hooks/use-store";
 import endpoint from "@/api/endpoints";
 
 import { createLabSchema, type CreateLabValues } from "@/lib/validations/auth";
@@ -53,6 +52,7 @@ function getRoleRedirect(role: string): string {
 
 export default function CreateLab() {
   const navigate = useNavigate();
+  const { setAuth } = useStore();
 
   const form = useForm<CreateLabValues>({
     resolver: zodResolver(createLabSchema),
@@ -75,7 +75,7 @@ export default function CreateLab() {
       onSuccess: (res) => {
         if (!res.data) return;
 
-        setStoredAuth(res.data);
+        setAuth(res.data);
 
         notify.fromApiSuccess(res, "Lab created successfully!");
 

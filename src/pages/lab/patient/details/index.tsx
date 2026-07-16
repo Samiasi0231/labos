@@ -30,6 +30,7 @@ import type {
 import type { Patient } from "@/api/types/patients";
 import type { TestOrderListResponse } from "@/api/types/test-order";
 import { OrderTable } from "@/components/lab/OrderTable";
+import { AppointmentTable } from "@/components/lab/appointments-table";
 import { EditPatientSheet } from "./edit-sheet";
 
 
@@ -296,6 +297,7 @@ export default function PatientDetail() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="appointments">Appointments</TabsTrigger>
         </TabsList>
 
         {/* ── Overview tab ─────────────────────────────── */}
@@ -402,10 +404,14 @@ export default function PatientDetail() {
 
         {/* ── Orders tab ───────────────────────────────── */}
         <TabsContent value="orders" className="mt-4">
-          <OrderTable
-            filters={{ patient: patientId }}
-            hideTabs
-          />
+          <OrderTable filters={{ patient: patientId }} />
+        </TabsContent>
+
+        {/* ── Appointments tab ─────────────────────────── */}
+        <TabsContent value="appointments" className="mt-4">
+          {patientId && (
+            <AppointmentTable filters={{ patient: patientId }} />
+          )}
         </TabsContent>
       </Tabs>
 

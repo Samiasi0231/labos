@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { useEffect } from "react";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 
@@ -17,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { useNigeriaLocation } from "@/hooks/use-nigeria-location";
+import { useNigeriaLocation } from "@/hooks/use-ng-location";
 
 interface Props<T extends FieldValues & { state?: string; city?: string }> {
   form: UseFormReturn<T>;
@@ -26,8 +27,7 @@ interface Props<T extends FieldValues & { state?: string; city?: string }> {
 export function StateLgaFields<
   T extends FieldValues & { state?: string; city?: string },
 >({ form }: Props<T>) {
-  const { states, lgas, loadingStates, loadingLgas, fetchLgas } =
-    useNigeriaLocation();
+  const { states, lgas, fetchLgas } = useNigeriaLocation();
 
   const selectedState = form.watch("state" as Path<T>);
 
@@ -56,9 +56,7 @@ export function StateLgaFields<
               <FormControl>
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={
-                      loadingStates ? "Loading states..." : "Select State"
-                    }
+                    placeholder="Select State"
                   />
                 </SelectTrigger>
               </FormControl>
@@ -84,33 +82,41 @@ export function StateLgaFields<
           <FormItem>
             <FormLabel>Local Government *</FormLabel>
 
-            <Select
-              value={field.value}
-              onValueChange={field.onChange}
-              disabled={!selectedState || loadingLgas}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      !selectedState
-                        ? "Select State first"
-                        : loadingLgas
-                          ? "Loading LGAs..."
-                          : "Select LGA"
-                    }
-                  />
-                </SelectTrigger>
-              </FormControl>
+            {lgas.length > 0 ? (
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={!selectedState}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !selectedState ? "Select State first" : "Select LGA"
+                      }
+                    />
+                  </SelectTrigger>
+                </FormControl>
 
-              <SelectContent>
-                {lgas.map((lga) => (
-                  <SelectItem key={lga} value={lga}>
-                    {lga}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  {lgas.map((lga) => (
+                    <SelectItem key={lga} value={lga}>
+                      {lga}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <FormControl>
+                <Input
+                  placeholder={
+                    !selectedState ? "Select State first" : "Enter LGA"
+                  }
+                  disabled={!selectedState}
+                  {...field}
+                />
+              </FormControl>
+            )}
 
             <FormMessage />
           </FormItem>

@@ -52,7 +52,7 @@ export interface CurrentUser extends User {
     lab: string;
     joinedAt: string;
   };
-membership?: {
+  membership?: {
     id: string;
     role: string;
     permissions: string[];
@@ -105,4 +105,14 @@ export interface NigeriaState {
   state: string;
   alias: string;
   lgas: string[];
+}
+
+export interface UserLab {
+  _id: string;
+  name: string;
+  code: string;
+  status: string;
+  logo?: string;
+  identifier: string;
+  role: string;
 }

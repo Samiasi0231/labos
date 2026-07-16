@@ -22,11 +22,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useApi, useGlobalSearch, useMutation } from "@/hooks/use-api";
+import { useCurrentUser, useGlobalSearch, useMutation } from "@/hooks/use-api";
+import { useStore } from "@/hooks/use-store";
 import endpoint from "@/api/endpoints";
-import type { CurrentUser } from "@/api/types/user";
 import type { LogoutPayload } from "@/api/types/auth";
-import { getStoredAuth, clearStoredAuth } from "@/api/client";
 import type { SearchResourceType, SearchHit } from "@/api/types/search";
 
 interface LabHeaderProps {
@@ -53,8 +52,8 @@ const GROUP_META: Record<
 
 export function LabHeader({ onMenuClick, pageTitle }: LabHeaderProps) {
   const navigate = useNavigate();
-  const { data: userData } = useApi<CurrentUser>(endpoint.user.me);
-  const user = userData?.data ?? null;
+  const { auth, unsetAuth } = useStore();
+  const { user } = useCurrentUser();
   const logoutMutation = useMutation<unknown, LogoutPayload>(endpoint.auth.logout, {
     method: "POST",
     skipErrorHandling: true,
@@ -64,16 +63,13 @@ export function LabHeader({ onMenuClick, pageTitle }: LabHeaderProps) {
   const logout = async () => {
     setIsLoggingOut(true);
     try {
-      const stored = getStoredAuth();
-      if (stored?.refresh_token) {
-        await logoutMutation.trigger({ refresh_token: stored.refresh_token });
+      if (auth?.refresh_token) {
+        await logoutMutation.trigger({ refresh_token: auth.refresh_token });
       }
     } catch (err) {
       console.error("Logout request failed:", err);
     } finally {
-      clearStoredAuth();
-      setIsLoggingOut(false);
-      navigate("/signin", { replace: true });
+      unsetAuth();
     }
   };
 

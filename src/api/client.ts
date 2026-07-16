@@ -35,6 +35,8 @@ export function setStoredAuth(auth: AuthTokens | SwitchTokens): void {
 export function clearStoredAuth(): void {
   localStorage.removeItem(STORAGE_KEYS.AUTH);
   localStorage.removeItem(STORAGE_KEYS.USER);
+  localStorage.removeItem(STORAGE_KEYS.LAB);
+  localStorage.removeItem("ezralabs_permissions"); // legacy
 }
 
 function isRefreshTokenExpired(auth: AuthTokens | null): boolean {
@@ -108,6 +110,16 @@ client.interceptors.request.use((config) => {
       return Promise.reject(new Error("Session expired"));
     }
     config.headers.Authorization = `Bearer ${auth.access_token}`;
+  }
+
+  // Let the runtime set multipart boundary — do not force application/json
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    const headers = config.headers;
+    if (headers && typeof headers.delete === "function") {
+      headers.delete("Content-Type");
+    } else if (headers) {
+      delete (headers as Record<string, unknown>)["Content-Type"];
+    }
   }
 
   return config;

@@ -4,8 +4,11 @@ import { useSWRConfig } from "swr";
 import { fetcher, get, post, put, patch, del } from "@/api/fetcher";
 import type { ApiError, ApiResponse } from "@/api/types/common";
 import type { GlobalSearchResult } from "@/api/types/search";
+import type { CurrentUser } from "@/api/types/user";
+import type { Lab } from "@/api/types/lab";
 import { notify } from "@/lib/notify";
 import endpoint from "@/api/endpoints";
+import { useStore } from "@/hooks/use-store";
 export { default as useDebounce } from "./use-debounce";
 import useDebounce from "./use-debounce";
 
@@ -142,24 +145,87 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
   };
 }
 
-export function useMyPermissions() {
-  const { data, isLoading } = useApi<MyPermissionsResponse>(
-    endpoint.lab.staff.myPermissions
+/** Fetch current user only when missing from the store / storage. */
+export function useCurrentUser() {
+  const { auth, user, hydrated, setUser } = useStore();
+  const needsFetch = hydrated && !!auth?.access_token && user === null;
+
+  const { isLoading, error, mutate } = useApi<CurrentUser>(
+    needsFetch ? endpoint.user.me : null,
+    {
+      onSuccess: (res) => {
+        if (res.data) setUser(res.data);
+      },
+    },
   );
 
-  const isAdmin = data?.data?.isAdmin ?? false;
-  const permissionSet = new Set(
-    (data?.data?.permissions ?? []).map((p) => p.permission)
-  );
-
-  const can = (permission: string): boolean => {
-    if (isAdmin) return true;
-    return permissionSet.has(permission);
+  return {
+    user,
+    isLoading: !hydrated || (needsFetch && isLoading),
+    error,
+    refetch: mutate,
   };
+}
 
-  const role = data?.data?.role ?? null;
+/** Fetch current lab only when missing from the store / storage. */
+export function useCurrentLab() {
+  const { auth, lab, hydrated, setLab } = useStore();
+  const needsFetch = hydrated && !!auth?.access_token && !!auth.labId && lab === null;
 
-  return { can, isAdmin, role, isLoading };
+  const { isLoading, error, mutate } = useApi<Lab>(
+    needsFetch ? endpoint.lab.me : null,
+    {
+      onSuccess: (res) => {
+        if (res.data) setLab(res.data);
+      },
+    },
+  );
+
+  return {
+    lab,
+    isLoading: !hydrated || (needsFetch && isLoading),
+    error,
+    refetch: mutate,
+  };
+}
+
+/** Fetch permissions only when missing from the store / storage. */
+export function useMyPermissions() {
+  const {
+    auth,
+    permissions,
+    role,
+    isAdmin,
+    hydrated,
+    setPermissions,
+    can: storeCan,
+  } = useStore();
+
+  const needsFetch =
+    hydrated && !!auth?.access_token && !!auth.labId && permissions === null;
+
+  const { isLoading } = useApi<MyPermissionsResponse>(
+    needsFetch ? endpoint.lab.staff.myPermissions : null,
+    {
+      onSuccess: (res) => {
+        const data = res.data;
+        if (!data) return;
+        setPermissions({
+          role: data.role,
+          isAdmin: data.isAdmin,
+          permissions: data.permissions.map((p) => p.permission),
+        });
+      },
+    },
+  );
+
+  return {
+    can: storeCan,
+    isAdmin,
+    role,
+    permissions: permissions ?? [],
+    isLoading: !hydrated || (needsFetch && isLoading),
+  };
 }
 
 export function useGlobalSearch(q: string, types?: string[]) {

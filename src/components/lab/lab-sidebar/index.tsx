@@ -1,16 +1,18 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, concatStrings } from "@/lib/utils";
 import {
-  LayoutDashboard, Users, FlaskConical, FileText, Stethoscope,
-  Package, DollarSign, UserSquare, GitBranch, Settings, ChevronLeft,
+  LayoutDashboard, Users, FlaskConical, FileText,
+  Package, UserSquare, GitBranch, Settings, ChevronLeft,
   Activity, X, ClipboardList, CalendarDays, ReceiptText,
-  Clock, ShieldCheck, Heart, History,
+  Clock, History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useMyPermissions } from "@/hooks/use-api";
+import { useCurrentUser, useMyPermissions } from "@/hooks/use-api";
+import { useMemo } from "react";
+import { LabSwitcher } from "./lab-switcher";
 
 // ─── Nav item / group types ─────────────────────────────────────
 
@@ -43,7 +45,7 @@ const ALL_NAV: NavGroup[] = [
     items: [
       { path: "/lab/patients", label: "Patients", icon: Users, requires: "patients.read" },
       { path: "/lab/tests", label: "Test Orders", icon: FlaskConical, requires: "tests.read" },
-      { path: "/lab/assigned", label: "Assigned Tests", icon: ClipboardList, requires: "tests.read" },
+      { path: "/lab/assigned", label: "Assigned Tests", icon: ClipboardList, requires: "tests.read_own" },
       { path: "/lab/results", label: "Results", icon: FileText, requires: "results.read" },
       { path: "/lab/reviews", label: "Pending Reviews", icon: Clock, requires: "results.read_own" },
       { path: "/lab/appointments", label: "Appointments", icon: CalendarDays, requires: "appointments.read" },
@@ -55,9 +57,7 @@ const ALL_NAV: NavGroup[] = [
     items: [
       { path: "/lab/test-catalog", label: "Test Catalog", icon: ClipboardList, requires: "test_catalog.read" },
       { path: "/lab/staff", label: "Staff", icon: UserSquare, requires: "staff.read" },
-      { path: "/lab/doctors", label: "Doctors", icon: Stethoscope, requires: "doctors.read" },
       { path: "/lab/inventory", label: "Inventory", icon: Package, requires: "inventory.read" },
-      { path: "/lab/finance", label: "Finance", icon: DollarSign, requires: "finance.read" },
       { path: "/lab/branches", label: "Branches", icon: GitBranch, requires: "branches.read" },
       { path: "/lab/activity", label: "Activity Log", icon: History, requires: "activity.read" },
     ],
@@ -84,7 +84,15 @@ interface LabSidebarProps {
 export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }: LabSidebarProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { user } = useCurrentUser();
   const { can, role: staffRole, isLoading: permLoading } = useMyPermissions();
+
+  const { name, initials } = useMemo(() => {
+    const name = concatStrings(user?.firstName || "My", user?.lastName || "Account", " ");
+    const initials = name.split(" ").map(name => name[0]).join("").toUpperCase();
+
+    return { name, initials };
+  }, [user?.firstName, user?.lastName]);
 
   const visibleGroups = ALL_NAV.map((group) => ({
     ...group,
@@ -102,7 +110,7 @@ export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }:
     <div className="flex flex-col h-full">
       {/* ── Logo ──────────────────────────────────── */}
       <div className={cn(
-        "flex items-center gap-3 px-4 py-5 border-b border-sidebar-border",
+        "flex items-center gap-3 px-4 py-5 border-sidebar-border",
         collapsed && !isMobile ? "justify-center px-3" : ""
       )}>
         <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 shadow-glow">
@@ -110,7 +118,7 @@ export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }:
         </div>
         {(!collapsed || isMobile) && (
           <div className="overflow-hidden">
-            <p className="font-bold text-sidebar-foreground text-base leading-tight">Ezralabs</p>
+            <p className="font-bold text-sidebar-foreground text-base leading-tight">LabOS</p>
             <p className="text-xs text-sidebar-muted leading-tight">Laboratory Management</p>
           </div>
         )}
@@ -132,6 +140,11 @@ export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }:
             <X className="w-4 h-4" />
           </Button>
         )}
+      </div>
+
+      {/* ── Lab Switcher ──────────────────────────── */}
+      <div className="px-3 py-2 border-b border-sidebar-border">
+        <LabSwitcher collapsed={collapsed} isMobile={isMobile} />
       </div>
 
       {/* ── Navigation ────────────────────────────── */}
@@ -195,10 +208,12 @@ export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }:
         {(!collapsed || isMobile) ? (
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
             <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-sidebar-primary-foreground">U</span>
+              <span className="text-xs font-bold text-sidebar-primary-foreground">{initials}</span>
             </div>
             <div className="flex-1 text-left overflow-hidden">
-              <p className="text-sm font-medium text-sidebar-foreground truncate leading-tight">My Account</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate leading-tight">
+                {name || "—"}
+              </p>
               <p className="text-xs text-sidebar-muted truncate leading-tight capitalize">
                 {permLoading ? "Loading…" : (staffRole?.replace("_", " ") ?? "Staff")}
               </p>
@@ -207,7 +222,7 @@ export function LabSidebar({ collapsed, onCollapse, mobileOpen, onMobileClose }:
         ) : (
           <div className="flex items-center justify-center py-2 rounded-xl">
             <div className="w-8 h-8 rounded-full bg-sidebar-primary flex items-center justify-center">
-              <span className="text-xs font-bold text-sidebar-primary-foreground">U</span>
+              <span className="text-xs font-bold text-sidebar-primary-foreground">{initials}</span>
             </div>
           </div>
         )}

@@ -29,13 +29,7 @@ const SECURITY_ITEMS = [
     label: "Audit Logs",
     desc: "Track all user actions and changes",
     defaultValue: true,
-  },
-  {
-    key: "ipRestriction",
-    label: "IP Restriction",
-    desc: "Restrict access to specific IP ranges",
-    defaultValue: false,
-  },
+  }
 ] as const;
 
 type SecurityKey = (typeof SECURITY_ITEMS)[number]["key"];

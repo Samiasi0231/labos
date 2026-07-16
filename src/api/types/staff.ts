@@ -55,4 +55,5 @@ export interface StaffListQuery {
   status?: StaffStatus;
   page?: number;
   limit?: number;
+  search?: string;
 }

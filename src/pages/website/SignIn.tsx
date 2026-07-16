@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
-import { setStoredAuth } from "@/api/client";
+import { useStore } from "@/hooks/use-store";
 import endpoint from "@/api/endpoints";
 import {
   signInSchema,
@@ -61,6 +61,7 @@ interface SignInProps {
 
 export default function SignIn({ accessType = "staff" }: SignInProps) {
   const navigate = useNavigate();
+  const { setAuth } = useStore();
   const [showPass, setShowPass] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
@@ -83,7 +84,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
       onSuccess: (res) => {
         const data = res.data;
         if (!data) return;
-        setStoredAuth({ ...data, access_type: accessType });
+        setAuth({ ...data, access_type: accessType });
 
         notify.success("Welcome back!");
         if (accessType === "staff") {

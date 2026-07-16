@@ -78,3 +78,12 @@ export async function downloadPDF(path: string, fallbackName: string): Promise<v
   document.body.removeChild(a);
   URL.revokeObjectURL(objectUrl);
 }
+
+export const concatStrings = (...args: any[]): string => {
+  if (args.length === 0) return '';
+  const separator = args[args.length - 1];
+  const strings = args.slice(0, -1);
+  return strings
+    .filter((str: any) => str && typeof str === 'string' && str.trim() !== '')
+    .join(separator || '');
+};

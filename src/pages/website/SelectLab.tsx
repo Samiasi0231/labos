@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
-import { getStoredAuth, setStoredAuth } from "@/api/client";
+import { useStore } from "@/hooks/use-store";
 import endpoint from "@/api/endpoints";
-import type { SwitchTokens, SwitchLabPayload } from "@/api/types/auth";
+import type { SwitchTokens, SwitchLabPayload, LoginResponse } from "@/api/types/auth";
 import type { UserLabItem } from "@/api/types/user";
 
 function getRoleRedirect(role: string): string {
@@ -31,10 +31,10 @@ function getRoleRedirect(role: string): string {
 
 export default function SelectLab() {
   const navigate = useNavigate();
+  const { auth, setAuth } = useStore();
 
-  // Labs come from the login response — already stored in localStorage
-  const stored = getStoredAuth();
-  const labs: UserLabItem[] = (stored as any)?.labs ?? [];
+  // Labs come from the login response — kept on the auth payload
+  const labs: UserLabItem[] = (auth as LoginResponse | null)?.labs ?? [];
 
   const switchMutation = useMutation<SwitchTokens, SwitchLabPayload>(
     endpoint.auth.switch,
@@ -42,7 +42,7 @@ export default function SelectLab() {
       skipErrorHandling: true,
       onSuccess: (res) => {
         if (!res.data) return;
-        setStoredAuth(res.data);
+        setAuth(res.data);
         notify.fromApiSuccess(res, "Lab selected");
         navigate(getRoleRedirect(res.data.role));
       },
