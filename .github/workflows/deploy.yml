@@ -44,6 +44,8 @@ jobs:
         with:
           name: dist
           path: dist/
+          # Required so public/.htaccess (SPA rewrite rules) is included
+          include-hidden-files: true
           retention-days: 1
 
   deploy:

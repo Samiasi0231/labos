@@ -37,6 +37,16 @@ interface AcceptInvitePayload {
   password?: string;
 }
 
+interface AcceptInviteResponse {
+  access_type: "staff" | "patient" | "doctor";
+  identifier: string;
+}
+
+function getPostInviteRedirect(accessType: string): string {
+  if (accessType === "patient") return "/patient/signin";
+  return "/signin";
+}
+
 export default function AcceptInvite() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -52,7 +62,7 @@ export default function AcceptInvite() {
   const info = inviteData?.data ?? null;
 
   const { trigger: acceptInvite, isLoading: isAccepting } = useMutation<
-    unknown,
+    AcceptInviteResponse,
     AcceptInvitePayload
   >(endpoint.auth.acceptInvite, { skipErrorHandling: true });
 
@@ -64,12 +74,12 @@ export default function AcceptInvite() {
   const onSubmit = async (values: AcceptInviteValues) => {
     if (!token) return;
     try {
-      await acceptInvite({
+      const res = await acceptInvite({
         token,
         password: info?.hasPassword ? undefined : values.password,
       });
-      notify.success("Invitation accepted. You can now log in.");
-      navigate("/signin");
+      notify.success("Invitation accepted. You can now sign in.");
+      navigate(getPostInviteRedirect(res?.data?.access_type ?? info?.type ?? "staff"));
     } catch (err) {
       notify.fromApiError(err as ApiError, "This link may be invalid or expired.");
     }
@@ -78,9 +88,9 @@ export default function AcceptInvite() {
   const handleAcceptExisting = async () => {
     if (!token) return;
     try {
-      await acceptInvite({ token });
-      notify.success("Invitation accepted. You can now log in.");
-      navigate("/signin");
+      const res = await acceptInvite({ token });
+      notify.success("Invitation accepted. You can now sign in.");
+      navigate(getPostInviteRedirect(res?.data?.access_type ?? info?.type ?? "staff"));
     } catch (err) {
       notify.fromApiError(err as ApiError, "This link may be invalid or expired.");
     }

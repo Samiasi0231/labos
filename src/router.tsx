@@ -48,6 +48,7 @@ import ResultEntry from "./pages/lab/result/entry";
 import LabResultDetail from "./pages/lab/result/detail";
 import PendingReviews from "./pages/lab/result/pending-reviews";
 import ActivityLog from "./pages/lab/activities";
+import MyAccount from "./pages/lab/account";
 
 import { PatientLayout } from "./components/patient/PatientLayout";
 import PatientDashboard from "./pages/patient/PatientDashboard";
@@ -113,6 +114,7 @@ export const routers = [
           { path: "result-entry", element: <ResultEntry /> },
           { path: "reviews", element: <PendingReviews /> },
           { path: "activity", element: <ActivityLog /> },
+          { path: "account", element: <MyAccount /> },
         ],
       },
     ],

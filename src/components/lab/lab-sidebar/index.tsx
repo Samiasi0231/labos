@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, FlaskConical, FileText,
   Package, UserSquare, GitBranch, Settings, ChevronLeft,
   Activity, X, ClipboardList, CalendarDays, ReceiptText,
-  Clock, History,
+  Clock, History, UserCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,7 @@ const ALL_NAV: NavGroup[] = [
   {
     group: "System",
     items: [
+      { path: "/lab/account", label: "My Account", icon: UserCircle },
       { path: "/lab/settings", label: "Settings", icon: Settings },
     ],
   },
