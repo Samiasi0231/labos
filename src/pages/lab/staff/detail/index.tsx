@@ -4,13 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChevronRight } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
-import { staffDetailUrl, staffDetailName } from "./shared";
+import { staffDetailUrl } from "./shared";
 import type { StaffDetail } from "./shared";
 import { StaffIdentityCard } from "./identity-card";
 import { TabOverview } from "./tab-overview";
 import { TabPermissions } from "./tab-permissions";
 import { TabActivity } from "./tab-activity";
 import { TabAssignedWork } from "./tab-assigned-work";
+import { concatStrings } from "@/lib/utils";
 
 export default function StaffDetail() {
   const { membershipId } = useParams<{ membershipId: string }>();
@@ -20,6 +21,7 @@ export default function StaffDetail() {
   const url = membershipId ? staffDetailUrl(membershipId) : null;
   const { data, isLoading, error, mutate } = useApi<StaffDetail>(url);
   const staff = data?.data ?? null;
+  const name = concatStrings(staff?.user?.firstName, staff?.user?.lastName, " ");
 
   const showAssigned =
     staff?.role === "scientist" || staff?.role === "technician";
@@ -67,7 +69,7 @@ export default function StaffDetail() {
           Staff
         </Link>
         <ChevronRight className="inline w-3.5 h-3.5 mx-1.5 opacity-50" />
-        <span className="text-foreground font-semibold">{staffDetailName(staff)}</span>
+        <span className="text-foreground font-semibold">{name}</span>
       </p>
 
       {/* ── Two-column grid ── */}
