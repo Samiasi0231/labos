@@ -33,7 +33,10 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      # Vite inlines VITE_* at build time — must be set here (not at deploy).
       - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
         run: npm run build
 
       - name: Upload dist artifact
