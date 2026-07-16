@@ -67,7 +67,17 @@ jobs:
           local-dir: ./dist/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           security: loose
+          # Keep false unless you intentionally want to wipe the whole server-dir first.
+          # Target dir previously had a Next.js app; excluding _next avoids FTP 550
+          # when the action tries to remove a folder that is already gone / inaccessible.
           dangerous-clean-slate: false
           exclude: |
             **/*.map
             **/stats.html
+            **/_next/**
+            **/_next
+            **/.next/**
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/cgi-bin/**
