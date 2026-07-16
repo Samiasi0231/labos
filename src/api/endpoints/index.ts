@@ -88,6 +88,9 @@ const testCatalogEndpoints = {
   addParameter: (testId: string) => `/test-catalog/${testId}/parameters`,
   updateParameter: (testId: string, paramId: string) => `/test-catalog/${testId}/parameters/${paramId}`,
   removeParameter: (testId: string, paramId: string) => `/test-catalog/${testId}/parameters/${paramId}`,
+  addMaterial: (testId: string) => `/test-catalog/${testId}/materials`,
+  updateMaterial: (testId: string, materialId: string) => `/test-catalog/${testId}/materials/${materialId}`,
+  removeMaterial: (testId: string, materialId: string) => `/test-catalog/${testId}/materials/${materialId}`,
   listPresets: "/test-catalog/presets",
   importPresets: "/test-catalog/presets/import",
 } as const;

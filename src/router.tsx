@@ -40,6 +40,7 @@ import StaffDetail from "./pages/lab/staff/detail";
 import Branches from "./pages/lab/Branches";
 import Settings from "./pages/lab/settings";
 import TestCatalog from "./pages/lab/test-catalog";
+import TestCatalogDetail from "./pages/lab/test-catalog/detail";
 
 import PatientRegistration from "./pages/lab/patient/registration";
 import Appointments from "./pages/lab/appointments";
@@ -107,6 +108,7 @@ export const routers = [
           { path: "branches", element: <Branches /> },
           { path: "settings", element: <Settings /> },
           { path: "test-catalog", element: <TestCatalog /> },
+          { path: "test-catalog/:testId", element: <TestCatalogDetail /> },
           // Receptionist pages
           { path: "register", element: <PatientRegistration /> },
           { path: "appointments", element: <Appointments /> },

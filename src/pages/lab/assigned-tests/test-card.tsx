@@ -184,10 +184,10 @@ export function TestCard({
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Beaker className="w-3 h-3" />
-            Parameters ({item.parameters?.length ?? 0})
+            Parameters ({(item?.parameters ?? []).filter(Boolean).length})
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {(item.parameters ?? []).map((p) => (
+            {(item?.parameters ?? []).filter(Boolean).map((p) => (
               <Badge
                 key={p._id}
                 variant="outline"

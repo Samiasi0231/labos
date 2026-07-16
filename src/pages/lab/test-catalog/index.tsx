@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSWRConfig } from "swr";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,11 +31,13 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
-  Pencil,
   Trash2,
   MoreHorizontal,
   TestTube,
   Library,
+  Eye,
+  PowerOff,
+  Power,
 } from "lucide-react";
 import { PresetLibrarySheet } from "@/components/lab/PresetLibrarySheet";
 import { useApi, useMutation } from "@/hooks/use-api";
@@ -42,7 +45,6 @@ import { unslugify } from "@/lib/utils";
 import type { TestCatalogEntry, ReferenceRange, TestCatalogListResponse } from "@/api/types/test-catalog";
 import endpoint from "@/api/endpoints";
 import { AddWizard } from "./add-wizard";
-import { EditDialog } from "./edit-dialog";
 import { DeleteDialog } from "./delete-dialog";
 
 function formatRefRange(range?: ReferenceRange, key: "male" | "female" = "male") {
@@ -52,6 +54,7 @@ function formatRefRange(range?: ReferenceRange, key: "male" | "female" = "male")
 }
 
 export default function TestCatalog() {
+  const navigate = useNavigate();
   const { mutate } = useSWRConfig();
 
   const [search, setSearch] = useState("");
@@ -81,7 +84,6 @@ export default function TestCatalog() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [presetOpen, setPresetOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<TestCatalogEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TestCatalogEntry | null>(null);
 
   const categoriesInUse = useMemo(() => {
@@ -325,15 +327,18 @@ export default function TestCatalog() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             className="gap-2"
-                            onClick={() => setEditTarget(test)}
+                            onClick={() => navigate(`/lab/test-catalog/${test._id}`)}
                           >
-                            <Pencil className="w-3.5 h-3.5" /> Edit
+                            <Eye className="w-3.5 h-3.5" /> View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2"
                             onClick={() => handleToggleActive(test)}
                           >
-                            {test.isActive ? "Deactivate" : "Activate"}
+                            {test.isActive
+                              ? <><PowerOff className="w-3.5 h-3.5" /> Deactivate</>
+                              : <><Power className="w-3.5 h-3.5" /> Activate</>
+                            }
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2 text-destructive"
@@ -433,7 +438,6 @@ export default function TestCatalog() {
       </Card>
 
       <AddWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
-      <EditDialog target={editTarget} onClose={() => setEditTarget(null)} />
       <DeleteDialog target={deleteTarget} onClose={() => setDeleteTarget(null)} />
 
       <PresetLibrarySheet

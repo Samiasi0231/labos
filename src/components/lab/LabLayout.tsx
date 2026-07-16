@@ -30,9 +30,10 @@ export function LabLayout() {
   const location = useLocation();
 
   const pageTitle = pageTitles[location.pathname]
-    ?? (location.pathname.startsWith('/lab/test-order')  ? 'New Test Order'
-      : location.pathname.startsWith('/lab/patients/')   ? 'Patient Details'
-      : location.pathname.startsWith('/lab/staff/')      ? 'Staff'
+    ?? (location.pathname.startsWith('/lab/test-order')      ? 'New Test Order'
+      : location.pathname.startsWith('/lab/patients/')       ? 'Patient Details'
+      : location.pathname.startsWith('/lab/staff/')          ? 'Staff'
+      : location.pathname.startsWith('/lab/test-catalog/')   ? 'Test Catalog'
       : 'Ezralabs');
 
   return (

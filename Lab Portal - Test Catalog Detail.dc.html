@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/styles.css">
+  <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+  <script src="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/_ds_bundle.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    @keyframes labos-spin { to { transform: rotate(360deg); } }
+    .labos-spin { animation: labos-spin .8s linear infinite; }
+  </style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans)">
+
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Sidebar" groups="{{ navGroups }}" active-id="catalog" brand="{{ brandCfg }}" user="{{ sidebarUser }}" hint-size="240px,100%"></x-import>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <header style="height:64px;flex-shrink:0;display:flex;align-items:center;padding:0 24px;background:hsl(var(--card));border-bottom:1px solid hsl(var(--border))">
+      <p style="margin:0;font-size:13px;color:hsl(var(--muted-foreground))">Test Catalog <span style="margin:0 6px">→</span> <span style="color:hsl(var(--foreground));font-weight:600">{{ test.name }}</span></p>
+    </header>
+
+    <main style="flex:1;overflow-y:auto;padding:24px">
+      <div class="animate-fade-in" style="max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+
+        <div class="labos-card" style="padding:20px 22px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+                <h1 style="margin:0;font-size:18px;font-weight:700">{{ test.name }}</h1>
+                <span style="font-size:12px;font-family:var(--font-mono);color:hsl(var(--muted-foreground))">{{ test.code }}</span>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap">
+                <span style="{{ test.catStyle }}">{{ test.category }}</span>
+                <span style="font-size:12.5px;color:hsl(var(--muted-foreground))">{{ test.sampleType }}</span>
+                <span style="font-size:12.5px;color:hsl(var(--muted-foreground))">Turnaround: {{ test.turnaround }} hrs</span>
+              </div>
+            </div>
+            <button class="labos-btn labos-btn-outline labos-btn-sz-sm" style="flex-shrink:0" onClick="{{ openTestEdit }}">{{ ic.pencil }}Edit</button>
+          </div>
+        </div>
+
+        <div class="labos-card" style="padding:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid hsl(var(--border))">
+            <p style="margin:0;font-size:14px;font-weight:600">Materials</p>
+            <button class="labos-btn labos-btn-default labos-btn-sz-sm" onClick="{{ openAddMaterial }}">{{ ic.plus }}Add Material</button>
+          </div>
+
+          <sc-if value="{{ materialsAllEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="margin:18px 20px;display:flex;align-items:flex-start;gap:12px;background:hsl(var(--warning)/.1);border:1px solid hsl(var(--warning)/.3);border-radius:var(--radius);padding:14px 16px">
+              {{ ic.alertWarning }}
+              <div style="flex:1">
+                <p style="margin:0;font-size:13px;color:hsl(var(--foreground))">No materials configured. Add the inventory items needed to collect samples and run this test.</p>
+                <button class="labos-btn labos-btn-outline labos-btn-sz-sm" style="margin-top:10px" onClick="{{ openAddMaterial }}">{{ ic.plus }}Add Material</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ materialsNotAllEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:18px 20px;display:flex;flex-direction:column;gap:20px">
+              <sc-for list="{{ phaseGroups }}" as="pg" hint-placeholder-count="2">
+                <div>
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+                    <p style="margin:0;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:hsl(var(--muted-foreground))">{{ pg.label }}</p>
+                    <p style="margin:0;font-size:11.5px;color:hsl(var(--muted-foreground))">{{ pg.description }}</p>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <sc-for list="{{ pg.rows }}" as="m" hint-placeholder-count="0">
+                      <div style="border:1px solid hsl(var(--border));border-radius:var(--radius);padding:10px 12px">
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <div style="flex:1;min-width:0">
+                            <p style="margin:0;font-size:13px;font-weight:600">{{ m.name }}</p>
+                            <p style="margin:1px 0 0;font-size:11px;color:hsl(var(--muted-foreground))">{{ m.skuLine }}</p>
+                          </div>
+                          <span style="{{ m.badgeStyle }}">{{ m.phaseLabel }}</span>
+                          <sc-if value="{{ m.swapping }}" hint-placeholder-val="{{ false }}"><span class="labos-spin" style="display:inline-flex">{{ ic.spinner }}</span></sc-if>
+                          <sc-if value="{{ m.notSwapping }}" hint-placeholder-val="{{ true }}">
+                            <span class="labos-select" style="width:112px">
+                              <select value="{{ m.phase }}" onChange="{{ m.onPhaseChange }}">
+                                <option value="collection">Collection</option>
+                                <option value="analysis">Analysis</option>
+                              </select>
+                              <span class="labos-select-chevron">{{ ic.chevronDown }}</span>
+                            </span>
+                          </sc-if>
+                          <button class="labos-btn labos-btn-ghost labos-btn-sz-icon" style="height:28px;width:28px;flex-shrink:0" onClick="{{ m.toggleRemoveConfirm }}">{{ ic.trash }}</button>
+                        </div>
+                        <sc-if value="{{ m.removeConfirmOpen }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid hsl(var(--border))">
+                            <p style="margin:0;flex:1;font-size:12px;color:hsl(var(--foreground))">Remove this material?</p>
+                            <button class="labos-btn labos-btn-ghost labos-btn-sz-sm" onClick="{{ m.cancelRemove }}">Cancel</button>
+                            <button class="labos-btn labos-btn-destructive labos-btn-sz-sm" onClick="{{ m.confirmRemove }}">Remove</button>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ pg.empty }}" hint-placeholder-val="{{ false }}">
+                      <div style="text-align:center;padding:14px 10px;border:1px dashed hsl(var(--border));border-radius:var(--radius);color:hsl(var(--muted-foreground));font-size:12px">No materials added</div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <div class="labos-card" style="padding:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid hsl(var(--border))">
+            <p style="margin:0;font-size:14px;font-weight:600">Parameters</p>
+            <button class="labos-btn labos-btn-outline labos-btn-sz-sm" onClick="{{ openBulk }}">{{ ic.slidersHorizontal }}Configure All Parameters</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ paramRows }}" as="p" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid hsl(var(--border))">
+                <div style="flex:1;min-width:0">
+                  <p style="margin:0;font-size:13.5px;font-weight:600">{{ p.name }}</p>
+                  <p style="margin:2px 0 0;font-size:11.5px;color:hsl(var(--muted-foreground))">{{ p.metaLine }}</p>
+                </div>
+
+                <!-- inline editable price -->
+                <sc-if value="{{ p.priceEditing }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:relative;width:110px;flex-shrink:0">
+                    <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:hsl(var(--muted-foreground))">₦</span>
+                    <input class="labos-input" style="height:32px;padding-left:22px;width:100%;box-sizing:border-box;font-size:13px" type="number" min="0" autoFocus="{{ true }}"
+                      value="{{ p.priceDraft }}" onChange="{{ p.onPriceDraft }}" onBlur="{{ p.commitPrice }}" onKeyDown="{{ p.onPriceKeyDown }}">
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.priceNotEditing }}" hint-placeholder-val="{{ true }}">
+                  <button style="{{ p.priceDisplayStyle }}" onClick="{{ p.startPriceEdit }}">{{ p.priceLabel }}</button>
+                </sc-if>
+
+                <button class="labos-btn labos-btn-ghost labos-btn-sz-icon" style="height:30px;width:30px;flex-shrink:0" onClick="{{ p.openConfigure }}">{{ ic.pencil }}</button>
+                <button class="labos-btn labos-btn-ghost labos-btn-sz-icon" style="height:30px;width:30px;flex-shrink:0" onClick="{{ p.remove }}">{{ ic.trash }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============ ADD MATERIAL MODAL ============ -->
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Dialog" open="{{ addMatOpen }}" on-close="{{ closeAddMaterial }}" width="{{ n440 }}" hint-size="0px,0px">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <h2 style="margin:0;font-size:16px;font-weight:700">Add Material</h2>
+      <div>
+        <label style="{{ lbl }}">Inventory Item</label>
+        <input class="labos-input" style="width:100%;box-sizing:border-box" placeholder="Search by name, SKU, unit…" value="{{ am.query }}" onChange="{{ am.onQuery }}">
+        <div style="max-height:150px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-top:6px">
+          <sc-for list="{{ am.results }}" as="ri" hint-placeholder-count="0">
+            <button style="{{ ri.style }}" onClick="{{ ri.select }}">
+              <span style="font-weight:600">{{ ri.name }}</span>
+              <span style="font-size:11px;color:hsl(var(--muted-foreground))">{{ ri.metaLine }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div>
+        <label style="{{ lbl }}">Phase</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <sc-for list="{{ am.phaseOptions }}" as="po" hint-placeholder-count="0">
+            <label style="{{ po.rowStyle }}">
+              <input type="radio" name="mat-phase" checked="{{ po.checked }}" onChange="{{ po.select }}">
+              <span><span style="font-size:13.5px;font-weight:600;display:block">{{ po.label }}</span><span style="font-size:11.5px;color:hsl(var(--muted-foreground))">{{ po.desc }}</span></span>
+            </label>
+          </sc-for>
+        </div>
+      </div>
+      <sc-if value="{{ am.duplicateWarning }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:8px;background:hsl(var(--warning)/.08);border:1px solid hsl(var(--warning)/.25);border-radius:var(--radius);padding:10px 12px">
+          {{ ic.alertWarning }}<p style="margin:0;font-size:12px;color:hsl(var(--foreground))">{{ am.duplicateWarning }}</p>
+        </div>
+      </sc-if>
+      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid hsl(var(--border));padding-top:14px">
+        <button class="labos-btn labos-btn-ghost labos-btn-sz-default" onClick="{{ closeAddMaterial }}">Cancel</button>
+        <button class="labos-btn labos-btn-default labos-btn-sz-default" disabled="{{ am.addDisabled }}" onClick="{{ am.add }}">Add Material</button>
+      </div>
+    </div>
+  </x-import>
+
+  <!-- ============ EDIT TEST MODAL ============ -->
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Dialog" open="{{ testEditOpen }}" on-close="{{ closeTestEdit }}" width="{{ n480 }}" hint-size="0px,0px">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <h2 style="margin:0;font-size:16px;font-weight:700">Edit Test</h2>
+      <div>
+        <label style="{{ lbl }}">Test Name</label>
+        <input class="labos-input" style="width:100%;box-sizing:border-box" value="{{ tf.name }}" onChange="{{ tf.onName }}">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label style="{{ lbl }}">Test Code</label>
+          <input class="labos-input" style="width:100%;box-sizing:border-box;font-family:var(--font-mono)" value="{{ tf.code }}" onChange="{{ tf.onCode }}">
+        </div>
+        <div>
+          <label style="{{ lbl }}">Category</label>
+          <input class="labos-input" style="width:100%;box-sizing:border-box" value="{{ tf.category }}" onChange="{{ tf.onCategory }}">
+        </div>
+      </div>
+      <div>
+        <label style="{{ lbl }}">Sample Type</label>
+        <input class="labos-input" style="width:100%;box-sizing:border-box" value="{{ tf.sampleType }}" onChange="{{ tf.onSampleType }}">
+      </div>
+      <div style="max-width:180px">
+        <label style="{{ lbl }}">Turnaround Time (hrs)</label>
+        <input class="labos-input" style="width:100%;box-sizing:border-box" type="number" min="0" value="{{ tf.turnaround }}" onChange="{{ tf.onTurnaround }}">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid hsl(var(--border));padding-top:14px">
+        <button class="labos-btn labos-btn-ghost labos-btn-sz-default" onClick="{{ closeTestEdit }}">Cancel</button>
+        <button class="labos-btn labos-btn-default labos-btn-sz-default" onClick="{{ saveTestEdit }}">Save Changes</button>
+      </div>
+    </div>
+  </x-import>
+
+  <!-- ============ SINGLE CONFIGURE MODAL ============ -->
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Dialog" open="{{ singleOpen }}" on-close="{{ closeSingle }}" width="{{ n480 }}" hint-size="0px,0px">
+    <div style="display:flex;flex-direction:column;gap:16px;max-height:78vh">
+      <h2 style="margin:0;font-size:16px;font-weight:700">Configure Parameter</h2>
+      <div style="overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="{{ lbl }}">Name</label>
+          <input class="labos-input" style="width:100%;box-sizing:border-box" value="{{ sf.name }}" onChange="{{ sf.onName }}">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <label style="{{ lbl }}">Price</label>
+            <div style="position:relative">
+              <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;color:hsl(var(--muted-foreground))">₦</span>
+              <input class="labos-input" style="width:100%;box-sizing:border-box;padding-left:24px" type="number" min="0" value="{{ sf.price }}" onChange="{{ sf.onPrice }}">
+            </div>
+          </div>
+          <div>
+            <label style="{{ lbl }}">Unit</label>
+            <input class="labos-input" style="width:100%;box-sizing:border-box" placeholder="e.g. g/dL" value="{{ sf.unit }}" onChange="{{ sf.onUnit }}">
+          </div>
+        </div>
+        <div>
+          <label style="{{ lbl }}">Result Type</label>
+          <div style="display:inline-flex;border:1px solid hsl(var(--border));border-radius:var(--radius-md);overflow:hidden;margin-top:4px">
+            <sc-for list="{{ sf.typeOptions }}" as="t" hint-placeholder-count="0"><button style="{{ t.style }}" onClick="{{ t.select }}">{{ t.label }}</button></sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ sf.showOptions }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <label style="{{ lbl }}">Options</label>
+            <input class="labos-input" style="width:100%;box-sizing:border-box" placeholder="Type a value and press Enter" value="{{ sf.optionDraft }}" onChange="{{ sf.onOptionDraft }}" onKeyDown="{{ sf.onOptionKeyDown }}">
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+              <sc-for list="{{ sf.optionChips }}" as="oc" hint-placeholder-count="0">
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;background:hsl(var(--muted));border:1px solid hsl(var(--border));border-radius:999px;padding:3px 6px 3px 10px">{{ oc.value }}<button style="border:none;background:transparent;cursor:pointer;color:hsl(var(--muted-foreground));display:flex;padding:2px" onClick="{{ oc.remove }}">{{ ic.xSmall }}</button></span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sf.showRange }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <label style="{{ lbl }}">Reference Range</label>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+              <sc-for list="{{ sf.rangeRows }}" as="rr" hint-placeholder-count="3">
+                <div style="border:1px solid hsl(var(--border));border-radius:var(--radius);overflow:hidden">
+                  <button style="display:flex;align-items:center;justify-content:space-between;width:100%;border:none;background:transparent;cursor:pointer;padding:9px 12px" onClick="{{ rr.toggle }}">
+                    <span style="font-size:12.5px;font-weight:600">{{ rr.label }}</span>{{ rr.chevronEl }}
+                  </button>
+                  <sc-if value="{{ rr.open }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px 12px">
+                      <div><label style="font-size:11px;color:hsl(var(--muted-foreground))">Min</label><input class="labos-input" style="width:100%;box-sizing:border-box" type="number" value="{{ rr.min }}" onChange="{{ rr.onMin }}"></div>
+                      <div><label style="font-size:11px;color:hsl(var(--muted-foreground))">Max</label><input class="labos-input" style="width:100%;box-sizing:border-box" type="number" value="{{ rr.max }}" onChange="{{ rr.onMax }}"></div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid hsl(var(--border));padding-top:14px">
+        <button class="labos-btn labos-btn-ghost labos-btn-sz-default" onClick="{{ closeSingle }}">Cancel</button>
+        <button class="labos-btn labos-btn-default labos-btn-sz-default" onClick="{{ saveSingle }}">Save Changes</button>
+      </div>
+    </div>
+  </x-import>
+
+  <!-- ============ BULK CONFIGURE SHEET ============ -->
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Sheet" open="{{ bulkOpen }}" on-close="{{ closeBulk }}" width="{{ n640 }}" hint-size="0px,0px">
+    <div style="display:flex;flex-direction:column;height:calc(100vh - 48px);margin:-24px;padding:24px;box-sizing:border-box">
+      <div style="flex-shrink:0;margin-bottom:14px">
+        <h2 style="margin:0;font-size:18px;font-weight:700">Configure All Parameters</h2>
+        <p style="margin:3px 0 0;font-size:13px;color:hsl(var(--muted-foreground))">{{ test.name }}</p>
+      </div>
+
+      <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px">
+        <sc-for list="{{ bulkRows }}" as="br" hint-placeholder-count="6">
+          <div style="border:1px solid hsl(var(--border));border-radius:var(--radius);overflow:hidden">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px">
+              <p style="flex:1;min-width:0;margin:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ br.name }}</p>
+              <div style="position:relative;width:100px;flex-shrink:0">
+                <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:hsl(var(--muted-foreground))">₦</span>
+                <input class="labos-input" style="height:32px;padding-left:22px;width:100%;box-sizing:border-box;font-size:12.5px" type="number" min="0" value="{{ br.price }}" onChange="{{ br.onPrice }}">
+              </div>
+              <input class="labos-input" style="height:32px;width:100px;flex-shrink:0;font-size:12.5px" placeholder="Unit" value="{{ br.unit }}" onChange="{{ br.onUnit }}">
+              <button class="labos-btn labos-btn-ghost labos-btn-sz-icon" style="height:30px;width:30px;flex-shrink:0" onClick="{{ br.expand }}">{{ ic.pencilSmall }}</button>
+              <span style="width:20px;flex-shrink:0;display:flex;justify-content:center">
+                <sc-if value="{{ br.stateSaving }}" hint-placeholder-val="{{ false }}"><span class="labos-spin" style="display:inline-flex">{{ ic.spinner }}</span></sc-if>
+                <sc-if value="{{ br.stateSaved }}" hint-placeholder-val="{{ false }}">{{ ic.checkSaved }}</sc-if>
+                <sc-if value="{{ br.stateError }}" hint-placeholder-val="{{ false }}">
+                  <button style="border:none;background:transparent;cursor:pointer;display:flex" onClick="{{ br.retry }}" title="Retry">{{ ic.retryError }}</button>
+                </sc-if>
+              </span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex-shrink:0;margin-top:14px;padding-top:14px;border-top:1px solid hsl(var(--border));display:flex;justify-content:space-between;align-items:center">
+        <p style="margin:0;font-size:12.5px;color:hsl(var(--muted-foreground))">{{ bulkChangedLabel }}</p>
+        <div style="display:flex;gap:8px">
+          <button class="labos-btn labos-btn-ghost labos-btn-sz-default" onClick="{{ closeBulk }}">Close</button>
+          <button class="labos-btn labos-btn-default labos-btn-sz-default" disabled="{{ bulkSaveDisabled }}" onClick="{{ saveAll }}">
+            <sc-if value="{{ bulkSaving }}" hint-placeholder-val="{{ false }}"><span class="labos-spin" style="display:inline-flex;margin-right:6px">{{ ic.spinner }}</span></sc-if>{{ bulkSaveLabel }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </x-import>
+
+  {{ toastEl }}
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  emptyRanges() { return { General: { min: '', max: '' }, Male: { min: '', max: '' }, Female: { min: '', max: '' } }; }
+
+  state = {
+    test: { name: 'Full Blood Count', code: 'CBC-001', category: 'Haematology', sampleType: 'EDTA whole blood', turnaround: 4 },
+    parameters: [
+      { id: 'p1', name: 'Haemoglobin', type: 'Numeric', unit: 'g/dL', price: 500, options: [], ranges: { General: { min: '13', max: '17' }, Male: { min: '13.5', max: '17.5' }, Female: { min: '12', max: '15.5' } } },
+      { id: 'p2', name: 'White Blood Cells', type: 'Numeric', unit: 'x10⁹/L', price: 350, options: [], ranges: { General: { min: '4', max: '11' }, Male: { min: '', max: '' }, Female: { min: '', max: '' } } },
+      { id: 'p3', name: 'Platelet Count', type: 'Numeric', unit: 'x10⁹/L', price: 0, options: [], ranges: { General: { min: '150', max: '450' }, Male: { min: '', max: '' }, Female: { min: '', max: '' } } },
+      { id: 'p4', name: 'Blood Group', type: 'Select', unit: '', price: 200, options: ['A', 'B', 'AB', 'O'], ranges: this.emptyRanges() },
+      { id: 'p5', name: 'Interpretation Notes', type: 'Text', unit: '', price: 0, options: [], ranges: this.emptyRanges() },
+    ],
+    priceEditingId: null, priceDraft: '',
+    singleOpen: false, singleParamId: null, sf: null, sfRangeOpen: { General: true, Male: false, Female: false },
+    bulkOpen: false, bulkDrafts: {}, bulkExpandedId: null, bulkRowStates: {}, bulkSaving: false,
+    testEditOpen: false, tf: null,
+    materials: [
+      { id: 'm1', name: 'EDTA Tubes (5mL)', sku: 'INV-EDTA-5', category: 'Collection Supplies', phase: 'collection', swapping: false, removeConfirmOpen: false },
+      { id: 'm2', name: 'Full Blood Count Reagent', sku: 'INV-003', category: 'Reagents', phase: 'analysis', swapping: false, removeConfirmOpen: false },
+    ],
+    addMatOpen: false, amQuery: '', amSelectedId: null, amPhase: 'collection',
+    toast: null,
+  };
+
+  get DS() { return window.LabOSDesignSystem_ab2dfe || null; }
+  componentDidMount() { if (!this.DS) { this._poll = setInterval(() => { if (this.DS) { clearInterval(this._poll); this.forceUpdate(); } }, 100); } }
+  componentWillUnmount() { clearInterval(this._poll); clearTimeout(this._t); }
+
+  INVENTORY = [
+    { id: 'INV-001', name: 'EDTA Tubes (5mL)', stock: 240 }, { id: 'INV-002', name: 'Malaria RDT Kits', stock: 45 },
+    { id: 'INV-003', name: 'Full Blood Count Reagent', stock: 12 }, { id: 'INV-004', name: 'Urine Cups', stock: 380 },
+    { id: 'INV-005', name: 'Latex Gloves (M)', stock: 8 }, { id: 'INV-006', name: 'Hepatitis B Surface Antigen Kit', stock: 60 },
+    { id: 'INV-008', name: 'Centrifuge Tubes (15mL)', stock: 150 }, { id: 'INV-009', name: 'SST/Gel Tubes (Yellow)', stock: 190 },
+    { id: 'INV-010', name: 'Alcohol Swabs', stock: 500 },
+  ];
+  i(name, size, color) { return React.createElement(this.DS.Icon, { name, size: size || 14, color: color || 'currentColor' }); }
+
+  openAddMaterial() { this.setState({ addMatOpen: true, amQuery: '', amSelectedId: null, amPhase: 'collection' }); }
+  closeAddMaterial() { this.setState({ addMatOpen: false }); }
+  addMaterial() {
+    const s = this.state;
+    const item = this.INVENTORY.find((i) => i.id === s.amSelectedId);
+    if (!item) return;
+    const dup = s.materials.some((m) => m.sku === item.id && m.phase === s.amPhase);
+    if (dup) return;
+    const cat = item.name.toLowerCase().includes('reagent') || item.name.toLowerCase().includes('kit') ? 'Reagents' : 'Collection Supplies';
+    const row = { id: item.id + '-' + Date.now(), name: item.name, sku: item.id, category: cat, phase: s.amPhase, swapping: false, removeConfirmOpen: false };
+    this.setState({ materials: [...s.materials, row], addMatOpen: false });
+    this.showToast('Material Added', item.name + ' added under ' + (s.amPhase === 'collection' ? 'Collection' : 'Analysis') + '.');
+  }
+  toggleRemoveConfirm(id) { this.setState({ materials: this.state.materials.map((m) => (m.id === id ? { ...m, removeConfirmOpen: !m.removeConfirmOpen } : m)) }); }
+  confirmRemoveMaterial(id) { this.setState({ materials: this.state.materials.filter((m) => m.id !== id) }); this.showToast('Material Removed', 'Material removed from this test.'); }
+  changeMaterialPhase(id, newPhase) {
+    this.setState({ materials: this.state.materials.map((m) => (m.id === id ? { ...m, swapping: true } : m)) });
+    setTimeout(() => {
+      this.setState({ materials: this.state.materials.map((m) => (m.id === id ? { ...m, phase: newPhase, swapping: false } : m)) });
+    }, 500);
+  }
+  pill(tint) {
+    const base = { display: 'inline-flex', alignItems: 'center', borderRadius: 999, padding: '2px 10px', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' };
+    return tint ? { ...base, background: 'hsl(var(--' + tint + ')/.15)', color: 'hsl(var(--' + tint + '))', border: '1px solid hsl(var(--' + tint + ')/.3)' } : { ...base, background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))', border: '1px solid hsl(var(--border))' };
+  }
+  showToast(title, description) { clearTimeout(this._t); this.setState({ toast: { title, description } }); this._t = setTimeout(() => this.setState({ toast: null }), 3000); }
+
+  // inline price edit
+  startPriceEdit(id, current) { this.setState({ priceEditingId: id, priceDraft: String(current) }); }
+  commitPrice(id) {
+    const val = parseFloat(this.state.priceDraft);
+    if (!isNaN(val) && val >= 0) {
+      this.setState({ parameters: this.state.parameters.map((p) => (p.id === id ? { ...p, price: val } : p)), priceEditingId: null });
+      this.showToast('Price Updated', 'Parameter price saved.');
+    } else this.setState({ priceEditingId: null });
+  }
+  removeParam(id) { this.setState({ parameters: this.state.parameters.filter((p) => p.id !== id) }); }
+
+  openTestEdit() { const t = this.state.test; this.setState({ testEditOpen: true, tf: { name: t.name, code: t.code, category: t.category, sampleType: t.sampleType, turnaround: String(t.turnaround) } }); }
+  closeTestEdit() { this.setState({ testEditOpen: false }); }
+  saveTestEdit() {
+    const tf = this.state.tf;
+    this.setState({ test: { ...this.state.test, name: tf.name, code: tf.code, category: tf.category, sampleType: tf.sampleType, turnaround: parseFloat(tf.turnaround) || 0 }, testEditOpen: false });
+    this.showToast('Test Updated', tf.name + ' has been saved.');
+  }
+
+  // single configure modal
+  openSingle(param) {
+    this.setState({ singleOpen: true, singleParamId: param.id, sf: { name: param.name, price: String(param.price), unit: param.unit, type: param.type, options: [...param.options], optionDraft: '', ranges: JSON.parse(JSON.stringify(param.ranges)) }, sfRangeOpen: { General: true, Male: false, Female: false } });
+  }
+  closeSingle() { this.setState({ singleOpen: false }); }
+  saveSingle() {
+    const sf = this.state.sf, id = this.state.singleParamId;
+    this.setState({ parameters: this.state.parameters.map((p) => (p.id === id ? { ...p, name: sf.name, price: parseFloat(sf.price) || 0, unit: sf.unit, type: sf.type, options: sf.options, ranges: sf.ranges } : p)), singleOpen: false });
+    this.showToast('Parameter Updated', sf.name + ' has been saved.');
+  }
+
+  // bulk
+  openBulk() {
+    const drafts = {}; this.state.parameters.forEach((p) => { drafts[p.id] = { price: String(p.price), unit: p.unit }; });
+    this.setState({ bulkOpen: true, bulkDrafts: drafts, bulkRowStates: {}, bulkExpandedId: null });
+  }
+  closeBulk() { this.setState({ bulkOpen: false }); }
+  saveAll() {
+    const s = this.state;
+    const changedIds = s.parameters.filter((p) => {
+      const d = s.bulkDrafts[p.id];
+      return d && (String(p.price) !== d.price || p.unit !== d.unit);
+    }).map((p) => p.id);
+    if (changedIds.length === 0) { this.showToast('Nothing to Save', 'No parameter changes detected.'); return; }
+    const states = {}; changedIds.forEach((id) => { states[id] = 'saving'; });
+    this.setState({ bulkSaving: true, bulkRowStates: { ...s.bulkRowStates, ...states } });
+    this._t2 = setTimeout(() => {
+      const newStates = { ...this.state.bulkRowStates };
+      let updatedParams = this.state.parameters;
+      changedIds.forEach((id) => {
+        const fail = Math.random() < 0.12;
+        newStates[id] = fail ? 'error' : 'saved';
+        if (!fail) {
+          const d = this.state.bulkDrafts[id];
+          updatedParams = updatedParams.map((p) => (p.id === id ? { ...p, price: parseFloat(d.price) || 0, unit: d.unit } : p));
+        }
+      });
+      this.setState({ bulkRowStates: newStates, bulkSaving: false, parameters: updatedParams });
+    }, 900);
+  }
+  retryRow(id) {
+    this.setState({ bulkRowStates: { ...this.state.bulkRowStates, [id]: 'saving' } });
+    setTimeout(() => {
+      const d = this.state.bulkDrafts[id];
+      this.setState({
+        bulkRowStates: { ...this.state.bulkRowStates, [id]: 'saved' },
+        parameters: this.state.parameters.map((p) => (p.id === id ? { ...p, price: parseFloat(d.price) || 0, unit: d.unit } : p)),
+      });
+    }, 700);
+  }
+
+  renderVals() {
+    const DS = this.DS;
+    if (!DS) return { toastEl: null };
+    const s = this.state;
+    const set = (patch) => this.setState(patch);
+    const lbl = { fontSize: '11.5px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '5px' };
+
+    const ic = {
+      plus: this.i('plus', 14),
+      slidersHorizontal: this.i('sliders-horizontal', 14), pencil: this.i('pencil', 14), pencilSmall: this.i('pencil', 13),
+      trash: this.i('trash-2', 14, 'hsl(var(--destructive))'), xSmall: this.i('x', 12),
+      spinner: this.i('loader-2', 14, 'hsl(var(--muted-foreground))'), checkSaved: this.i('check-circle-2', 16, 'hsl(var(--success))'),
+      retryError: this.i('rotate-cw', 14, 'hsl(var(--destructive))'), alertWarning: this.i('alert-triangle', 16, 'hsl(var(--warning))'),
+      chevronDown: this.i('chevron-down', 13),
+    };
+    const chevron = (open) => this.i(open ? 'chevron-up' : 'chevron-down', 13, 'hsl(var(--muted-foreground))');
+
+    const navGroups = [{ group: 'Management', items: [{ id: 'catalog', label: 'Test Catalog', icon: 'flask-conical' }] }];
+    const test = { ...s.test, catStyle: this.pill('primary') };
+
+    const paramRows = s.parameters.map((p) => {
+      const editing = s.priceEditingId === p.id;
+      const zeroPrice = p.price === 0;
+      const priceDisplayStyle = {
+        border: 'none', cursor: 'pointer', width: 110, flexShrink: 0, textAlign: 'right', fontSize: 13, fontWeight: 700,
+        borderRadius: 6, padding: '5px 10px',
+        background: zeroPrice ? 'hsl(var(--warning)/.12)' : 'transparent', color: zeroPrice ? 'hsl(var(--warning))' : 'hsl(var(--foreground))',
+      };
+      return {
+        name: p.name, metaLine: [p.type, p.unit].filter(Boolean).join(' · '),
+        priceEditing: editing, priceNotEditing: !editing,
+        priceDraft: editing ? s.priceDraft : '', onPriceDraft: (e) => set({ priceDraft: e.target.value }),
+        startPriceEdit: () => this.startPriceEdit(p.id, p.price),
+        commitPrice: () => this.commitPrice(p.id),
+        onPriceKeyDown: (e) => { if (e.key === 'Enter') e.target.blur(); if (e.key === 'Escape') set({ priceEditingId: null }); },
+        priceDisplayStyle, priceLabel: zeroPrice ? '₦0 — Set price' : '₦' + p.price.toLocaleString(),
+        openConfigure: () => this.openSingle(p), remove: () => this.removeParam(p.id),
+      };
+    });
+
+    // single form
+    let sfVals = null;
+    if (s.sf) {
+      const sf = s.sf;
+      const typeOptions = ['Numeric', 'Text', 'Select'].map((t) => ({
+        label: t, select: () => set({ sf: { ...sf, type: t } }),
+        style: { padding: '7px 14px', fontSize: 12.5, fontWeight: 600, border: 'none', borderRight: t !== 'Select' ? '1px solid hsl(var(--border))' : 'none', cursor: 'pointer', background: sf.type === t ? 'hsl(var(--primary))' : 'hsl(var(--card))', color: sf.type === t ? '#fff' : 'hsl(var(--foreground))' },
+      }));
+      const rangeRows = ['General', 'Male', 'Female'].map((label) => {
+        const open = s.sfRangeOpen[label];
+        const r = sf.ranges[label] || { min: '', max: '' };
+        return {
+          label, open, chevronEl: chevron(open), toggle: () => set({ sfRangeOpen: { ...s.sfRangeOpen, [label]: !open } }),
+          min: r.min, onMin: (e) => set({ sf: { ...sf, ranges: { ...sf.ranges, [label]: { ...r, min: e.target.value } } } }),
+          max: r.max, onMax: (e) => set({ sf: { ...sf, ranges: { ...sf.ranges, [label]: { ...r, max: e.target.value } } } }),
+        };
+      });
+      sfVals = {
+        name: sf.name, onName: (e) => set({ sf: { ...sf, name: e.target.value } }),
+        price: sf.price, onPrice: (e) => set({ sf: { ...sf, price: e.target.value } }),
+        unit: sf.unit, onUnit: (e) => set({ sf: { ...sf, unit: e.target.value } }),
+        typeOptions, showOptions: sf.type === 'Select', showRange: sf.type === 'Numeric',
+        optionDraft: sf.optionDraft, onOptionDraft: (e) => set({ sf: { ...sf, optionDraft: e.target.value } }),
+        onOptionKeyDown: (e) => { if (e.key === 'Enter' && sf.optionDraft.trim()) { e.preventDefault(); set({ sf: { ...sf, options: [...sf.options, sf.optionDraft.trim()], optionDraft: '' } }); } },
+        optionChips: sf.options.map((o, idx) => ({ value: o, remove: () => set({ sf: { ...sf, options: sf.options.filter((_, i) => i !== idx) } }) })),
+        rangeRows,
+      };
+    }
+
+    // bulk rows
+    const bulkRows = s.parameters.map((p) => {
+      const draft = s.bulkDrafts[p.id] || { price: String(p.price), unit: p.unit };
+      const rowState = s.bulkRowStates[p.id];
+      return {
+        name: p.name,
+        price: draft.price, onPrice: (e) => set({ bulkDrafts: { ...s.bulkDrafts, [p.id]: { ...draft, price: e.target.value } }, bulkRowStates: { ...s.bulkRowStates, [p.id]: undefined } }),
+        unit: draft.unit, onUnit: (e) => set({ bulkDrafts: { ...s.bulkDrafts, [p.id]: { ...draft, unit: e.target.value } }, bulkRowStates: { ...s.bulkRowStates, [p.id]: undefined } }),
+        expand: () => { set({ bulkOpen: false }); this.openSingle(p); },
+        stateSaving: rowState === 'saving', stateSaved: rowState === 'saved', stateError: rowState === 'error',
+        retry: () => this.retryRow(p.id),
+      };
+    });
+    const changedCount = s.parameters.filter((p) => { const d = s.bulkDrafts[p.id]; return d && (String(p.price) !== d.price || p.unit !== d.unit); }).length;
+
+    const tf = s.tf ? {
+      name: s.tf.name, onName: (e) => set({ tf: { ...s.tf, name: e.target.value } }),
+      code: s.tf.code, onCode: (e) => set({ tf: { ...s.tf, code: e.target.value } }),
+      category: s.tf.category, onCategory: (e) => set({ tf: { ...s.tf, category: e.target.value } }),
+      sampleType: s.tf.sampleType, onSampleType: (e) => set({ tf: { ...s.tf, sampleType: e.target.value } }),
+      turnaround: s.tf.turnaround, onTurnaround: (e) => set({ tf: { ...s.tf, turnaround: e.target.value } }),
+    } : null;
+
+    const phaseBadge = (phase) => this.pill(phase === 'collection' ? 'info' : 'primary');
+    const buildGroup = (phase, label, description) => {
+      const rows = s.materials.filter((m) => m.phase === phase).map((m) => ({
+        name: m.name, skuLine: m.sku + ' · ' + m.category, phase: m.phase, badgeStyle: phaseBadge(m.phase), phaseLabel: m.phase === 'collection' ? 'Collection' : 'Analysis',
+        onPhaseChange: (e) => this.changeMaterialPhase(m.id, e.target.value),
+        swapping: m.swapping, notSwapping: !m.swapping,
+        removeConfirmOpen: m.removeConfirmOpen, toggleRemoveConfirm: () => this.toggleRemoveConfirm(m.id),
+        cancelRemove: () => this.toggleRemoveConfirm(m.id), confirmRemove: () => this.confirmRemoveMaterial(m.id),
+      }));
+      return { label, description, rows, empty: rows.length === 0 };
+    };
+    const phaseGroups = [
+      buildGroup('collection', 'Collection', 'Items needed when collecting the patient sample'),
+      buildGroup('analysis', 'Analysis', 'Items consumed during test processing'),
+    ];
+    const materialsAllEmpty = s.materials.length === 0;
+
+    // Add material modal
+    const amQuery = s.amQuery.trim().toLowerCase();
+    const amFiltered = this.INVENTORY.filter((it) => !amQuery || it.name.toLowerCase().includes(amQuery)).slice(0, 6);
+    const amResults = amFiltered.map((it) => ({
+      name: it.name, metaLine: it.id + ' · ' + it.stock + ' in stock',
+      style: { display: 'flex', flexDirection: 'column', gap: 2, padding: '7px 9px', fontSize: 12.5, border: s.amSelectedId === it.id ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: 'var(--radius-md)', background: s.amSelectedId === it.id ? 'hsl(var(--primary)/.08)' : 'transparent', cursor: 'pointer', textAlign: 'left' },
+      select: () => set({ amSelectedId: it.id, amQuery: it.name }),
+    }));
+    const amDup = s.amSelectedId && s.materials.some((m) => m.sku === s.amSelectedId && m.phase === s.amPhase);
+    const amPhaseLabel = s.amPhase === 'collection' ? 'Collection' : 'Analysis';
+    const am = {
+      query: s.amQuery, onQuery: (e) => set({ amQuery: e.target.value, amSelectedId: null }), results: amResults,
+      phaseOptions: [
+        { value: 'collection', label: 'Collection', desc: 'Used during sample collection', checked: s.amPhase === 'collection', select: () => set({ amPhase: 'collection' }), rowStyle: { display: 'flex', alignItems: 'center', gap: 10, border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)', padding: '9px 12px', cursor: 'pointer' } },
+        { value: 'analysis', label: 'Analysis', desc: 'Used during test processing', checked: s.amPhase === 'analysis', select: () => set({ amPhase: 'analysis' }), rowStyle: { display: 'flex', alignItems: 'center', gap: 10, border: '1px solid hsl(var(--border))', borderRadius: 'var(--radius)', padding: '9px 12px', cursor: 'pointer' } },
+      ],
+      duplicateWarning: amDup ? 'This item is already listed under ' + amPhaseLabel + '.' : '',
+      addDisabled: !s.amSelectedId || amDup, add: () => this.addMaterial(),
+    };
+
+    return {
+      ic, navGroups, brandCfg: { icon: 'activity', caption: 'Laboratory Management' }, sidebarUser: { initials: 'KA', name: 'Kemi Adewale', title: 'Manager' },
+      test, paramRows, lbl,
+      testEditOpen: s.testEditOpen, openTestEdit: () => this.openTestEdit(), closeTestEdit: () => this.closeTestEdit(), saveTestEdit: () => this.saveTestEdit(), tf,
+      phaseGroups, materialsAllEmpty, materialsNotAllEmpty: !materialsAllEmpty,
+      addMatOpen: s.addMatOpen, openAddMaterial: () => this.openAddMaterial(), closeAddMaterial: () => this.closeAddMaterial(), am, n440: 440,
+      singleOpen: s.singleOpen, closeSingle: () => this.closeSingle(), saveSingle: () => this.saveSingle(), sf: sfVals, n480: 480,
+      bulkOpen: s.bulkOpen, openBulk: () => this.openBulk(), closeBulk: () => this.closeBulk(), bulkRows, n640: 640,
+      bulkChangedLabel: changedCount + ' parameter' + (changedCount === 1 ? '' : 's') + ' changed',
+      bulkSaveDisabled: changedCount === 0 || s.bulkSaving, bulkSaving: s.bulkSaving, bulkSaveLabel: s.bulkSaving ? 'Saving…' : 'Save All', saveAll: () => this.saveAll(),
+      toastEl: s.toast ? React.createElement(DS.Toast, { fixed: true, tone: 'success', title: s.toast.title, description: s.toast.description, onClose: () => set({ toast: null }) }) : null,
+    };
+  }
+}
+</script>
+</body>
+</html>

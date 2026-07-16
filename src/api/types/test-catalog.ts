@@ -28,6 +28,7 @@ export interface CatalogMaterial {
     _id: string;
     name: string;
     unit: string;
+    sku?: string;
     quantityOnHand: number;
   };
   phase: "collection" | "analysis";
@@ -82,6 +83,7 @@ export interface UpdateParameterPayload {
   type?: ParamType;
   options?: string[];
   referenceRange?: ReferenceRange;
+  price?: number;
 }
 
 export interface CreateTestCatalogPayload {

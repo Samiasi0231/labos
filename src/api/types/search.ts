@@ -1,4 +1,4 @@
-export type SearchResourceType = "patients" | "staff" | "test_catalog" | "test_orders" | "appointments";
+export type SearchResourceType = "patients" | "staff" | "test_catalog" | "test_orders" | "appointments" | "inventory";
 
 export interface SearchHit {
   id: string;
