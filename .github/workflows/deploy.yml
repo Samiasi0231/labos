@@ -20,7 +20,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       # Fresh install on the Linux runner so platform optional deps
       # (e.g. @rollup/rollup-linux-x64-gnu) are resolved correctly.
@@ -67,9 +67,10 @@ jobs:
           local-dir: ./dist/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           security: loose
-          # Keep false unless you intentionally want to wipe the whole server-dir first.
-          # Target dir previously had a Next.js app; excluding _next avoids FTP 550
-          # when the action tries to remove a folder that is already gone / inaccessible.
+          # Changing state-name invalidates the old cached server state (which recorded
+          # stale folders like /***blogs from a previous Next.js deployment) and forces
+          # a clean diff on the next run, preventing FTP 550 errors on missing folders.
+          state-name: .ftp-deploy-sync-state-labos.json
           dangerous-clean-slate: false
           exclude: |
             **/*.map
@@ -81,3 +82,7 @@ jobs:
             **/.git*/**
             **/node_modules/**
             **/cgi-bin/**
+            ***blogs
+            ***blogs/**
+            **/blogs/**
+            **/blogs
