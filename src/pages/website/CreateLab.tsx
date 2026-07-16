@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {StateLgaFields} from "@/components/form/StateLgaField";
+import { StateLgaFields } from "@/components/form/StateLgaField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -117,7 +117,7 @@ export default function CreateLab() {
             </div>
 
             <span className="text-2xl font-bold">
-              <span className="text-primary">Lab</span>OS
+              <span className="text-primary">Ezra</span>Labs
             </span>
           </Link>
 

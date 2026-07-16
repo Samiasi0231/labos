@@ -132,7 +132,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold">
-              <span className="text-primary">Lab</span>OS
+              <span className="text-primary">Ezra</span>Labs
             </span>
           </Link>
           <h1 className="text-2xl font-bold">

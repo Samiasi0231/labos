@@ -135,8 +135,8 @@ export function Navbar() {
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold text-primary">Lab</span>
-              <span className="text-xl font-bold text-foreground">OS</span>
+              <span className="text-xl font-bold text-primary">Ezra</span>
+              <span className="text-xl font-bold text-foreground">Labs</span>
             </div>
           </Link>
 

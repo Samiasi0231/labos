@@ -81,7 +81,7 @@ export default function SelectLab() {
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold">
-              <span className="text-primary">Lab</span>OS
+              <span className="text-primary">Ezra</span>Labs
             </span>
           </div>
           <h1 className="text-2xl font-bold">Select a Laboratory</h1>
