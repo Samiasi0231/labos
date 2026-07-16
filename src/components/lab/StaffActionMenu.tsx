@@ -30,7 +30,6 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type { StaffRole, StaffStatus } from "@/api/types/enums";
 
 const CHANGEABLE_ROLES: StaffRole[] = ["scientist", "receptionist"];
@@ -47,11 +46,11 @@ interface Props {
   name: string;
   role: StaffRole;
   status: StaffStatus;
-  onResend: (id: string) => Promise<void>;
-  onEditRole: (id: string, newRole: StaffRole) => Promise<void>;
-  onDeactivate: (id: string) => Promise<void>;
-  onActivate: (id: string) => Promise<void>;
-  onRemove: (id: string) => Promise<void>;
+  onResend: (id: string) => Promise<unknown | null>;
+  onEditRole: (id: string, newRole: StaffRole) => Promise<unknown | null>;
+  onDeactivate: (id: string) => Promise<unknown | null>;
+  onActivate: (id: string) => Promise<unknown | null>;
+  onRemove: (id: string) => Promise<unknown | null>;
 }
 
 type ActionKey = "resend" | "editRole" | "deactivate" | "activate" | "remove";
@@ -67,7 +66,6 @@ export function StaffActionMenu({
   onActivate,
   onRemove,
 }: Props) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState<ActionKey | null>(null);
   const [confirm, setConfirm] = useState<"deactivate" | "remove" | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -77,49 +75,20 @@ export function StaffActionMenu({
   const run = async (action: ActionKey, payload?: StaffRole) => {
     setLoading(action);
     setError(null);
-    try {
-      if (action === "resend") {
-        await onResend(id);
-        toast({
-          title: "Invite resent",
-          description: `Invite resent to ${name}.`,
-        });
-      }
-      if (action === "editRole") {
-        await onEditRole(id, payload!);
-        toast({
-          title: "Role updated",
-          description: `${name} is now a ${ROLE_LABELS[payload!]}.`,
-        });
-        setEditOpen(false);
-      }
-      if (action === "deactivate") {
-        await onDeactivate(id);
-        toast({
-          title: "Staff deactivated",
-          description: `${name} has been deactivated.`,
-        });
-      }
-      if (action === "activate") {
-        await onActivate(id);
-        toast({
-          title: "Staff activated",
-          description: `${name} has been reactivated.`,
-        });
-      }
-      if (action === "remove") {
-        await onRemove(id);
-        toast({
-          title: "Staff removed",
-          description: `${name} has been removed.`,
-        });
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
+    let result: unknown | null = null;
+    if (action === "resend") result = await onResend(id);
+    if (action === "editRole") result = await onEditRole(id, payload!);
+    if (action === "deactivate") result = await onDeactivate(id);
+    if (action === "activate") result = await onActivate(id);
+    if (action === "remove") result = await onRemove(id);
+    if (result === null) {
       setLoading(null);
       setConfirm(null);
+      return;
     }
+    if (action === "editRole") setEditOpen(false);
+    setLoading(null);
+    setConfirm(null);
   };
 
   const isManager = role === "manager";

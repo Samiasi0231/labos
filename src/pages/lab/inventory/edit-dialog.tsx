@@ -18,12 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateInventoryItem } from "@/hooks/use-inventory";
+import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type {
   InventoryItem,
   InventoryCategory,
   InventoryStatus,
+  UpdateInventoryItemPayload,
 } from "@/api/types/inventory";
 
 interface EditItemDialogProps {
@@ -46,7 +47,14 @@ const EMPTY_FORM = {
 export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { updateItem, isLoading: isUpdating } = useUpdateInventoryItem([]);
+  const { trigger: triggerUpdate, isLoading: isUpdating } = useMutation<
+    InventoryItem,
+    UpdateInventoryItemPayload
+  >("inventory/update", {
+    method: "PATCH",
+    successToast: "Item updated",
+    invalidate: [],
+  });
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => {
@@ -75,8 +83,8 @@ export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
       });
       return;
     }
-    try {
-      await updateItem(target._id, {
+    const res = await triggerUpdate(
+      {
         name: form.name,
         sku: form.sku || undefined,
         category: form.category as InventoryCategory,
@@ -86,15 +94,14 @@ export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
         supplier: form.supplier || undefined,
         expiryDate: form.expiryDate || undefined,
         status: form.status,
-      });
-      mutate((key: unknown) =>
-        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
-      );
-      toast({ title: "Item updated" });
-      onClose();
-    } catch {
-      toast({ title: "Failed to update item", variant: "destructive" });
-    }
+      },
+      endpoint.lab.inventory.update(target._id),
+    );
+    if (!res) return;
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+    );
+    onClose();
   };
 
   return (

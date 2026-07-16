@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +32,9 @@ import {
   Inbox,
   Loader2,
 } from "lucide-react";
-import { useActivityList } from "@/hooks/use-activity";
-import type { Activity, ActivityListQuery } from "@/api/types/activity";
+import { useApi } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { Activity, ActivityListQuery, ActivityListResponse } from "@/api/types/activity";
 import { ActionBadge, ActorAvatar, actorName, fullDate, metaLabel } from "./components";
 import ActivityDrawer from "./details";
 
@@ -134,8 +135,31 @@ export default function ActivityLog() {
     limit: 10,
   };
 
-  const { activities: rawActivities, pagination, isLoading, isValidating, refetch } =
-    useActivityList(query);
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (query.resource) params.set("resource", query.resource);
+    if (query.action) params.set("action", query.action);
+    if (query.actor) params.set("actor", query.actor);
+    if (query.start_date) params.set("start_date", query.start_date);
+    if (query.end_date) params.set("end_date", query.end_date);
+    params.set("page", String(query.page ?? 1));
+    params.set("limit", String(query.limit ?? 20));
+    return `${endpoint.lab.activity.list}?${params.toString()}`;
+  }, [query.resource, query.action, query.actor, query.start_date, query.end_date, query.page, query.limit]);
+
+  const { data, isLoading, isValidating, mutate: refetch } =
+    useApi<ActivityListResponse>(listUrl);
+
+  const rawActivities = data?.data?.docs ?? [];
+  const pagination = data?.data
+    ? {
+        totalDocs: data.data.totalDocs,
+        page: data.data.page,
+        totalPages: data.data.totalPages,
+        hasPrevPage: data.data.hasPrevPage,
+        hasNextPage: data.data.hasNextPage,
+      }
+    : null;
 
   // Apply client-side keyword filter across actor name and action string
   const qLower = q.trim().toLowerCase();

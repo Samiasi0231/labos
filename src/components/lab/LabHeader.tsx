@@ -22,9 +22,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useCurrentUser } from "@/hooks/use-user";
-import { useLogout } from "@/hooks/use-auth";
-import { useGlobalSearch } from "@/hooks/use-api";
+import { useApi, useGlobalSearch, useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { CurrentUser } from "@/api/types/user";
+import type { LogoutPayload } from "@/api/types/auth";
+import { getStoredAuth, clearStoredAuth } from "@/api/client";
 import type { SearchResourceType, SearchHit } from "@/api/types/search";
 
 interface LabHeaderProps {
@@ -51,8 +53,30 @@ const GROUP_META: Record<
 
 export function LabHeader({ onMenuClick, pageTitle }: LabHeaderProps) {
   const navigate = useNavigate();
-  const { user } = useCurrentUser();
-  const { logout, isLoading: isLoggingOut } = useLogout();
+  const { data: userData } = useApi<CurrentUser>(endpoint.user.me);
+  const user = userData?.data ?? null;
+  const logoutMutation = useMutation<unknown, LogoutPayload>(endpoint.auth.logout, {
+    method: "POST",
+    skipErrorHandling: true,
+  });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const logout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const stored = getStoredAuth();
+      if (stored?.refresh_token) {
+        await logoutMutation.trigger({ refresh_token: stored.refresh_token });
+      }
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      clearStoredAuth();
+      setIsLoggingOut(false);
+      navigate("/signin", { replace: true });
+    }
+  };
+
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const [searchQuery, setSearchQuery] = useState("");

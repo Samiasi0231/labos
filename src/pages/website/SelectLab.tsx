@@ -3,7 +3,7 @@ import { FlaskConical, Building2, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
 import { getStoredAuth, setStoredAuth } from "@/api/client";
 import endpoint from "@/api/endpoints";
@@ -43,10 +43,10 @@ export default function SelectLab() {
       onSuccess: (res) => {
         if (!res.data) return;
         setStoredAuth(res.data);
-        toast.success("Lab selected");
+        notify.fromApiSuccess(res, "Lab selected");
         navigate(getRoleRedirect(res.data.role));
       },
-      onError: (err) => toast.error(err.message || "Failed to switch lab"),
+      onError: (err) => notify.fromApiError(err, "Failed to switch lab"),
     },
   );
 

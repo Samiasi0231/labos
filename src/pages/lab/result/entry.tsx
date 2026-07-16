@@ -61,12 +61,12 @@ export default function ResultEntry() {
   const { trigger: triggerSaveDraft, isLoading: isSaving } = useMutation<
     LabResult,
     SaveResultDraftPayload
-  >("results/save-draft", { method: "PUT", skipErrorHandling: true });
+  >("results/save-draft", { method: "PUT", successToast: "Draft saved" });
 
   const { trigger: triggerSubmit, isLoading: isSubmitting } = useMutation<
     LabResult,
     void
-  >("results/submit", { skipErrorHandling: true });
+  >("results/submit", { successToast: "Result submitted" });
 
   const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
@@ -107,16 +107,11 @@ export default function ResultEntry() {
 
   const handleSaveDraft = async () => {
     if (!state) return;
-    try {
-      const res = await triggerSaveDraft(
-        buildPayload(),
-        endpoint.lab.resultEntry.saveDraft(state.orderId, state.itemId),
-      );
-      if (!res) throw new Error();
-      toast({ title: "Draft saved", description: "Your progress has been saved." });
-    } catch {
-      toast({ title: "Save failed", description: "Something went wrong.", variant: "destructive" });
-    }
+    const res = await triggerSaveDraft(
+      buildPayload(),
+      endpoint.lab.resultEntry.saveDraft(state.orderId, state.itemId),
+    );
+    if (!res) return;
   };
 
   const handleSubmit = async () => {
@@ -130,29 +125,17 @@ export default function ResultEntry() {
       });
       return;
     }
-    try {
-      const saveRes = await triggerSaveDraft(
-        buildPayload(),
-        endpoint.lab.resultEntry.saveDraft(state.orderId, state.itemId),
-      );
-      if (!saveRes) throw new Error("Failed to save draft");
-      const submitRes = await triggerSubmit(
-        undefined,
-        endpoint.lab.resultEntry.submit(state.orderId, state.itemId),
-      );
-      if (!submitRes) throw new Error("Failed to submit result");
-      setSubmitted(true);
-      toast({
-        title: "Result submitted",
-        description: `${state.testName} result for ${state.patientName} sent for review.`,
-      });
-    } catch {
-      toast({
-        title: "Submit failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
+    const saveRes = await triggerSaveDraft(
+      buildPayload(),
+      endpoint.lab.resultEntry.saveDraft(state.orderId, state.itemId),
+    );
+    if (!saveRes) return;
+    const submitRes = await triggerSubmit(
+      undefined,
+      endpoint.lab.resultEntry.submit(state.orderId, state.itemId),
+    );
+    if (!submitRes) return;
+    setSubmitted(true);
   };
 
   const returnInfo = useMemo(() => {

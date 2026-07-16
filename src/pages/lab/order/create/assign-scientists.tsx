@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronRight, ChevronDown, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useStaffSearch } from "@/hooks/use-staff";
+import { useApi } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { StaffMember } from "@/api/types/staff";
 import type { AssignScientistsSectionProps, AssigneeInfo } from "./types";
 
 export function AssignScientistsSection({
@@ -15,7 +17,14 @@ export function AssignScientistsSection({
   const [pickerOpenFor, setPickerOpenFor] = useState<string | null>(null);
   const [staffQuery, setStaffQuery] = useState("");
 
-  const { staff, isLoading: isLoadingStaff } = useStaffSearch(staffQuery);
+  const searchUrl = useMemo(() => {
+    const trimmed = staffQuery.trim();
+    return trimmed.length >= 1
+      ? `${endpoint.lab.staff.search}?q=${encodeURIComponent(trimmed)}`
+      : null;
+  }, [staffQuery]);
+  const { data: staffData, isLoading: isLoadingStaff } = useApi<StaffMember[]>(searchUrl);
+  const staff = staffData?.data ?? [];
   const scientists = staff.filter(
     (s) => s.role === "scientist" || s.role === "manager",
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,15 +24,19 @@ import { Search, Plus, Mail, Phone } from "lucide-react";
 import { StaffMembershipBadge } from "@/components/lab/StaffMembershipBadge";
 import { StaffActionMenu } from "@/components/lab/StaffActionMenu";
 import { useToast } from "@/hooks/use-toast";
-import {
-  useStaffList,
-  useInviteStaff,
-  useUpdateStaffRole,
-  useUpdateStaffStatus,
-  useRemoveStaff,
-} from "@/hooks/use-staff";
-import { usePortalAccess } from "@/hooks/use-portal-access";
-import type { StaffRole } from "@/api/types/enums";
+import { useApi, useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type {
+  StaffListResponse,
+  InviteStaffPayload,
+  InviteStaffResponse,
+  UpdateStaffRolePayload,
+  UpdateStaffStatusPayload,
+  UpdateStaffStatusResponse,
+  UpdateStaffRoleResponse,
+} from "@/api/types/staff";
+import type { ResendPortalInvitePayload } from "@/api/types/lab";
+import type { StaffRole, StaffStatus } from "@/api/types/enums";
 
 const roleColors: Record<StaffRole, string> = {
   manager: "bg-primary/15 text-primary border-primary/30",
@@ -53,12 +57,70 @@ export default function Staff() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const { staff, isLoading, refetch, listUrl } = useStaffList({ limit: 100 });
-  const { invite } = useInviteStaff([listUrl]);
-  const { updateRole } = useUpdateStaffRole([listUrl]);
-  const { updateStatus } = useUpdateStaffStatus([listUrl]);
-  const { remove } = useRemoveStaff([listUrl]);
-  const { resend } = usePortalAccess("staff");
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", "1");
+    params.set("limit", "100");
+    const qs = params.toString();
+    return qs ? `${endpoint.lab.staff.list}?${qs}` : endpoint.lab.staff.list;
+  }, []);
+
+  const { data: staffData, isLoading } = useApi<StaffListResponse>(listUrl);
+  const staff = staffData?.data?.docs ?? [];
+
+  const inviteMutation = useMutation<InviteStaffResponse, InviteStaffPayload>(
+    endpoint.lab.staff.invite,
+    { successToast: "Invite sent", invalidate: [listUrl] },
+  );
+  const invite = async (payload: InviteStaffPayload) => {
+    const res = await inviteMutation.trigger(payload);
+    if (!res) return null;
+    return res.data;
+  };
+
+  const updateRoleMutation = useMutation<UpdateStaffRoleResponse, UpdateStaffRolePayload>(
+    "staff/update-role",
+    { method: "PATCH", successToast: "Role updated", invalidate: [listUrl] },
+  );
+  const updateRole = async (membershipId: string, role: StaffRole) => {
+    const res = await updateRoleMutation.trigger({ role }, endpoint.lab.staff.updateRole(membershipId));
+    if (!res) return null;
+    return res.data;
+  };
+
+  const updateStatusMutation = useMutation<UpdateStaffStatusResponse, UpdateStaffStatusPayload>(
+    "staff/update-status",
+    { method: "PATCH", successToast: "Status updated", invalidate: [listUrl] },
+  );
+  const updateStatus = async (membershipId: string, status: StaffStatus) => {
+    const res = await updateStatusMutation.trigger(
+      { status },
+      endpoint.lab.staff.updateStatus(membershipId),
+    );
+    if (!res) return null;
+    return res.data;
+  };
+
+  const removeMutation = useMutation<unknown, void>("staff/remove", {
+    method: "DELETE",
+    successToast: "Staff member removed",
+    invalidate: [listUrl],
+  });
+  const remove = async (membershipId: string) => {
+    const res = await removeMutation.trigger(undefined, endpoint.lab.staff.remove(membershipId));
+    if (!res) return null;
+    return res.data;
+  };
+
+  const resendMutation = useMutation<unknown, ResendPortalInvitePayload>(endpoint.lab.resendInvite, {
+    successToast: "Invite resent",
+    invalidate: [],
+  });
+  const resend = async (identifier: string) => {
+    const res = await resendMutation.trigger({ type: "staff", identifier });
+    if (!res) return null;
+    return res.data;
+  };
 
   const [form, setForm] = useState({
     name: "",
@@ -89,44 +151,23 @@ export default function Staff() {
     const [firstName, ...rest] = form.name.trim().split(" ");
     const lastName = rest.join(" ") || firstName;
 
-    try {
-      await invite({
-        firstName,
-        lastName,
-        email: form.email,
-        role: form.role,
-        phone: form.phone || undefined,
-      });
-      setOpen(false);
-      setForm({ name: "", role: "", email: "", phone: "" });
-      toast({
-        title: "Staff Invited",
-        description: `${form.name} has been invited as ${ROLE_LABELS[form.role]}.`,
-      });
-    } catch {
-      toast({
-        title: "Invite failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
+    const invited = await invite({
+      firstName,
+      lastName,
+      email: form.email,
+      role: form.role,
+      phone: form.phone || undefined,
+    });
+    if (!invited) return;
+    setOpen(false);
+    setForm({ name: "", role: "", email: "", phone: "" });
   };
 
-  const handleResend = async (id: string) => {
-    await resend(id);
-  };
-  const handleEditRole = async (id: string, newRole: StaffRole) => {
-    await updateRole(id, newRole);
-  };
-  const handleDeactivate = async (id: string) => {
-    await updateStatus(id, "inactive");
-  };
-  const handleActivate = async (id: string) => {
-    await updateStatus(id, "active");
-  };
-  const handleRemove = async (id: string) => {
-    await remove(id);
-  };
+  const handleResend = (id: string) => resend(id);
+  const handleEditRole = (id: string, newRole: StaffRole) => updateRole(id, newRole);
+  const handleDeactivate = (id: string) => updateStatus(id, "inactive");
+  const handleActivate = (id: string) => updateStatus(id, "active");
+  const handleRemove = (id: string) => remove(id);
 
   const initials = (first: string, last: string) =>
     `${first[0] ?? ""}${last[0] ?? ""}`.toUpperCase();

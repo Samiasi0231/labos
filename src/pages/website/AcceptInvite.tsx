@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,12 +14,28 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { CheckCircle, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
-import { useInviteInfo, useAcceptInvite } from "@/hooks/use-invite";
+import { notify } from "@/lib/notify";
+import type { ApiError } from "@/api/types/common";
+import { useApi, useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
 import {
   acceptInviteSchema,
   type AcceptInviteValues,
 } from "@/lib/validations/auth";
+
+interface InviteInfo {
+  type: "staff" | "patient" | "doctor";
+  firstName: string;
+  lastName: string;
+  email: string;
+  labName: string;
+  hasPassword: boolean;
+}
+
+interface AcceptInvitePayload {
+  token: string;
+  password?: string;
+}
 
 export default function AcceptInvite() {
   const [searchParams] = useSearchParams();
@@ -27,8 +43,18 @@ export default function AcceptInvite() {
   const token = searchParams.get("token");
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const { info, isLoading, error } = useInviteInfo(token ?? null);
-  const { acceptInvite, isLoading: isAccepting } = useAcceptInvite();
+
+  const inviteUrl = useMemo(
+    () => (token ? endpoint.auth.inviteInfo(token) : null),
+    [token],
+  );
+  const { data: inviteData, isLoading, error } = useApi<InviteInfo>(inviteUrl);
+  const info = inviteData?.data ?? null;
+
+  const { trigger: acceptInvite, isLoading: isAccepting } = useMutation<
+    unknown,
+    AcceptInvitePayload
+  >(endpoint.auth.acceptInvite, { skipErrorHandling: true });
 
   const form = useForm<AcceptInviteValues>({
     resolver: zodResolver(acceptInviteSchema),
@@ -38,22 +64,25 @@ export default function AcceptInvite() {
   const onSubmit = async (values: AcceptInviteValues) => {
     if (!token) return;
     try {
-      await acceptInvite(token, info?.hasPassword ? undefined : values.password);
-      toast.success("Invitation accepted. You can now log in.");
+      await acceptInvite({
+        token,
+        password: info?.hasPassword ? undefined : values.password,
+      });
+      notify.success("Invitation accepted. You can now log in.");
       navigate("/signin");
-    } catch (err: any) {
-      toast.error(err?.message || "This link may be invalid or expired.");
+    } catch (err) {
+      notify.fromApiError(err as ApiError, "This link may be invalid or expired.");
     }
   };
 
   const handleAcceptExisting = async () => {
     if (!token) return;
     try {
-      await acceptInvite(token);
-      toast.success("Invitation accepted. You can now log in.");
+      await acceptInvite({ token });
+      notify.success("Invitation accepted. You can now log in.");
       navigate("/signin");
-    } catch (err: any) {
-      toast.error(err?.message || "This link may be invalid or expired.");
+    } catch (err) {
+      notify.fromApiError(err as ApiError, "This link may be invalid or expired.");
     }
   };
 

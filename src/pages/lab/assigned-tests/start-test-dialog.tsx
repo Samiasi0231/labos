@@ -10,7 +10,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Play, FlaskConical } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useApi, useMutation } from "@/hooks/use-api";
 import type {
   AssignmentItem,
@@ -31,14 +30,13 @@ export function StartTestDialog({
   onClose,
   onStarted,
 }: StartTestDialogProps) {
-  const { toast } = useToast();
   const [materialQtys, setMaterialQtys] = useState<Record<string, string>>({});
 
   const { trigger: startTest, isLoading: isStarting } = useMutation<
     TestOrderItem,
     StartTestPayload
   >("test-orders/start-test", {
-    skipErrorHandling: true,
+    successToast: "Test started",
     invalidate: [endpoint.lab.testOrders.assignments],
   });
 
@@ -64,24 +62,13 @@ export function StartTestDialog({
       }))
       .filter((m) => m.quantity > 0);
 
-    try {
-      await startTest(
-        { materials },
-        endpoint.lab.testOrders.startTest(item.testOrder._id, item._id),
-      );
-      setMaterialQtys({});
-      onStarted();
-      toast({
-        title: "Test started",
-        description: `${item.testName} is now In Progress.`,
-      });
-    } catch {
-      toast({
-        title: "Couldn't start test",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    }
+    const res = await startTest(
+      { materials },
+      endpoint.lab.testOrders.startTest(item.testOrder._id, item._id),
+    );
+    if (!res) return;
+    setMaterialQtys({});
+    onStarted();
   };
 
   return (

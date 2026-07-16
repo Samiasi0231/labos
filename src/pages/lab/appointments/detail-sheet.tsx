@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Check, LogIn } from "lucide-react";
 import { useMutation } from "@/hooks/use-api";
-import { useToast } from "@/hooks/use-toast";
 import endpoint from "@/api/endpoints";
 import type {
   Appointment,
@@ -44,7 +43,6 @@ export function DetailSheet({
   onCheckIn,
   onMutate,
 }: DetailSheetProps) {
-  const { toast } = useToast();
   const [confirmFor, setConfirmFor] = useState<ConfirmFor>(null);
 
   const { trigger: updateStatus, isLoading: isUpdating } = useMutation<
@@ -54,7 +52,7 @@ export function DetailSheet({
     appointment
       ? endpoint.lab.appointments.status(appointment._id)
       : "appointments/status",
-    { method: "PATCH", skipErrorHandling: true }
+    { method: "PATCH", successToast: "Appointment updated" }
   );
 
   const handleStatusChange = async (status: AppointmentStatus) => {
@@ -63,14 +61,10 @@ export function DetailSheet({
       { status },
       endpoint.lab.appointments.status(appointment._id)
     );
-    if (res) {
-      onMutate();
-      toast({ title: `Appointment ${STATUS_CONFIG[status].label.toLowerCase()}` });
-      setConfirmFor(null);
-      onClose();
-    } else {
-      toast({ title: "Failed to update status", variant: "destructive" });
-    }
+    if (!res) return;
+    onMutate();
+    setConfirmFor(null);
+    onClose();
   };
 
   if (!appointment) return null;

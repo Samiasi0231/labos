@@ -8,8 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useRemoveInventoryItem } from "@/hooks/use-inventory";
+import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { InventoryItem } from "@/api/types/inventory";
 
@@ -19,27 +18,20 @@ interface DeleteItemDialogProps {
 }
 
 export function DeleteItemDialog({ target, onClose }: DeleteItemDialogProps) {
-  const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { removeItem, isLoading: isRemoving } = useRemoveInventoryItem([]);
+  const { trigger: triggerRemove, isLoading: isRemoving } = useMutation<unknown, void>(
+    "inventory/remove",
+    { method: "DELETE", successToast: "Item removed", invalidate: [] },
+  );
 
   const handleConfirm = async () => {
     if (!target) return;
-    try {
-      await removeItem(target._id);
-      mutate((key: unknown) =>
-        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
-      );
-      toast({ title: "Item removed", description: `${target.name} deleted.` });
-      onClose();
-    } catch {
-      toast({
-        title: "Cannot delete",
-        description: "Item still has stock on hand. Adjust to zero first.",
-        variant: "destructive",
-      });
-      onClose();
-    }
+    const res = await triggerRemove(undefined, endpoint.lab.inventory.remove(target._id));
+    if (!res) return;
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+    );
+    onClose();
   };
 
   return (

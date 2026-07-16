@@ -24,7 +24,6 @@ import {
   Check,
 } from "lucide-react";
 import { useApi, useMutation } from "@/hooks/use-api";
-import { useToast } from "@/hooks/use-toast";
 import endpoint from "@/api/endpoints";
 import type { TestCatalogPreset, InventoryPreset, ImportPresetsPayload } from "@/api/types/presets";
 
@@ -62,7 +61,6 @@ function SkeletonCard() {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function PresetLibrarySheet({ type, open, onOpenChange }: PresetLibrarySheetProps) {
-  const { toast } = useToast();
   const isCatalog = type === "testCatalog";
 
   // ── Fetch presets ────────────────────────────────────────────────────────────
@@ -87,7 +85,7 @@ export function PresetLibrarySheet({ type, open, onOpenChange }: PresetLibrarySh
 
   const { trigger: triggerImport, isLoading: importing } = useMutation<null, ImportPresetsPayload>(
     importUrl,
-    { skipErrorHandling: true, invalidate: [invalidateUrl, presetsUrl] },
+    { successToast: "Presets imported", invalidate: [invalidateUrl, presetsUrl] },
   );
 
   // ── Local state ──────────────────────────────────────────────────────────────
@@ -136,17 +134,12 @@ export function PresetLibrarySheet({ type, open, onOpenChange }: PresetLibrarySh
   const handleImport = async () => {
     if (selectedIds.length === 0 || importing) return;
     setImportError("");
-    try {
-      await triggerImport({ ids: selectedIds });
-      const count = selectedIds.length;
-      onOpenChange(false);
-      toast({
-        title: "Presets Imported",
-        description: `${count} preset${count === 1 ? "" : "s"} added to your ${isCatalog ? "test catalog" : "inventory"}.`,
-      });
-    } catch {
+    const res = await triggerImport({ ids: selectedIds });
+    if (!res) {
       setImportError("Something went wrong while importing presets. Please try again.");
+      return;
     }
+    onOpenChange(false);
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────

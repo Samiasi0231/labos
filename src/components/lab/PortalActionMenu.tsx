@@ -6,7 +6,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { MoreHorizontal, Send, RefreshCw, ShieldOff, Loader2, Pencil } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type { PortalAccess } from "@/data/mockData";
 
 interface Props {
@@ -14,9 +13,9 @@ interface Props {
   name: string;
   email?: string;
   portalAccess: PortalAccess;
-  onGrant:  (id: string) => Promise<void>;
-  onResend: (id: string) => Promise<void>;
-  onRevoke: (id: string) => Promise<void>;
+  onGrant:  (id: string) => Promise<unknown | null>;
+  onResend: (id: string) => Promise<unknown | null>;
+  onRevoke: (id: string) => Promise<unknown | null>;
   onEdit?:  () => void;
   editLabel?: string;
   /** 'menu' = kebab dropdown for list rows; 'buttons' = labeled buttons for detail view */
@@ -28,7 +27,6 @@ type ActionKey = "grant" | "resend" | "revoke";
 export function PortalActionMenu({
   id, name, email, portalAccess, onGrant, onResend, onRevoke, onEdit, editLabel = "Edit", variant = "menu",
 }: Props) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState<ActionKey | null>(null);
   const [confirm, setConfirm] = useState<"grant" | "revoke" | null>(null);
   const [error,   setError]   = useState<string | null>(null);
@@ -36,16 +34,17 @@ export function PortalActionMenu({
   const run = async (action: ActionKey) => {
     setLoading(action);
     setError(null);
-    try {
-      if (action === "grant")  { await onGrant(id);  toast({ title: "Invite sent",    description: `Portal invite sent to ${name}.` }); }
-      if (action === "resend") { await onResend(id); toast({ title: "Invite resent",  description: `Invite resent to ${email ?? name}.` }); }
-      if (action === "revoke") { await onRevoke(id); toast({ title: "Access revoked", description: `${name}'s portal access has been removed.` }); }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
+    let result: unknown | null = null;
+    if (action === "grant") result = await onGrant(id);
+    if (action === "resend") result = await onResend(id);
+    if (action === "revoke") result = await onRevoke(id);
+    if (result === null) {
       setLoading(null);
       setConfirm(null);
+      return;
     }
+    setLoading(null);
+    setConfirm(null);
   };
 
   const grantDialog = (

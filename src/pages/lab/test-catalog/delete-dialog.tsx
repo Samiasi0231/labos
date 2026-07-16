@@ -8,8 +8,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useRemoveTest } from "@/hooks/use-test-catalog";
+import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { TestCatalogEntry } from "@/api/types/test-catalog";
 
@@ -19,27 +18,20 @@ interface DeleteDialogProps {
 }
 
 export function DeleteDialog({ target, onClose }: DeleteDialogProps) {
-  const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { removeTest } = useRemoveTest([]);
+  const { trigger: triggerRemove } = useMutation<unknown, void>(
+    "test-catalog/remove",
+    { method: "DELETE", successToast: "Test deleted", invalidate: [] },
+  );
 
   const handleConfirm = async () => {
     if (!target) return;
-    try {
-      await removeTest(target._id);
-      mutate((key: unknown) =>
-        typeof key === "string" && key.startsWith(endpoint.lab.testCatalog.list),
-      );
-      toast({ title: "Test deleted", description: `${target.name} removed.` });
-      onClose();
-    } catch {
-      toast({
-        title: "Cannot delete test",
-        description: "This test has existing orders. Deactivate it instead.",
-        variant: "destructive",
-      });
-      onClose();
-    }
+    const res = await triggerRemove(undefined, endpoint.lab.testCatalog.remove(target._id));
+    if (!res) return;
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.testCatalog.list),
+    );
+    onClose();
   };
 
   return (

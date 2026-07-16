@@ -114,15 +114,15 @@ export default function LabResultDetail() {
 
   const { trigger: approveResult, isLoading: isApproving } = useMutation<LabResult, void>(
     "results/approve",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Result approved", invalidate },
   );
   const { trigger: returnResult, isLoading: isReturning } = useMutation<LabResult, ReturnResultPayload>(
     "results/return",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Result returned", invalidate },
   );
   const { trigger: releaseResult, isLoading: isReleasing } = useMutation<LabResult, void>(
     "results/release",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Result released", invalidate },
   );
 
   const [returnOpen, setReturnOpen] = useState(false);
@@ -131,24 +131,14 @@ export default function LabResultDetail() {
 
   const handleApprove = async () => {
     if (!result) return;
-    try {
-      const res = await approveResult(undefined, endpoint.lab.results.approve(result._id));
-      if (!res) throw new Error();
-      toast({ title: "Result Approved", description: "Ready to release to the patient." });
-    } catch {
-      toast({ title: "Approve failed", description: "Something went wrong.", variant: "destructive" });
-    }
+    const res = await approveResult(undefined, endpoint.lab.results.approve(result._id));
+    if (!res) return;
   };
 
   const handleRelease = async () => {
     if (!result) return;
-    try {
-      const res = await releaseResult(undefined, endpoint.lab.results.release(result._id));
-      if (!res) throw new Error();
-      toast({ title: "Result Released", description: "The patient can now view this result." });
-    } catch {
-      toast({ title: "Release failed", description: "Something went wrong.", variant: "destructive" });
-    }
+    const res = await releaseResult(undefined, endpoint.lab.results.release(result._id));
+    if (!res) return;
   };
 
   const handleReturn = async () => {
@@ -157,18 +147,13 @@ export default function LabResultDetail() {
       toast({ title: "Note required", description: "A note is required when returning a result.", variant: "destructive" });
       return;
     }
-    try {
-      const res = await returnResult(
-        { note: returnNote.trim() },
-        endpoint.lab.results.return(result._id),
-      );
-      if (!res) throw new Error();
-      setReturnOpen(false);
-      setReturnNote("");
-      toast({ title: "Result Returned", description: "Sent back to the lab scientist for correction." });
-    } catch {
-      toast({ title: "Return failed", description: "Something went wrong.", variant: "destructive" });
-    }
+    const res = await returnResult(
+      { note: returnNote.trim() },
+      endpoint.lab.results.return(result._id),
+    );
+    if (!res) return;
+    setReturnOpen(false);
+    setReturnNote("");
   };
 
   const handleDownload = async () => {

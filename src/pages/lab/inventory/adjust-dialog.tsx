@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAdjustStock, useInventoryList } from "@/hooks/use-inventory";
+import { useApi, useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
+import type { AdjustStockPayload, InventoryListResponse, StockMutationResponse } from "@/api/types/inventory";
 
 interface AdjustDialogProps {
   open: boolean;
@@ -39,8 +40,20 @@ const EMPTY_FORM = {
 export function AdjustDialog({ open, defaultItemId = "", onClose }: AdjustDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { adjust, isLoading: isAdjusting } = useAdjustStock([]);
-  const { items: allItems } = useInventoryList({ limit: 100 });
+  const { trigger: triggerAdjust, isLoading: isAdjusting } = useMutation<
+    StockMutationResponse,
+    AdjustStockPayload
+  >("inventory/adjust", { successToast: "Stock adjusted", invalidate: [] });
+
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.inventory.list}?${params.toString()}`;
+  }, []);
+
+  const { data } = useApi<InventoryListResponse>(listUrl);
+  const allItems = data?.data?.docs ?? [];
 
   const [adjustItemId, setAdjustItemId] = useState(defaultItemId);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -80,25 +93,19 @@ export function AdjustDialog({ open, defaultItemId = "", onClose }: AdjustDialog
       return;
     }
     const quantityChange = form.direction === "add" ? qty : -qty;
-    try {
-      await adjust(adjustItemId, {
+    const res = await triggerAdjust(
+      {
         quantityChange,
         reason: form.reason.trim(),
         type: form.type,
-      });
-      mutate((key: unknown) =>
-        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
-      );
-      toast({
-        title: "Stock adjusted",
-        description: adjustItem
-          ? `${adjustItem.name} adjusted to ${adjustPreviewQty} ${adjustItem.unit}.`
-          : "Stock adjusted.",
-      });
-      onClose();
-    } catch {
-      toast({ title: "Adjustment failed", variant: "destructive" });
-    }
+      },
+      endpoint.lab.inventory.adjust(adjustItemId),
+    );
+    if (!res) return;
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+    );
+    onClose();
   };
 
   return (

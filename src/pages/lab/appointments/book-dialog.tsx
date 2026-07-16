@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation } from "@/hooks/use-api";
-import { useToast } from "@/hooks/use-toast";
 import { GlobalSearchSelect } from "@/components/lab/GlobalSearchSelect";
 import endpoint from "@/api/endpoints";
 import type { CreateAppointmentPayload, Appointment } from "@/api/types/appointments";
@@ -22,7 +21,6 @@ interface BookDialogProps {
 }
 
 export function BookDialog({ open, onClose }: BookDialogProps) {
-  const { toast } = useToast();
 
   const [selectedPatient, setSelectedPatient] = useState<SearchHit | null>(null);
   const [selectedTests, setSelectedTests] = useState<SearchHit[]>([]);
@@ -35,7 +33,7 @@ export function BookDialog({ open, onClose }: BookDialogProps) {
     Appointment,
     CreateAppointmentPayload
   >(endpoint.lab.appointments.create, {
-    skipErrorHandling: true,
+    successToast: "Appointment booked",
     invalidate: [endpoint.lab.appointments.list]
   });
 
@@ -70,15 +68,11 @@ export function BookDialog({ open, onClose }: BookDialogProps) {
       notes: notes || undefined,
     });
 
-    if (res) {
-      toast({
-        title: "Appointment booked",
-        description: `Scheduled for ${scheduledDate}`,
-      });
-      onClose();
-    } else {
+    if (!res) {
       setError("Could not book appointment. Please try again.");
+      return;
     }
+    onClose();
   };
 
   const canBook =

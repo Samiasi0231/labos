@@ -20,14 +20,15 @@ import {
 } from "@/components/ui/select";
 import { Pencil, Check, X, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  useUpdateTest,
-  useAddParameter,
-  useRemoveParameter,
-} from "@/hooks/use-test-catalog";
+import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import { unslugify } from "@/lib/utils";
-import type { TestCatalogEntry, ParamType } from "@/api/types/test-catalog";
+import type {
+  TestCatalogEntry,
+  ParamType,
+  UpdateTestCatalogPayload,
+  CreateParameterPayload,
+} from "@/api/types/test-catalog";
 import {
   CATEGORY_SUGGESTIONS,
   SAMPLE_TYPES,
@@ -45,9 +46,18 @@ interface EditDialogProps {
 export function EditDialog({ target, onClose }: EditDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { updateTest } = useUpdateTest([]);
-  const { addParameter } = useAddParameter([]);
-  const { removeParameter } = useRemoveParameter([]);
+  const { trigger: triggerUpdate } = useMutation<TestCatalogEntry, UpdateTestCatalogPayload>(
+    "test-catalog/update",
+    { method: "PATCH", successToast: "Test updated", invalidate: [] },
+  );
+  const { trigger: triggerAddParameter } = useMutation<TestCatalogEntry, CreateParameterPayload>(
+    "test-catalog/add-parameter",
+    { successToast: "Parameter added", invalidate: [] },
+  );
+  const { trigger: triggerRemoveParameter } = useMutation<TestCatalogEntry, void>(
+    "test-catalog/remove-parameter",
+    { method: "DELETE", successToast: "Parameter removed", invalidate: [] },
+  );
 
   const [editForm, setEditForm] = useState<EditFormState>({
     name: "",
@@ -91,22 +101,18 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
       toast({ title: "Required fields missing", variant: "destructive" });
       return;
     }
-    try {
-      await updateTest(target._id, {
+    const res = await triggerUpdate(
+      {
         name: editForm.name,
         category: editForm.category,
         turnaroundTime: Number(editForm.turnaroundTime),
         samples: editForm.samples,
-      });
-      await invalidateList();
-      toast({
-        title: "Test updated",
-        description: `${editForm.name} has been updated.`,
-      });
-      onClose();
-    } catch {
-      toast({ title: "Save failed", variant: "destructive" });
-    }
+      },
+      endpoint.lab.testCatalog.update(target._id),
+    );
+    if (!res) return;
+    await invalidateList();
+    onClose();
   };
 
   const addParamToExistingTest = async () => {
@@ -115,8 +121,8 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
       toast({ title: "Parameter name required", variant: "destructive" });
       return;
     }
-    try {
-      const updated = await addParameter(target._id, {
+    const res = await triggerAddParameter(
+      {
         name: newParam.name,
         unit:
           newParam.type !== "select" ? newParam.unit || undefined : undefined,
@@ -130,30 +136,26 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
             : undefined,
         referenceRange: buildRangeForEdit(newParam),
         price: Number(newParam.price) || 0,
-      });
-      if (updated) {
-        setEditForm((prev) => ({ ...prev, parameters: updated.parameters }));
-      }
-      setNewParam(emptyEditParam);
-      await invalidateList();
-      toast({ title: "Parameter added" });
-    } catch {
-      toast({ title: "Failed to add parameter", variant: "destructive" });
-    }
+      },
+      endpoint.lab.testCatalog.addParameter(target._id),
+    );
+    if (!res) return;
+    const updated = res.data;
+    setEditForm((prev) => ({ ...prev, parameters: updated.parameters }));
+    setNewParam(emptyEditParam);
+    await invalidateList();
   };
 
   const handleRemoveExistingParam = async (paramId: string) => {
     if (!target) return;
-    try {
-      const updated = await removeParameter(target._id, paramId);
-      if (updated) {
-        setEditForm((prev) => ({ ...prev, parameters: updated.parameters }));
-      }
-      await invalidateList();
-      toast({ title: "Parameter removed" });
-    } catch {
-      toast({ title: "Failed to remove parameter", variant: "destructive" });
-    }
+    const res = await triggerRemoveParameter(
+      undefined,
+      endpoint.lab.testCatalog.removeParameter(target._id, paramId),
+    );
+    if (!res) return;
+    const updated = res.data;
+    setEditForm((prev) => ({ ...prev, parameters: updated.parameters }));
+    await invalidateList();
   };
 
   return (

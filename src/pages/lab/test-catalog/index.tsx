@@ -37,10 +37,9 @@ import {
   Library,
 } from "lucide-react";
 import { PresetLibrarySheet } from "@/components/lab/PresetLibrarySheet";
-import { useToast } from "@/hooks/use-toast";
-import { useTestCatalogList, useUpdateTestStatus } from "@/hooks/use-test-catalog";
+import { useApi, useMutation } from "@/hooks/use-api";
 import { unslugify } from "@/lib/utils";
-import type { TestCatalogEntry, ReferenceRange } from "@/api/types/test-catalog";
+import type { TestCatalogEntry, ReferenceRange, TestCatalogListResponse } from "@/api/types/test-catalog";
 import endpoint from "@/api/endpoints";
 import { AddWizard } from "./add-wizard";
 import { EditDialog } from "./edit-dialog";
@@ -53,18 +52,31 @@ function formatRefRange(range?: ReferenceRange, key: "male" | "female" = "male")
 }
 
 export default function TestCatalog() {
-  const { toast } = useToast();
   const { mutate } = useSWRConfig();
 
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
-  const { tests, isLoading } = useTestCatalogList({
-    search: search || undefined,
-    category: catFilter === "All" ? undefined : catFilter,
-    limit: 200,
-  });
 
-  const { updateStatus } = useUpdateTestStatus([]);
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (catFilter !== "All") params.set("category", catFilter);
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.testCatalog.list}?${params.toString()}`;
+  }, [search, catFilter]);
+
+  const { data, isLoading } = useApi<TestCatalogListResponse>(listUrl);
+  const tests = data?.data?.docs ?? [];
+
+  const { trigger: triggerUpdateStatus } = useMutation<
+    TestCatalogEntry,
+    { isActive: boolean }
+  >("test-catalog/update-status", {
+    method: "PATCH",
+    successToast: "Test status updated",
+    invalidate: [],
+  });
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [presetOpen, setPresetOpen] = useState(false);
@@ -94,17 +106,16 @@ export default function TestCatalog() {
   };
 
   const handleToggleActive = async (t: TestCatalogEntry) => {
-    try {
-      await updateStatus(t._id, !t.isActive);
-      mutate(
-        (key: unknown) =>
-          typeof key === "string" &&
-          key.startsWith(endpoint.lab.testCatalog.list),
-      );
-      toast({ title: t.isActive ? "Test deactivated" : "Test activated" });
-    } catch {
-      toast({ title: "Failed to update status", variant: "destructive" });
-    }
+    const res = await triggerUpdateStatus(
+      { isActive: !t.isActive },
+      endpoint.lab.testCatalog.updateStatus(t._id),
+    );
+    if (!res) return;
+    mutate(
+      (key: unknown) =>
+        typeof key === "string" &&
+        key.startsWith(endpoint.lab.testCatalog.list),
+    );
   };
 
   return (

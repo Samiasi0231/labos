@@ -86,9 +86,10 @@ export function CreateOrderSheet({
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
   // ── API hooks ────────────────────────────────────────────────────────────────
+  // Progress UI owns feedback. Create errors auto-toast; step errors stay in the log.
   const { trigger: createOrder } = useMutation<TestOrder, CreateTestOrderPayload>(
     endpoint.lab.testOrders.create,
-    { skipErrorHandling: true, invalidate: [endpoint.lab.testOrders.list] },
+    { invalidate: [endpoint.lab.testOrders.list] },
   );
   const { trigger: collectSample } = useMutation<TestOrderItem, CollectSamplePayload>(
     "test-orders/collect-sample",
@@ -171,89 +172,81 @@ export function CreateOrderSheet({
 
     const failures: string[] = [];
 
-    try {
-      // ── Step 1: Create order ─────────────────────────────────────────────────
-      const payload: CreateTestOrderPayload = {
-        patient: patient._id,
-        priority,
-        notes: notes.trim() || undefined,
-        items: selectedTests.map((i) => ({
-          testCatalogId: i.testCatalogId,
-          parameterIds: i.parameterIds,
-        })),
-      };
+    const payload: CreateTestOrderPayload = {
+      patient: patient._id,
+      priority,
+      notes: notes.trim() || undefined,
+      items: selectedTests.map((i) => ({
+        testCatalogId: i.testCatalogId,
+        parameterIds: i.parameterIds,
+      })),
+    };
 
-      const createRes = await createOrder(payload);
-      if (!createRes?.data) throw new Error("Order creation failed");
-      const created = createRes.data;
-      setCreatedOrderId(created._id);
-      markStep("create", "done");
-
-      if (!hasSamples && !hasAssignments) {
-        setProgressPhase("success");
-        return;
-      }
-
-      // ── Fetch populated items (match by index) ───────────────────────────────
-      const populatedRes = await get<TestOrder>(endpoint.lab.testOrders.get(created._id));
-      const populatedItems: TestOrderItem[] = populatedRes.data?.items ?? [];
-
-      // ── Step 2: Collect samples ──────────────────────────────────────────────
-      if (hasSamples) {
-        markStep("samples", "running");
-        for (let i = 0; i < populatedItems.length; i++) {
-          const apiItem = populatedItems[i];
-          const staged = selectedTests[i];
-          if (!staged || !apiItem) continue;
-          const samples = (sampleChips[staged.testCatalogId] ?? []).filter((s) => s.trim());
-          if (samples.length === 0) continue;
-          try {
-            await collectSample(
-              { samples, materials: [] },
-              endpoint.lab.testOrders.collectSample(created._id, apiItem._id),
-            );
-          } catch {
-            failures.push(`Collect sample: ${staged.testName}`);
-          }
-        }
-        markStep("samples", failures.some((f) => f.startsWith("Collect")) ? "failed" : "done");
-      }
-
-      // ── Step 3: Assign scientists ────────────────────────────────────────────
-      if (hasAssignments) {
-        markStep("assign", "running");
-        for (let i = 0; i < populatedItems.length; i++) {
-          const apiItem = populatedItems[i];
-          const staged = selectedTests[i];
-          if (!staged || !apiItem) continue;
-          const assignee = assignees[staged.testCatalogId];
-          if (!assignee) continue;
-          // Assignment requires sample to have been collected
-          const hasSampleForItem =
-            (sampleChips[staged.testCatalogId] ?? []).length > 0;
-          if (!hasSampleForItem) {
-            failures.push(`Assign: ${staged.testName} (no sample collected)`);
-            continue;
-          }
-          try {
-            await assignTestOrderItem(
-              { assignedTo: assignee.id },
-              endpoint.lab.testOrders.assignItem(created._id, apiItem._id),
-            );
-          } catch {
-            failures.push(`Assign: ${staged.testName}`);
-          }
-        }
-        markStep("assign", failures.some((f) => f.startsWith("Assign")) ? "failed" : "done");
-      }
-
-      setFailedItems(failures);
-      setProgressPhase(failures.length > 0 ? "partialFail" : "success");
-    } catch (err) {
-      // Order creation itself failed — close progress, show toast
+    const createRes = await createOrder(payload);
+    if (!createRes?.data) {
       setMode("form");
-      toast({ title: "Failed to create order", variant: "destructive" });
+      return;
     }
+    const created = createRes.data;
+    setCreatedOrderId(created._id);
+    markStep("create", "done");
+
+    if (!hasSamples && !hasAssignments) {
+      setProgressPhase("success");
+      return;
+    }
+
+    const populatedRes = await get<TestOrder>(endpoint.lab.testOrders.get(created._id));
+    const populatedItems: TestOrderItem[] = populatedRes.data?.items ?? [];
+
+    if (hasSamples) {
+      markStep("samples", "running");
+      for (let i = 0; i < populatedItems.length; i++) {
+        const apiItem = populatedItems[i];
+        const staged = selectedTests[i];
+        if (!staged || !apiItem) continue;
+        const samples = (sampleChips[staged.testCatalogId] ?? []).filter((s) => s.trim());
+        if (samples.length === 0) continue;
+        try {
+          await collectSample(
+            { samples, materials: [] },
+            endpoint.lab.testOrders.collectSample(created._id, apiItem._id),
+          );
+        } catch {
+          failures.push(`Collect sample: ${staged.testName}`);
+        }
+      }
+      markStep("samples", failures.some((f) => f.startsWith("Collect")) ? "failed" : "done");
+    }
+
+    if (hasAssignments) {
+      markStep("assign", "running");
+      for (let i = 0; i < populatedItems.length; i++) {
+        const apiItem = populatedItems[i];
+        const staged = selectedTests[i];
+        if (!staged || !apiItem) continue;
+        const assignee = assignees[staged.testCatalogId];
+        if (!assignee) continue;
+        const hasSampleForItem =
+          (sampleChips[staged.testCatalogId] ?? []).length > 0;
+        if (!hasSampleForItem) {
+          failures.push(`Assign: ${staged.testName} (no sample collected)`);
+          continue;
+        }
+        try {
+          await assignTestOrderItem(
+            { assignedTo: assignee.id },
+            endpoint.lab.testOrders.assignItem(created._id, apiItem._id),
+          );
+        } catch {
+          failures.push(`Assign: ${staged.testName}`);
+        }
+      }
+      markStep("assign", failures.some((f) => f.startsWith("Assign")) ? "failed" : "done");
+    }
+
+    setFailedItems(failures);
+    setProgressPhase(failures.length > 0 ? "partialFail" : "success");
   }
 
   // ── Retry failed steps ───────────────────────────────────────────────────────

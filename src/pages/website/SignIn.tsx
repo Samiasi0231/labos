@@ -22,7 +22,7 @@ import {
   ArrowRight,
   Shield,
 } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
 import { setStoredAuth } from "@/api/client";
 import endpoint from "@/api/endpoints";
@@ -85,7 +85,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
         if (!data) return;
         setStoredAuth({ ...data, access_type: accessType });
 
-        toast.success("Welcome back!");
+        notify.success("Welcome back!");
         if (accessType === "staff") {
           if (data.nextAction === "create_lab") { navigate("/create-lab"); return; }
           if (data.nextAction === "select_lab") { navigate("/select-lab"); return; }
@@ -95,7 +95,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
           navigate("/patient");
         }
       },
-      onError: (err) => toast.error(err.message || "Invalid email or password"),
+      onError: (err) => notify.fromApiError(err, "Invalid email or password"),
     },
   );
 
@@ -104,7 +104,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
     {
       skipErrorHandling: true,
       onSuccess: () => setResetSent(true),
-      onError: (err) => toast.error(err.message || "Something went wrong"),
+      onError: (err) => notify.fromApiError(err, "Something went wrong"),
     },
   );
 

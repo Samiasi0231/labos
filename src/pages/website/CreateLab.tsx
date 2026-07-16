@@ -16,7 +16,7 @@ import {
 
 import { FlaskConical, Building2, ArrowRight, Phone } from "lucide-react";
 
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 import { useMutation } from "@/hooks/use-api";
 
@@ -77,13 +77,13 @@ export default function CreateLab() {
 
         setStoredAuth(res.data);
 
-        toast.success("Lab created successfully!");
+        notify.fromApiSuccess(res, "Lab created successfully!");
 
         navigate(getRoleRedirect(res.data.role));
       },
 
       onError: (err) => {
-        toast.error(err.message || "Lab creation failed");
+        notify.fromApiError(err, "Lab creation failed");
       },
     },
   );

@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { PackagePlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useRestockItem } from "@/hooks/use-inventory";
+import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import type { InventoryItem } from "@/api/types/inventory";
+import type { InventoryItem, RestockPayload, StockMutationResponse } from "@/api/types/inventory";
 
 interface RestockDialogProps {
   target: InventoryItem | null;
@@ -33,7 +33,10 @@ const EMPTY_FORM = {
 export function RestockDialog({ target, onClose }: RestockDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { restock, isLoading: isRestocking } = useRestockItem([]);
+  const { trigger: triggerRestock, isLoading: isRestocking } = useMutation<
+    StockMutationResponse,
+    RestockPayload
+  >("inventory/restock", { successToast: "Stock restocked", invalidate: [] });
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => {
@@ -55,25 +58,21 @@ export function RestockDialog({ target, onClose }: RestockDialogProps) {
       toast({ title: "Enter a valid quantity", variant: "destructive" });
       return;
     }
-    try {
-      await restock(target._id, {
+    const res = await triggerRestock(
+      {
         quantity: qty,
         unitCost: form.unitCost ? parseFloat(form.unitCost) : undefined,
         supplier: form.supplier || undefined,
         expiryDate: form.expiryDate || undefined,
         note: form.note || undefined,
-      });
-      mutate((key: unknown) =>
-        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
-      );
-      toast({
-        title: "Item restocked",
-        description: `${target.name} +${qty} ${target.unit}`,
-      });
-      onClose();
-    } catch {
-      toast({ title: "Restock failed", variant: "destructive" });
-    }
+      },
+      endpoint.lab.inventory.restock(target._id),
+    );
+    if (!res) return;
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+    );
+    onClose();
   };
 
   return (

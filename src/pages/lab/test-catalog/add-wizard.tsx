@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +24,10 @@ import {
   FlaskConical,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateTest } from "@/hooks/use-test-catalog";
-import { useInventoryList } from "@/hooks/use-inventory";
+import { useApi, useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import type { ParamType } from "@/api/types/test-catalog";
+import type { ParamType, TestCatalogEntry, CreateTestCatalogPayload } from "@/api/types/test-catalog";
+import type { InventoryListResponse } from "@/api/types/inventory";
 import {
   CATEGORY_SUGGESTIONS,
   SAMPLE_TYPES,
@@ -93,8 +93,23 @@ interface AddWizardProps {
 export function AddWizard({ open, onClose }: AddWizardProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { createTest, isLoading: isCreating } = useCreateTest([]);
-  const { items: allItems } = useInventoryList({ limit: 100 });
+  const { trigger: triggerCreate, isLoading: isCreating } = useMutation<
+    TestCatalogEntry,
+    CreateTestCatalogPayload
+  >(endpoint.lab.testCatalog.create, {
+    successToast: "Test added to catalog",
+    invalidate: [],
+  });
+
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.inventory.list}?${params.toString()}`;
+  }, []);
+
+  const { data } = useApi<InventoryListResponse>(listUrl);
+  const allItems = data?.data?.docs ?? [];
 
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
   const [step1Error, setStep1Error] = useState("");
@@ -211,37 +226,30 @@ export function AddWizard({ open, onClose }: AddWizardProps) {
       });
       return;
     }
-    try {
-      await createTest({
-        name: basic.name.trim(),
-        code: basic.code.trim().toUpperCase(),
-        category: basic.category.trim(),
-        turnaroundTime: Number(basic.turnaround),
-        samples: basic.samples,
-        parameters: pendingParams.map((p) => ({
-          name: p.name,
-          unit: p.unit,
-          type: p.type,
-          options: p.options,
-          referenceRange: p.referenceRange,
-          price: p.price,
-        })),
-        materials: pendingMaterials.map((m) => ({
-          inventoryItem: m.itemId,
-          phase: m.phase,
-        })),
-      });
-      mutate((key: unknown) =>
-        typeof key === "string" && key.startsWith(endpoint.lab.testCatalog.list),
-      );
-      toast({
-        title: "Test created",
-        description: `${basic.name.trim()} added with ${pendingParams.length} parameter${pendingParams.length !== 1 ? "s" : ""}.`,
-      });
-      handleClose();
-    } catch {
-      toast({ title: "Failed to create test", variant: "destructive" });
-    }
+    const res = await triggerCreate({
+      name: basic.name.trim(),
+      code: basic.code.trim().toUpperCase(),
+      category: basic.category.trim(),
+      turnaroundTime: Number(basic.turnaround),
+      samples: basic.samples,
+      parameters: pendingParams.map((p) => ({
+        name: p.name,
+        unit: p.unit,
+        type: p.type,
+        options: p.options,
+        referenceRange: p.referenceRange,
+        price: p.price,
+      })),
+      materials: pendingMaterials.map((m) => ({
+        inventoryItem: m.itemId,
+        phase: m.phase,
+      })),
+    });
+    if (!res) return;
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.testCatalog.list),
+    );
+    handleClose();
   };
 
   return (

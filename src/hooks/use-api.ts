@@ -4,7 +4,7 @@ import { useSWRConfig } from "swr";
 import { fetcher, get, post, put, patch, del } from "@/api/fetcher";
 import type { ApiError, ApiResponse } from "@/api/types/common";
 import type { GlobalSearchResult } from "@/api/types/search";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import endpoint from "@/api/endpoints";
 export { default as useDebounce } from "./use-debounce";
 import useDebounce from "./use-debounce";
@@ -17,32 +17,6 @@ interface MyPermissionsResponse {
     description: string;
   }[];
 }
-
-const TOAST_IDS = {
-  AUTH_ERROR: "auth-error",
-  NETWORK_ERROR: "network-error",
-} as const;
-
-function isNetworkError(err: ApiError): boolean {
-  return err.status == null;
-}
-
-function showApiErrorToast(err: ApiError) {
-  if (err.status === 401) {
-    toast.error("Session expired. Please sign in again.", {
-      id: TOAST_IDS.AUTH_ERROR,
-    });
-    return;
-  }
-  if (isNetworkError(err)) {
-    toast.error(err.message || "Network error. Check your connection.", {
-      id: TOAST_IDS.NETWORK_ERROR,
-    });
-    return;
-  }
-  toast.error(err.message);
-}
-
 
 export interface UseApiOptions {
   skipErrorHandling?: boolean;
@@ -67,7 +41,7 @@ export function useApi<T>(
   >(endpoint, (url) => fetcher<T>(url), {
     ...swrConfig,
     onError: (err) => {
-      if (!skipErrorHandling) showApiErrorToast(err);
+      if (!skipErrorHandling) notify.fromApiError(err);
       onError?.(err);
     },
     onSuccess: (data) => {
@@ -83,7 +57,13 @@ type Method = "POST" | "PUT" | "PATCH" | "DELETE" | "GET";
 
 export interface UseMutationOptions<TResponse> {
   method?: Method;
+  /** When true, errors are thrown and not auto-toasted. */
   skipErrorHandling?: boolean;
+  /**
+   * Show a success toast with the backend `message`.
+   * Pass a string as fallback when the response message is empty.
+   */
+  successToast?: boolean | string;
   onSuccess?: (data: ApiResponse<TResponse>) => void;
   onError?: (error: ApiError) => void;
   invalidate?: string[];
@@ -96,6 +76,7 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
   const {
     method = "POST",
     skipErrorHandling = false,
+    successToast,
     onSuccess,
     onError,
     invalidate = [],
@@ -126,13 +107,18 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
     endpoint,
     fetcherFn,
     {
-      throwOnError: false,
+      throwOnError: true,
       onSuccess: (data) => {
         invalidate.forEach((key) => globalMutate(key));
+        if (successToast) {
+          const fallback =
+            typeof successToast === "string" ? successToast : "Success";
+          notify.fromApiSuccess(data, fallback);
+        }
         onSuccess?.(data);
       },
       onError: (err: ApiError) => {
-        if (!skipErrorHandling) showApiErrorToast(err);
+        if (!skipErrorHandling) notify.fromApiError(err);
         onError?.(err);
       },
     }

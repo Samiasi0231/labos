@@ -40,11 +40,12 @@ import {
   Library,
 } from "lucide-react";
 import { PresetLibrarySheet } from "@/components/lab/PresetLibrarySheet";
-import { useMyPermissions } from "@/hooks/use-api";
-import { useInventoryList } from "@/hooks/use-inventory";
+import { useApi, useMyPermissions } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
 import type {
   InventoryCategory,
   InventoryItem,
+  InventoryListResponse,
   InventoryStatus,
 } from "@/api/types/inventory";
 import { AddItemDialog } from "./add-dialog";
@@ -128,14 +129,20 @@ export function ItemsTab() {
   }, []);
 
   // ── Data ──
-  const { items, isLoading } = useInventoryList({
-    search: search || undefined,
-    category: categoryFilter === "All" ? undefined : categoryFilter,
-    status: statusFilter === "All" ? undefined : statusFilter,
-    lowStock: lowStockOnly ? true : undefined,
-    expiringBefore: expiringSoon ? expiringSoonDate : undefined,
-    limit: 100,
-  });
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (categoryFilter !== "All") params.set("category", categoryFilter);
+    if (statusFilter !== "All") params.set("status", statusFilter);
+    if (lowStockOnly) params.set("lowStock", "true");
+    if (expiringSoon) params.set("expiringBefore", expiringSoonDate);
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.inventory.list}?${params.toString()}`;
+  }, [search, categoryFilter, statusFilter, lowStockOnly, expiringSoon, expiringSoonDate]);
+
+  const { data, isLoading } = useApi<InventoryListResponse>(listUrl);
+  const items = data?.data?.docs ?? [];
 
   const openAdjust = (item: InventoryItem) => {
     setAdjustItemId(item._id);

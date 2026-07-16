@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2 } from "lucide-react";
 import { useMutation } from "@/hooks/use-api";
 import { useSWRConfig } from "swr";
-import { useToast } from "@/hooks/use-toast";
 import endpoint from "@/api/endpoints";
 import type { Appointment, CheckInPayload } from "@/api/types/appointments";
 import { patientName } from "./shared";
@@ -31,7 +30,6 @@ const PRIORITIES: { value: Priority; label: string }[] = [
 ];
 
 export function CheckInDialog({ appointment, onClose, onMutate }: CheckInDialogProps) {
-  const { toast } = useToast();
   const { mutate: globalMutate } = useSWRConfig();
 
   const [priority, setPriority] = useState<Priority>("routine");
@@ -42,7 +40,7 @@ export function CheckInDialog({ appointment, onClose, onMutate }: CheckInDialogP
     appointment
       ? endpoint.lab.appointments.checkIn(appointment._id)
       : "appointments/check-in",
-    { skipErrorHandling: true }
+    { successToast: "Checked in" }
   );
 
   useEffect(() => {
@@ -62,16 +60,13 @@ export function CheckInDialog({ appointment, onClose, onMutate }: CheckInDialogP
       { priority, notes: notes || undefined },
       endpoint.lab.appointments.checkIn(appointment._id)
     );
-    if (res) {
-      globalMutate(
-        (key) =>
-          typeof key === "string" && key.startsWith(endpoint.lab.appointments.list)
-      );
-      onMutate();
-      setSuccess(true);
-    } else {
-      toast({ title: "Check-in failed. Please try again.", variant: "destructive" });
-    }
+    if (!res) return;
+    globalMutate(
+      (key) =>
+        typeof key === "string" && key.startsWith(endpoint.lab.appointments.list)
+    );
+    onMutate();
+    setSuccess(true);
   };
 
   return (

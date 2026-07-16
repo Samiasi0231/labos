@@ -3,7 +3,9 @@ import { Search, ChevronRight, ChevronDown, X, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { useTestCatalogList } from "@/hooks/use-test-catalog";
+import { useApi } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { TestCatalogListResponse } from "@/api/types/test-catalog";
 import type { TestSelectionSectionProps, StagedItem } from "./types";
 
 export function TestSelectionSection({
@@ -16,7 +18,16 @@ export function TestSelectionSection({
   // testCatalogId → Set of selected parameterIds
   const [paramSel, setParamSel] = useState<Record<string, Set<string>>>({});
 
-  const { tests: catalog, isLoading } = useTestCatalogList({ isActive: true, limit: 100 });
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("isActive", "true");
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.testCatalog.list}?${params.toString()}`;
+  }, []);
+
+  const { data, isLoading } = useApi<TestCatalogListResponse>(listUrl);
+  const catalog = data?.data?.docs ?? [];
 
   const selectedIds = useMemo(() => new Set(selectedTests.map((t) => t.testCatalogId)), [selectedTests]);
 

@@ -18,9 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateInventoryItem, useRestockItem } from "@/hooks/use-inventory";
+import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import type { InventoryCategory, InventoryStatus } from "@/api/types/inventory";
+import type {
+  InventoryCategory,
+  InventoryItem,
+  InventoryStatus,
+  CreateInventoryItemPayload,
+  RestockPayload,
+  StockMutationResponse,
+} from "@/api/types/inventory";
 
 interface AddItemDialogProps {
   open: boolean;
@@ -42,8 +49,14 @@ const EMPTY_FORM = {
 export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
-  const { createItem, isLoading: isCreating } = useCreateInventoryItem([]);
-  const { restock, isLoading: isRestocking } = useRestockItem([]);
+  const { trigger: triggerCreate, isLoading: isCreating } = useMutation<
+    InventoryItem,
+    CreateInventoryItemPayload
+  >(endpoint.lab.inventory.create, { successToast: "Item added", invalidate: [] });
+  const { trigger: triggerRestock, isLoading: isRestocking } = useMutation<
+    StockMutationResponse,
+    RestockPayload
+  >("inventory/restock", { successToast: "Stock restocked", invalidate: [] });
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const handleAdd = async () => {
@@ -55,38 +68,31 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
       });
       return;
     }
-    try {
-      const created = await createItem({
-        name: form.name,
-        category: form.category as InventoryCategory,
-        unit: form.unit,
-        reorderLevel: parseInt(form.reorderLevel) || 0,
-        unitCost: parseFloat(form.unitCost) || 0,
-        supplier: form.supplier || undefined,
-      });
+    const res = await triggerCreate({
+      name: form.name,
+      category: form.category as InventoryCategory,
+      unit: form.unit,
+      reorderLevel: parseInt(form.reorderLevel) || 0,
+      unitCost: parseFloat(form.unitCost) || 0,
+      supplier: form.supplier || undefined,
+    });
+    if (!res) return;
+    const created = res.data;
 
-      const initialQty = parseFloat(form.quantity) || 0;
-      if (initialQty > 0 && created?._id) {
-        await restock(created._id, { quantity: initialQty });
-        toast({
-          title: "Item added & stocked",
-          description: `${form.name} added with ${initialQty} ${form.unit} in stock.`,
-        });
-      } else {
-        toast({
-          title: "Item added",
-          description: `${form.name} added. Use Restock to add quantity.`,
-        });
-      }
-
-      mutate((key: unknown) =>
-        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+    const initialQty = parseFloat(form.quantity) || 0;
+    if (initialQty > 0 && created._id) {
+      const restockRes = await triggerRestock(
+        { quantity: initialQty },
+        endpoint.lab.inventory.restock(created._id),
       );
-      setForm({ ...EMPTY_FORM });
-      onClose();
-    } catch {
-      toast({ title: "Failed to add item", variant: "destructive" });
+      if (!restockRes) return;
     }
+
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+    );
+    setForm({ ...EMPTY_FORM });
+    onClose();
   };
 
   const handleOpenChange = (v: boolean) => {

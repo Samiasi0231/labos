@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { FlaskConical, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import {
@@ -40,18 +40,18 @@ export default function ResetPassword() {
     {
       skipErrorHandling: true,
       onSuccess: () => {
-        toast.success("Password reset successfully.");
+        notify.success("Password reset successfully.");
         navigate("/signin");
       },
       onError: (err) => {
-        toast.error(err.message || "Unable to reset password.");
+        notify.fromApiError(err, "Unable to reset password.");
       },
     },
   );
 
   const onSubmit = (values: ResetPasswordValues) => {
     if (!token) {
-      toast.error("Invalid or expired password reset link.");
+      notify.error("Invalid or expired password reset link.");
       return;
     }
     resetMutation.trigger({ token, password: values.password });

@@ -30,7 +30,6 @@ import {
   RefreshCw,
   Printer,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { Patient, CreatePatientPayload } from "@/api/types/patients";
@@ -40,14 +39,13 @@ import {
 } from "@/lib/validations/patients-registration";
 
 export default function PatientRegistration() {
-  const { toast } = useToast();
   const { trigger, isLoading: isSubmitting } = useMutation<Patient, CreatePatientPayload>(
     endpoint.lab.patients.create,
-    { skipErrorHandling: true, invalidate: [endpoint.lab.patients.list] },
+    { successToast: "Patient registered", invalidate: [endpoint.lab.patients.list] },
   );
   const createPatient = async (payload: CreatePatientPayload) => {
     const res = await trigger(payload);
-    if (!res) throw new Error("Failed to register patient");
+    if (!res) return null;
     return res.data;
   };
   const [submitted, setSubmitted] = useState(false);
@@ -72,41 +70,33 @@ export default function PatientRegistration() {
   });
 
  const onSubmit = async (values: PatientRegistrationValues) => {
-   try {
-     const hasAddress =
-       values.addressLine1 ||
-       values.addressLine2 ||
-       values.city ||
-       values.state;
+   const hasAddress =
+     values.addressLine1 ||
+     values.addressLine2 ||
+     values.city ||
+     values.state;
 
-     const patient = await createPatient({
-       firstName: values.firstName,
-       lastName: values.lastName,
-       phone: values.phone,
-       gender: values.gender,
-       dob: values.dob || undefined,
-       email: values.email || undefined,
-       address: hasAddress
-         ? {
-             line1: values.addressLine1 || "",
-             line2: values.addressLine2 || undefined,
-             city: values.city || "",
-             state: values.state || "",
-             country: "NG",
-           }
-         : undefined,
-     });
-     setSubmittedValues(values);
-     setPatientCode(patient.code);
-     setSubmitted(true);
-   } catch (err) {
-  toast({
-    title: "Registration failed",
-    description:
-      "Could not register this patient. They may already exist, or a field is invalid.",
-    variant: "destructive",
-  });
-}
+   const patient = await createPatient({
+     firstName: values.firstName,
+     lastName: values.lastName,
+     phone: values.phone,
+     gender: values.gender,
+     dob: values.dob || undefined,
+     email: values.email || undefined,
+     address: hasAddress
+       ? {
+           line1: values.addressLine1 || "",
+           line2: values.addressLine2 || undefined,
+           city: values.city || "",
+           state: values.state || "",
+           country: "NG",
+         }
+       : undefined,
+   });
+   if (!patient) return;
+   setSubmittedValues(values);
+   setPatientCode(patient.code);
+   setSubmitted(true);
  };
 
   const handleReset = () => {

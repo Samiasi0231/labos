@@ -22,7 +22,7 @@ import {
   Shield,
   Mail,
 } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import { signUpSchema, type SignUpValues } from "@/lib/validations/auth";
@@ -52,7 +52,7 @@ export default function SignUp() {
     {
       skipErrorHandling: true,
       onSuccess: () => setDone(true),
-      onError: (err) => toast.error(err.message || "Registration failed"),
+      onError: (err) => notify.fromApiError(err, "Registration failed"),
     }
   );
 

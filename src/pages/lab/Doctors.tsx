@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,9 +31,14 @@ import { Search, Plus, Stethoscope, Building, Phone, Mail } from "lucide-react";
 import { PortalAccessBadge } from "@/components/lab/PortalAccessBadge";
 import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
 import { useToast } from "@/hooks/use-toast";
-import { useDoctorsList, useCreateDoctor } from "@/hooks/use-doctor";
-import { usePortalAccess } from "@/hooks/use-portal-access";
+import { useApi, useMutation } from "@/hooks/use-api";
 import { derivePortalAccess } from "@/lib/utils";
+import endpoint from "@/api/endpoints";
+import type { DoctorListResponse, CreateDoctorPayload } from "@/api/types/doctors";
+import type {
+  GrantPortalAccessPayload,
+  ResendPortalInvitePayload,
+} from "@/api/types/lab";
 
 const SPECIALTIES = [
   "Internal Medicine",
@@ -53,12 +58,58 @@ export default function Doctors() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const { doctors, isLoading, listUrl } = useDoctorsList({
-    search: search || undefined,
-    limit: 100,
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.doctors.list}?${params.toString()}`;
+  }, [search]);
+
+  const { data: doctorsData, isLoading } = useApi<DoctorListResponse>(listUrl);
+  const doctors = doctorsData?.data?.docs ?? [];
+
+  const createMutation = useMutation(endpoint.lab.doctors.create, {
+    successToast: "Doctor registered",
+    invalidate: [listUrl],
   });
-  const { createDoctor } = useCreateDoctor([listUrl]);
-  const { grant, resend, revoke } = usePortalAccess("doctor", [listUrl]);
+  const createDoctor = async (payload: CreateDoctorPayload) => {
+    const res = await createMutation.trigger(payload);
+    if (!res) return null;
+    return res.data;
+  };
+
+  const grantMutation = useMutation<unknown, GrantPortalAccessPayload>(endpoint.lab.invite, {
+    successToast: "Portal access granted",
+    invalidate: [listUrl],
+  });
+  const resendMutation = useMutation<unknown, ResendPortalInvitePayload>(endpoint.lab.resendInvite, {
+    successToast: "Invite resent",
+    invalidate: [listUrl],
+  });
+  const revokeMutation = useMutation<unknown, void>("portal-access/revoke", {
+    method: "DELETE",
+    successToast: "Access revoked",
+    invalidate: [listUrl],
+  });
+  const grant = async (identifier: string) => {
+    const res = await grantMutation.trigger({ identifier, access_type: "doctor" });
+    if (!res) return null;
+    return res.data;
+  };
+  const resend = async (identifier: string) => {
+    const res = await resendMutation.trigger({ type: "doctor", identifier });
+    if (!res) return null;
+    return res.data;
+  };
+  const revoke = async (identifier: string) => {
+    const res = await revokeMutation.trigger(
+      undefined,
+      endpoint.lab.revokeInvite("doctor", identifier),
+    );
+    if (!res) return null;
+    return res.data;
+  };
 
   const [form, setForm] = useState({
     name: "",
@@ -82,39 +133,22 @@ export default function Doctors() {
     const [firstName, ...rest] = form.name.trim().split(" ");
     const lastName = rest.join(" ") || firstName;
 
-    try {
-      await createDoctor({
-        firstName,
-        lastName,
-        specialty: form.specialty,
-        phone: form.phone,
-        email: form.email,
-        hospital: form.hospital,
-      });
-      setOpen(false);
-      setForm({ name: "", specialty: "", phone: "", email: "", hospital: "" });
-      toast({
-        title: "Doctor Registered",
-        description: `${form.name} has been added.`,
-      });
-    } catch {
-      toast({
-        title: "Registration failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
+    const created = await createDoctor({
+      firstName,
+      lastName,
+      specialty: form.specialty,
+      phone: form.phone,
+      email: form.email,
+      hospital: form.hospital,
+    });
+    if (!created) return;
+    setOpen(false);
+    setForm({ name: "", specialty: "", phone: "", email: "", hospital: "" });
   };
 
-  const handleGrant = async (id: string) => {
-    await grant(id);
-  };
-  const handleResend = async (id: string) => {
-    await resend(id);
-  };
-  const handleRevoke = async (id: string) => {
-    await revoke(id);
-  };
+  const handleGrant = (id: string) => grant(id);
+  const handleResend = (id: string) => resend(id);
+  const handleRevoke = (id: string) => revoke(id);
 
   return (
     <div className="space-y-6 animate-fade-in">

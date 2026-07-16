@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -19,20 +19,20 @@ export default function VerifyEmail() {
   >(endpoint.auth.verifyEmail, {
     skipErrorHandling: true,
     onSuccess: (res) => {
-      toast.success(res.message || "Email verified successfully");
+      notify.fromApiSuccess(res, "Email verified successfully");
 
       setTimeout(() => {
         navigate("/signin");
       }, 2500);
     },
     onError: (err) => {
-      toast.error(err.message || "Verification failed");
+      notify.fromApiError(err, "Verification failed");
     },
   });
 
   useEffect(() => {
     if (!token) {
-      toast.error("Invalid verification link");
+      notify.error("Invalid verification link");
       return;
     }
 

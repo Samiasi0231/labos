@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { Camera, Loader2 } from "lucide-react";
-import { useUpdateLab, useUpdateLabLogo, useLab } from "@/hooks/use-lab";
+import { useApi, useMutation } from "@/hooks/use-api";
 import { useToast } from "@/hooks/use-toast";
-import { UpdateLabPayload } from "@/api";
+import endpoint from "@/api/endpoints";
+import type { Lab, UpdateLabPayload, UpdateLabLogoPayload, UpdateLabLogoResponse } from "@/api/types/lab";
 
 const emptyLabForm: LabFormState = {
   name: "",
@@ -39,9 +40,16 @@ interface LabFormState {
 
 export default function Profile() {
   const { toast } = useToast();
-  const { lab, isLoading: isLabLoading, refetch } = useLab();
-  const { updateLab, isLoading: isSaving } = useUpdateLab();
-  const { updateLogo, isLoading: isUploadingLogo } = useUpdateLabLogo();
+  const { data: labData, isLoading: isLabLoading, mutate: refetch } = useApi<Lab>(endpoint.lab.me);
+  const lab = labData?.data ?? null;
+  const { trigger: updateLab, isLoading: isSaving } = useMutation<Lab, UpdateLabPayload>(
+    endpoint.lab.update,
+    { method: "PATCH", successToast: "Lab updated" },
+  );
+  const { isLoading: isUploadingLogo } = useMutation<UpdateLabLogoResponse, UpdateLabLogoPayload>(
+    endpoint.lab.updateLogo,
+    { method: "PATCH", successToast: "Logo updated" },
+  );
   const [labForm, setLabForm] = useState<LabFormState>(emptyLabForm);
 
   useEffect(() => {
@@ -81,20 +89,9 @@ export default function Profile() {
       },
     };
 
-    try {
-      await updateLab(payload);
-      toast({
-        title: "Settings Saved",
-        description: "Lab Profile settings have been updated.",
-      });
-      refetch();
-    } catch {
-      toast({
-        title: "Save failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
+    const updated = await updateLab(payload);
+    if (!updated) return;
+    refetch();
   };
 
   const handleLogoFileSelected = async (

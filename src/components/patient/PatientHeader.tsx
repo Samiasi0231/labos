@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +8,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useLogout } from "@/hooks/use-auth";
+import { useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { LogoutPayload } from "@/api/types/auth";
+import { getStoredAuth, clearStoredAuth } from "@/api/client";
 
 interface PatientHeaderProps {
   onMenuClick: () => void;
@@ -20,8 +25,29 @@ const notifications = [
 ];
 
 export function PatientHeader({ onMenuClick, pageTitle }: PatientHeaderProps) {
+  const navigate = useNavigate();
   const unread = notifications.filter(n => n.unread).length;
-  const { logout, isLoading: loggingOut } = useLogout();
+  const logoutMutation = useMutation<unknown, LogoutPayload>(endpoint.auth.logout, {
+    method: "POST",
+    skipErrorHandling: true,
+  });
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const logout = async () => {
+    setLoggingOut(true);
+    try {
+      const stored = getStoredAuth();
+      if (stored?.refresh_token) {
+        await logoutMutation.trigger({ refresh_token: stored.refresh_token });
+      }
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      clearStoredAuth();
+      setLoggingOut(false);
+      navigate("/signin", { replace: true });
+    }
+  };
 
   return (
     <header className="h-16 border-b border-border bg-card flex items-center gap-4 px-4 md:px-6 flex-shrink-0">

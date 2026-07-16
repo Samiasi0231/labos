@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Download, CheckCircle2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { usePatientResult } from "@/hooks/use-patient-portal";
+import { notify } from "@/lib/notify";
+import { useApi } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import { downloadPDF } from "@/lib/utils";
-import type { ResultFlag } from "@/api/types";
+import type { ResultFlag, PatientResultDetail } from "@/api/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -43,7 +43,10 @@ export default function ResultDetail() {
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
 
-  const { result, isLoading } = usePatientResult(resultId);
+  const { data: resultData, isLoading } = useApi<PatientResultDetail>(
+    resultId ? endpoint.patient.result(resultId) : null
+  );
+  const result = resultData?.data ?? null;
 
   const handleDownload = async () => {
     if (!resultId) return;
@@ -54,7 +57,7 @@ export default function ResultDetail() {
         `result-${resultId}.pdf`
       );
     } catch {
-      toast.error("Download failed. Please try again.");
+      notify.error("Download failed. Please try again.");
     } finally {
       setDownloading(false);
     }
