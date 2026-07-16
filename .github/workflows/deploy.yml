@@ -21,11 +21,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
+      # Fresh install on the Linux runner so platform optional deps
+      # (e.g. @rollup/rollup-linux-x64-gnu) are resolved correctly.
+      # package-lock from macOS often omits other OS binaries (npm#4828).
       - name: Install dependencies
-        # vite-plugin-enter-dev peers vite ^5|^6; project uses vite 7
-        run: npm install --legacy-peer-deps
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install --legacy-peer-deps
 
       - name: Type check
         run: npx tsc --noEmit
