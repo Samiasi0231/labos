@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { getStoredAuth } from "@/api/client";
 import type { PopulatedRef } from "@/api/types/results";
 import type { PortalAccess } from "@/data/mockData";
+import { mutate } from "swr";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -99,3 +100,7 @@ export function initials(name: string) {
       .toUpperCase() || "?"
   );
 }
+
+export const clearCache = (exclude: string[] = []) => mutate((key) => {
+  return exclude?.every((k) => k !== key);
+}, undefined, { revalidate: true });

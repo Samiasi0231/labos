@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronsUpDown, Check, Settings } from "lucide-react";
+import { ChevronsUpDown, Check, Settings, Plus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useApi, useCurrentLab, useMutation } from "@/hooks/use-api";
 import { useStore } from "@/hooks/use-store";
@@ -8,7 +8,7 @@ import { notify } from "@/lib/notify";
 import endpoint from "@/api/endpoints";
 import type { SwitchTokens, SwitchLabPayload } from "@/api/types/auth";
 import type { UserLab } from "@/api/types/user";
-import { cn, initials } from "@/lib/utils";
+import { clearCache, cn, initials } from "@/lib/utils";
 
 function getRoleRedirect(role: string): string {
   switch (role) {
@@ -105,7 +105,11 @@ export function LabSwitcher({ collapsed, isMobile }: LabSwitcherProps) {
   const handleSwitch = (item: UserLab) => {
     if (item._id === auth?.labId) return;
     setSwitchingId(item.identifier);
-    switchMutation.trigger({ membershipId: item.identifier });
+    switchMutation.trigger({
+      identifier: item?.identifier,
+      access_type: auth?.access_type ?? "staff",
+    });
+    clearCache([endpoint.user.myLabs]);
   };
 
   const currentName = lab?.name ?? "Select Lab";
@@ -282,13 +286,13 @@ function DropdownPanel({
         <button
           onClick={() => {
             onClose();
-            navigate("/lab/settings");
+            navigate("/create-lab");
           }}
           className="flex items-center gap-2 w-full px-2 py-2 rounded-lg text-left text-muted-foreground hover:bg-muted/60 transition-colors"
           style={{ fontSize: "12.5px", fontWeight: 600 }}
         >
-          <Settings className="w-[13px] h-[13px] flex-shrink-0" />
-          Manage Lab Access
+          <Plus className="w-[13px] h-[13px] flex-shrink-0" />
+          Create New Lab
         </button>
       </div>
     </div>

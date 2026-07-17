@@ -14,6 +14,7 @@ import ResetPassword from "./pages/website/ResetPassword";
 import VerifyEmail from "./pages/website/VerifyEmail";
 import CreateLab from "./pages/website/CreateLab";
 import AcceptInvite from "./pages/website/AcceptInvite";
+import SelectLab from "./pages/website/SelectLab";
 
 import { AdminLayout } from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -80,6 +81,7 @@ export const routers = [
       { path: "reset-password", element: <ResetPassword /> },
       { path: "verify-email", element: <VerifyEmail /> },
       { path: "create-lab", element: <CreateLab /> },
+      { path: "select-lab", element: <SelectLab /> },
       { path: "accept-invite", element: <AcceptInvite /> },
     ],
   },

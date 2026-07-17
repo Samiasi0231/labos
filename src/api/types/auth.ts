@@ -1,5 +1,4 @@
 import type { NextAction } from "./enums";
-import type { UserLabItem } from "./user";
 
 export interface AuthTokens {
   access_token: string;
@@ -39,9 +38,7 @@ export interface LoginPayload {
   access_type: "staff" | "patient";
 }
 
-export interface LoginResponse extends AuthTokens {
-  labs?: UserLabItem[];
-}
+export interface LoginResponse extends AuthTokens {}
 
 export interface VerifyEmailPayload {
   token: string;
@@ -65,7 +62,9 @@ export interface RefreshTokenPayload {
 }
 
 export interface SwitchLabPayload {
-  membershipId: string;
+  /** Membership _id — backend field name is `identifier` */
+  identifier: string;
+  access_type: "staff" | "patient" | "doctor";
 }
 
 export interface AcceptInvitePayload {

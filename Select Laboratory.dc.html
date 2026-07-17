@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/styles.css">
+  <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+  <script src="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/_ds_bundle.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    @keyframes labos-spin { to { transform: rotate(360deg); } }
+    .labos-spin { animation: labos-spin .8s linear infinite; }
+  </style>
+</helmet>
+
+<div style="min-height:100vh;background:hsl(var(--background));font-family:var(--font-sans);display:flex;align-items:center;justify-content:center;padding:40px 20px">
+  <div style="width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:28px">
+
+    <!-- Header -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+      <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.BrandMark" icon="activity" hint-size="auto,36px"></x-import>
+      <div>
+        <h1 style="margin:0;font-size:20px;font-weight:700;color:hsl(var(--foreground))">Select a Laboratory</h1>
+        <p style="margin:6px 0 0;font-size:13.5px;color:hsl(var(--muted-foreground))">You belong to multiple labs. Choose one to continue.</p>
+      </div>
+    </div>
+
+    <!-- State switcher (visual only, for review) -->
+    <div style="display:inline-flex;border:1px solid hsl(var(--border));border-radius:var(--radius-md);overflow:hidden">
+      <sc-for list="{{ stateOptions }}" as="so" hint-placeholder-count="0"><button style="{{ so.style }}" onClick="{{ so.select }}">{{ so.label }}</button></sc-for>
+    </div>
+
+    <!-- Lab list -->
+    <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ labRows }}" as="lb" hint-placeholder-count="3">
+          <button style="{{ lb.cardStyle }}" disabled="{{ lb.disabled }}" onMouseEnter="{{ lb.onEnter }}" onMouseLeave="{{ lb.onLeave }}" onClick="{{ lb.select }}">
+            <span style="width:40px;height:40px;border-radius:var(--radius-md);background:hsl(var(--primary)/.1);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10.5px;font-weight:700;color:hsl(var(--primary))">{{ lb.initials }}</span>
+            <span style="flex:1;min-width:0;text-align:left">
+              <span style="display:block;font-size:14.5px;font-weight:600;color:hsl(var(--foreground));white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ lb.name }}</span>
+              <span style="display:flex;align-items:center;gap:8px;margin-top:3px">
+                <span style="font-size:11.5px;font-family:var(--font-mono);color:hsl(var(--muted-foreground))">{{ lb.code }}</span>
+                <span style="{{ lb.roleStyle }}">{{ lb.role }}</span>
+              </span>
+            </span>
+            <span style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:20px;height:20px">
+              <sc-if value="{{ lb.loading }}" hint-placeholder-val="{{ false }}"><span class="labos-spin" style="display:inline-flex">{{ ic.spinner }}</span></sc-if>
+              <sc-if value="{{ lb.notLoading }}" hint-placeholder-val="{{ true }}">{{ ic.chevron }}</sc-if>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Empty/error state -->
+    <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:var(--radius);box-shadow:var(--shadow-card);padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center">
+        {{ ic.alertEmpty }}
+        <p style="margin:0;font-size:13.5px;color:hsl(var(--muted-foreground))">No labs found. Please sign in again.</p>
+        <button class="labos-btn labos-btn-outline labos-btn-sz-default">Back to Sign In</button>
+      </div>
+    </sc-if>
+
+    <!-- Footer -->
+    <p style="margin:0;font-size:12.5px;color:hsl(var(--muted-foreground))">Wrong account? <a href="#" style="color:hsl(var(--primary));font-weight:600;text-decoration:none">Sign out</a></p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  LABS = [
+    { id: 'l1', name: 'Ezralabs Diagnostics — Ikeja', code: 'LAB-EZR-01', role: 'Manager' },
+    { id: 'l2', name: 'Ezralabs Diagnostics — Lekki', code: 'LAB-EZR-02', role: 'Scientist' },
+    { id: 'l3', name: 'Sunrise Medical Labs', code: 'LAB-SNR-14', role: 'Receptionist' },
+  ];
+
+  state = { view: 'default', hoveredId: null, loadingId: null };
+
+  get DS() { return window.LabOSDesignSystem_ab2dfe || null; }
+  componentDidMount() { if (!this.DS) { this._poll = setInterval(() => { if (this.DS) { clearInterval(this._poll); this.forceUpdate(); } }, 100); } }
+  componentWillUnmount() { clearInterval(this._poll); }
+
+  i(name, size, color) { return React.createElement(this.DS.Icon, { name, size: size || 16, color: color || 'currentColor' }); }
+  initialsOf(name) { const words = name.replace(/—.*/, '').trim().split(' '); return ((words[0] || '')[0] + (words[1] || '')[0]).toUpperCase(); }
+  rolePill(role) {
+    const tint = /manager|owner/i.test(role) ? 'primary' : /scientist/i.test(role) ? 'info' : null;
+    const base = { display: 'inline-flex', fontSize: 9.5, fontWeight: 700, padding: '1px 6px', borderRadius: 999 };
+    return tint ? { ...base, background: 'hsl(var(--' + tint + ')/.15)', color: 'hsl(var(--' + tint + '))' } : { ...base, background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' };
+  }
+
+  renderVals() {
+    const DS = this.DS;
+    if (!DS) return {};
+    const s = this.state;
+    const set = (patch) => this.setState(patch);
+
+    const ic = {
+      chevron: this.i('chevron-right', 18, 'hsl(var(--muted-foreground))'),
+      spinner: this.i('loader-2', 16, 'hsl(var(--primary))'),
+      alertEmpty: this.i('folder-x', 30, 'hsl(var(--muted-foreground))'),
+    };
+
+    const views = [['default', 'Default'], ['hover', 'Hover (1st)'], ['loading', 'Loading'], ['empty', 'Empty/Error']];
+    const stateOptions = views.map(([id, label]) => ({
+      label, select: () => set({ view: id }),
+      style: { padding: '6px 12px', fontSize: 11.5, fontWeight: 600, border: 'none', borderRight: id !== 'empty' ? '1px solid hsl(var(--border))' : 'none', cursor: 'pointer', background: s.view === id ? 'hsl(var(--primary))' : 'hsl(var(--card))', color: s.view === id ? '#fff' : 'hsl(var(--foreground))' },
+    }));
+
+    const anyLoading = s.view === 'loading';
+    const labRows = this.LABS.map((lb, idx) => {
+      const isFirst = idx === 0;
+      const isHoverPreview = s.view === 'hover' && isFirst;
+      const isLoadingThis = anyLoading && isFirst;
+      const disabled = anyLoading && !isLoadingThis;
+      return {
+        name: lb.name, code: lb.code, role: lb.role, initials: this.initialsOf(lb.name), roleStyle: this.rolePill(lb.role),
+        loading: isLoadingThis, notLoading: !isLoadingThis, disabled,
+        onEnter: () => {}, onLeave: () => {}, select: () => {},
+        cardStyle: {
+          display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left', cursor: disabled ? 'default' : 'pointer',
+          background: 'hsl(var(--card))', border: '1px solid ' + (isHoverPreview ? 'hsl(var(--primary)/.4)' : 'hsl(var(--border))'),
+          borderRadius: 'var(--radius)', boxShadow: 'var(--shadow-card)', padding: '14px 16px', boxSizing: 'border-box',
+          opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' : 'auto', transition: 'border-color 150ms, box-shadow 150ms',
+        },
+      };
+    });
+
+    return {
+      ic, stateOptions, showList: s.view !== 'empty', showEmpty: s.view === 'empty', labRows,
+    };
+  }
+}
+</script>
+</body>
+</html>

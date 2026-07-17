@@ -31,20 +31,14 @@ function getRoleRedirect(role: string): string {
   switch (role) {
     case "lab_manager":
     case "lab_owner":
-      return "/lab";
-
+    case "manager":
     case "scientist":
-      return "/scientist";
-
     case "receptionist":
-      return "/reception";
-
+      return "/lab";
     case "patient":
       return "/patient";
-
     case "admin":
       return "/admin";
-
     default:
       return "/lab";
   }
@@ -75,11 +69,11 @@ export default function CreateLab() {
       onSuccess: (res) => {
         if (!res.data) return;
 
-        setAuth(res.data);
+        setAuth({ ...res.data, access_type: "staff" });
 
         notify.fromApiSuccess(res, "Lab created successfully!");
 
-        navigate(getRoleRedirect(res.data.role));
+        navigate(getRoleRedirect(res.data.role ?? "manager"));
       },
 
       onError: (err) => {
