@@ -201,7 +201,7 @@ function LabLogoUpload({
                   />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  PNG, JPG, or SVG · max 2 MB. Drag and drop supported.
+                  PNG, JPG, or SVG · max 500 KB. Drag and drop supported.
                 </p>
               </>
             ) : (
