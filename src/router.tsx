@@ -37,7 +37,7 @@ import Inventory from "./pages/lab/inventory";
 import Finance from "./pages/lab/Finance";
 import Staff from "./pages/lab/staff";
 import Branches from "./pages/lab/Branches";
-import Settings from "./pages/lab/settings";
+import Settings from "./pages/lab/Settings";
 import TestCatalog from "./pages/lab/test-catalog";
 
 import PatientRegistration from "./pages/lab/patient/registration";
