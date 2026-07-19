@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -130,7 +131,7 @@ export default function Billing() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus className="w-4 h-4" />Create Invoice</Button>
+            <PermissionButton permission="finance.create" fallback="hide" className="gap-2" leftIcon={<Plus className="w-4 h-4" />}>Create Invoice</PermissionButton>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader><DialogTitle>Create Invoice</DialogTitle></DialogHeader>
@@ -183,7 +184,7 @@ export default function Billing() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreate}>Create Invoice</Button>
+              <PermissionButton permission="finance.create" fallback="hide" onClick={handleCreate}>Create Invoice</PermissionButton>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -274,10 +275,16 @@ export default function Billing() {
                           <Download className="w-3.5 h-3.5" />
                         </Button>
                         {(inv.status === 'Pending' || inv.status === 'Partial') && (
-                          <Button size="sm" className="h-7 text-xs gap-1 bg-success hover:bg-success/90 text-success-foreground"
-                            onClick={() => { setSelectedInvoice(inv); setReceiptOpen(true); }}>
-                            <DollarSign className="w-3 h-3" />Pay
-                          </Button>
+                          <PermissionButton
+                            permission="finance.update"
+                            fallback="hide"
+                            size="sm"
+                            className="h-7 text-xs gap-1 bg-success hover:bg-success/90 text-success-foreground"
+                            leftIcon={<DollarSign className="w-3 h-3" />}
+                            onClick={() => { setSelectedInvoice(inv); setReceiptOpen(true); }}
+                          >
+                            Pay
+                          </PermissionButton>
                         )}
                       </div>
                     </TableCell>

@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation } from "@/hooks/use-api";
@@ -177,9 +178,15 @@ export function BookDialog({
           <Button variant="outline" onClick={onClose} disabled={isBooking}>
             Cancel
           </Button>
-          <Button onClick={handleBook} disabled={!canBook}>
-            {isBooking ? "Booking…" : "Book Appointment"}
-          </Button>
+          <PermissionButton
+            permission="appointments.create"
+            fallback="hide"
+            isLoading={isBooking}
+            disabled={!canBook}
+            onClick={handleBook}
+          >
+            Book Appointment
+          </PermissionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

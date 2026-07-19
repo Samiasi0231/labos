@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -201,9 +202,14 @@ export function AddItemDialog({ open, onClose }: AddItemDialogProps) {
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleAdd} disabled={isCreating || isRestocking}>
-            {isCreating || isRestocking ? "Adding…" : "Add Item"}
-          </Button>
+          <PermissionButton
+            permission="inventory.create"
+            fallback="hide"
+            isLoading={isCreating || isRestocking}
+            onClick={handleAdd}
+          >
+            Add Item
+          </PermissionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -3,6 +3,7 @@ import { ChevronRight, ChevronDown, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useApi } from "@/hooks/use-api";
+import { usePermission } from "@/hooks/use-permission";
 import endpoint from "@/api/endpoints";
 import type { StaffMember } from "@/api/types/staff";
 import type { AssignScientistsSectionProps, AssigneeInfo } from "./types";
@@ -16,6 +17,8 @@ export function AssignScientistsSection({
   const [expanded, setExpanded] = useState(false);
   const [pickerOpenFor, setPickerOpenFor] = useState<string | null>(null);
   const [staffQuery, setStaffQuery] = useState("");
+  const { can } = usePermission();
+  const canAssign = can("tests.assign");
 
   const searchUrl = useMemo(() => {
     const trimmed = staffQuery.trim();
@@ -113,22 +116,26 @@ export function AssignScientistsSection({
                           {assignee.name}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => openPicker(test.testCatalogId)}
-                        className="text-[11.5px] font-semibold text-muted-foreground underline hover:text-foreground transition-colors"
-                      >
-                        Change
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => clearAssignee(test.testCatalogId)}
-                        className="text-[11.5px] font-semibold text-destructive/70 underline hover:text-destructive transition-colors"
-                      >
-                        Remove
-                      </button>
+                      {canAssign && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openPicker(test.testCatalogId)}
+                            className="text-[11.5px] font-semibold text-muted-foreground underline hover:text-foreground transition-colors"
+                          >
+                            Change
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => clearAssignee(test.testCatalogId)}
+                            className="text-[11.5px] font-semibold text-destructive/70 underline hover:text-destructive transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </>
+                      )}
                     </div>
-                  ) : (
+                  ) : canAssign ? (
                     <Button
                       type="button"
                       size="sm"
@@ -139,7 +146,7 @@ export function AssignScientistsSection({
                       <Plus className="w-3 h-3" />
                       Assign
                     </Button>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Inline staff picker */}

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -191,10 +192,14 @@ export function InviteDialog({ open, onOpenChange, listUrl }: InviteDialogProps)
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              <PermissionButton
+                type="submit"
+                permission="staff.create"
+                fallback="hide"
+                isLoading={isLoading}
+              >
                 Send Invite
-              </Button>
+              </PermissionButton>
             </DialogFooter>
           </form>
         </Form>

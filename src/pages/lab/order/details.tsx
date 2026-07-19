@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -342,9 +343,15 @@ function CollectSampleModal({ item, orderId, onClose, onDone }: CollectSampleMod
         </div>
         <DialogFooter className="border-t border-border pt-4">
           <Button variant="outline" onClick={onClose} disabled={isCollecting}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isCollecting || samples.length === 0}>
-            {isCollecting ? "Collecting…" : "Collect Sample"}
-          </Button>
+          <PermissionButton
+            permission="tests.update_status"
+            fallback="hide"
+            isLoading={isCollecting}
+            disabled={samples.length === 0}
+            onClick={handleSubmit}
+          >
+            Collect Sample
+          </PermissionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -588,9 +595,14 @@ function AddTestModal({ open, orderId, onClose, onDone }: AddTestModalProps) {
             </div>
             <DialogFooter className="border-t border-border pt-4">
               <Button variant="outline" onClick={() => setStep("pick")}>Back</Button>
-              <Button onClick={handleSubmit} disabled={isAdding}>
-                {isAdding ? "Adding…" : "Add to Order"}
-              </Button>
+              <PermissionButton
+                permission="tests.create"
+                fallback="hide"
+                isLoading={isAdding}
+                onClick={handleSubmit}
+              >
+                Add to Order
+              </PermissionButton>
             </DialogFooter>
           </>
         )}

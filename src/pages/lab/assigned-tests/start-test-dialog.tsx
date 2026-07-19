@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -149,14 +150,16 @@ export function StartTestDialog({
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <Button
+          <PermissionButton
+            permission="tests.process"
+            fallback="hide"
+            isLoading={isStarting}
+            disabled={isLoadingCatalog}
+            leftIcon={<Play className="w-4 h-4" />}
             onClick={handleStart}
-            disabled={isStarting || isLoadingCatalog}
-            className="gap-1.5"
           >
-            <Play className="w-4 h-4" />
-            {isStarting ? "Starting…" : "Start Test"}
-          </Button>
+            Start Test
+          </PermissionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -161,10 +162,9 @@ export default function Doctors() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
+            <PermissionButton permission="doctors.create" fallback="hide" className="gap-2" leftIcon={<Plus className="w-4 h-4" />}>
               Register Doctor
-            </Button>
+            </PermissionButton>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -243,7 +243,7 @@ export default function Doctors() {
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAdd}>Register</Button>
+              <PermissionButton permission="doctors.create" fallback="hide" onClick={handleAdd}>Register</PermissionButton>
             </DialogFooter>
           </DialogContent>
         </Dialog>

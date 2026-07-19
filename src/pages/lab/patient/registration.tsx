@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -328,15 +329,17 @@ export default function PatientRegistration() {
 
         {/* ── Submit ── */}
         <div className="flex justify-end pt-2">
-          <Button
+          <PermissionButton
+            permission="patients.create"
+            fallback="hide"
             className="gap-2 px-8"
             size="lg"
             type="submit"
-            disabled={isSubmitting}
+            isLoading={isSubmitting}
+            leftIcon={<UserPlus className="w-4 h-4" />}
           >
-            <UserPlus className="w-4 h-4" />
-            {isSubmitting ? "Registering..." : "Register Patient"}
-          </Button>
+            Register Patient
+          </PermissionButton>
         </div>
       </form>
     </Form>
