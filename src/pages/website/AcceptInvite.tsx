@@ -1,27 +1,32 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PrimaryButton } from "@/components/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Form } from "@/components/ui/form";
+import { PasswordInput } from "@/components/form/password-input";
+import { CheckCircle } from "lucide-react";
 import { notify } from "@/lib/notify";
 import type { ApiError } from "@/api/types/common";
 import { useApi, useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import {
-  acceptInviteSchema,
-  type AcceptInviteValues,
-} from "@/lib/validations/auth";
+import { z } from "zod";
+
+export const acceptInviteSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/[0-9!@#$%^&*]/, "Must contain at least one number or symbol"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export type AcceptInviteValues = z.infer<typeof acceptInviteSchema>;
 
 interface InviteInfo {
   type: "staff" | "patient" | "doctor";
@@ -51,8 +56,6 @@ export default function AcceptInvite() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token");
-  const [showPass, setShowPass] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const inviteUrl = useMemo(
     () => (token ? endpoint.auth.inviteInfo(token) : null),
@@ -62,9 +65,9 @@ export default function AcceptInvite() {
   const info = inviteData?.data ?? null;
 
   const { trigger: acceptInvite, isLoading: isAccepting } = useMutation<
-    AcceptInviteResponse,
-    AcceptInvitePayload
-  >(endpoint.auth.acceptInvite, { skipErrorHandling: true });
+  AcceptInviteResponse,
+    AcceptInvitePayload >
+     (endpoint.auth.acceptInvite, { skipErrorHandling: true });
 
   const form = useForm<AcceptInviteValues>({
     resolver: zodResolver(acceptInviteSchema),
@@ -79,9 +82,14 @@ export default function AcceptInvite() {
         password: info?.hasPassword ? undefined : values.password,
       });
       notify.success("Invitation accepted. You can now sign in.");
-      navigate(getPostInviteRedirect(res?.data?.access_type ?? info?.type ?? "staff"));
+      navigate(
+        getPostInviteRedirect(res?.data?.access_type ?? info?.type ?? "staff"),
+      );
     } catch (err) {
-      notify.fromApiError(err as ApiError, "This link may be invalid or expired.");
+      notify.fromApiError(
+        err as ApiError,
+        "This link may be invalid or expired.",
+      );
     }
   };
 
@@ -90,9 +98,14 @@ export default function AcceptInvite() {
     try {
       const res = await acceptInvite({ token });
       notify.success("Invitation accepted. You can now sign in.");
-      navigate(getPostInviteRedirect(res?.data?.access_type ?? info?.type ?? "staff"));
+      navigate(
+        getPostInviteRedirect(res?.data?.access_type ?? info?.type ?? "staff"),
+      );
     } catch (err) {
-      notify.fromApiError(err as ApiError, "This link may be invalid or expired.");
+      notify.fromApiError(
+        err as ApiError,
+        "This link may be invalid or expired.",
+      );
     }
   };
 
@@ -110,7 +123,8 @@ export default function AcceptInvite() {
         <div className="max-w-md text-center space-y-2">
           <h2 className="text-lg font-semibold">Invalid or expired invite</h2>
           <p className="text-sm text-muted-foreground">
-            This invitation link is no longer valid. Please contact your lab for a new one.
+            This invitation link is no longer valid. Please contact your lab for
+            a new one.
           </p>
         </div>
       </div>
@@ -134,105 +148,59 @@ export default function AcceptInvite() {
             {info.hasPassword ? (
               <div className="space-y-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  You already have an account. Click below to accept and continue to sign in.
+                  You already have an account. Click below to accept and
+                  continue to sign in.
                 </p>
-                <Button
-                  className="w-full gap-2"
+                <PrimaryButton
+                  className="w-full"
                   onClick={handleAcceptExisting}
-                  disabled={isAccepting}
+                  isLoading={isAccepting}
+                  leftIcon={<CheckCircle className="w-4 h-4" />}
                 >
-                  {isAccepting ? "Activating…" : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Accept Invitation
-                    </>
-                  )}
-                </Button>
+                  Accept Invitation
+                </PrimaryButton>
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
+                  <PasswordInput
+                    form={form}
                     name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Set Password *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showPass ? "text" : "password"}
-                              placeholder="Min. 8 characters"
-                              className="pr-10"
-                              autoComplete="new-password"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPass(!showPass)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Set Password *"
+                    placeholder="Min. 8 characters"
+                    autoComplete="new-password"
                   />
 
-                  <FormField
-                    control={form.control}
+                  <PasswordInput
+                    form={form}
                     name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showConfirm ? "text" : "password"}
-                              placeholder="Re-enter password"
-                              className="pr-10"
-                              autoComplete="new-password"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirm(!showConfirm)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                              {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Confirm Password *"
+                    placeholder="Re-enter password"
+                    autoComplete="new-password"
                   />
 
                   <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
-                    <p className="font-medium text-foreground mb-1">Password requirements:</p>
-                    <p>• At least 8 characters · One uppercase letter · One number or symbol</p>
+                    <p className="font-medium text-foreground mb-1">
+                      Password requirements:
+                    </p>
+                    <p>
+                      • At least 8 characters · One uppercase letter · One
+                      number or symbol
+                    </p>
                   </div>
 
-                  <Button
+                  <PrimaryButton
                     type="submit"
                     size="lg"
-                    className="w-full gap-2"
-                    disabled={isAccepting}
+                    className="w-full"
+                    isLoading={isAccepting}
+                    leftIcon={<CheckCircle className="w-4 h-4" />}
                   >
-                    {isAccepting ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        Activating…
-                      </span>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Accept Invitation
-                      </>
-                    )}
-                  </Button>
+                    Accept Invitation
+                  </PrimaryButton>
                 </form>
               </Form>
             )}

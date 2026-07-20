@@ -1,34 +1,36 @@
-import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { FlaskConical, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Form } from "@/components/ui/form";
+import { PasswordInput } from "@/components/form/password-input";
+import { PrimaryButton } from "@/components/button";
+import { FlaskConical, ArrowRight } from "lucide-react";
 import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import {
-  resetPasswordSchema,
-  type ResetPasswordValues,
-} from "@/lib/validations/auth";
 import type { ResetPasswordPayload } from "@/api/types";
+import { z } from "zod";
+
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/[0-9!@#$%^&*]/, "Must contain at least one number or symbol"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<ResetPasswordValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -83,89 +85,30 @@ export default function ResetPassword() {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-5"
               >
-                <FormField
-                  control={form.control}
+                <PasswordInput
+                  form={form}
                   name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter new password"
-                            className="pr-10"
-                            autoComplete="new-password"
-                            {...field}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword((p) => !p)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showPassword ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="New Password"
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
                 />
 
-                <FormField
-                  control={form.control}
+                <PasswordInput
+                  form={form}
                   name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm new password"
-                            className="pr-10"
-                            autoComplete="new-password"
-                            {...field}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword((p) => !p)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Confirm Password"
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
                 />
 
-                <Button
+                <PrimaryButton
                   type="submit"
-                  className="w-full gap-2"
-                  disabled={resetMutation.isLoading}
+                  className="w-full"
+                  isLoading={resetMutation.isLoading}
+                  rightIcon={<ArrowRight className="w-4 h-4" />}
                 >
-                  {resetMutation.isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Resetting...
-                    </span>
-                  ) : (
-                    <>
-                      Reset Password
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </Button>
+                  Reset Password
+                </PrimaryButton>
               </form>
             </Form>
           </CardContent>

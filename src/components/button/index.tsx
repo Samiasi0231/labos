@@ -27,6 +27,38 @@ export function PrimaryButton({
       {children}
       {rightIcon && rightIcon}
     </Button>
+
+
+
+  );
+}
+
+interface SecondaryButtonProps extends ButtonProps {
+  isLoading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
+
+export function SecondaryButton({
+  isLoading,
+  disabled,
+  leftIcon,
+  rightIcon,
+  children,
+  className,
+  ...rest
+}: SecondaryButtonProps) {
+  return (
+    <Button
+      variant="outline"
+      disabled={isLoading || disabled}
+      className={className}
+      {...rest}
+    >
+      {isLoading ? <Spinner /> : leftIcon}
+      {children}
+      {rightIcon && rightIcon}
+    </Button>
   );
 }
 
