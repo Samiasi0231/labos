@@ -1,5 +1,6 @@
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import {
   Dialog,
   DialogContent,
@@ -52,9 +53,15 @@ export function DeleteDialog({ target, onClose }: DeleteDialogProps) {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleConfirm} className="gap-2">
-            <Trash2 className="w-4 h-4" /> Delete
-          </Button>
+          <PermissionButton
+            variant="destructive"
+            permission="test_catalog.delete"
+            fallback="hide"
+            leftIcon={<Trash2 className="w-4 h-4" />}
+            onClick={handleConfirm}
+          >
+            Delete
+          </PermissionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -486,9 +487,14 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleEditSave} className="gap-2">
-            <Check className="w-4 h-4" /> Save Changes
-          </Button>
+          <PermissionButton
+            permission="test_catalog.update"
+            fallback="hide"
+            leftIcon={<Check className="w-4 h-4" />}
+            onClick={handleEditSave}
+          >
+            Save Changes
+          </PermissionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

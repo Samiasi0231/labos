@@ -6,6 +6,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -213,16 +214,18 @@ export function DetailSheet({
                 >
                   Dismiss
                 </Button>
-                <Button
+                <PermissionButton
+                  permission="appointments.update_status"
+                  fallback="hide"
                   size="sm"
                   className="bg-destructive hover:bg-destructive/90 border-destructive text-white"
+                  isLoading={isUpdating}
                   onClick={() =>
                     handleStatusChange(confirmFor === "cancel" ? "cancelled" : "no_show")
                   }
-                  disabled={isUpdating}
                 >
-                  {isUpdating ? "Updating…" : "Confirm"}
-                </Button>
+                  Confirm
+                </PermissionButton>
               </div>
             </div>
           )}
@@ -233,43 +236,48 @@ export function DetailSheet({
               <Separator />
               <div className="flex flex-wrap gap-2">
                 {canConfirm && (
-                  <Button
+                  <PermissionButton
+                    permission="appointments.update_status"
+                    fallback="hide"
                     className="gap-1.5 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 border-[hsl(var(--success))] text-white"
+                    isLoading={isUpdating}
+                    leftIcon={<Check className="w-4 h-4" />}
                     onClick={() => handleStatusChange("confirmed")}
-                    disabled={isUpdating}
                   >
-                    <Check className="w-4 h-4" />
                     Confirm
-                  </Button>
+                  </PermissionButton>
                 )}
                 {canCheckIn && (
-                  <Button
-                    className="gap-1.5"
+                  <PermissionButton
+                    permission="appointments.update_status"
+                    fallback="hide"
+                    isLoading={isUpdating}
+                    leftIcon={<LogIn className="w-4 h-4" />}
                     onClick={() => onCheckIn(appointment)}
-                    disabled={isUpdating}
                   >
-                    <LogIn className="w-4 h-4" />
                     Check In
-                  </Button>
+                  </PermissionButton>
                 )}
                 {canNoShow && (
-                  <Button
+                  <PermissionButton
+                    permission="appointments.update_status"
+                    fallback="hide"
                     variant="outline"
                     onClick={() => setConfirmFor("noshow")}
-                    disabled={isUpdating}
                   >
                     Mark No-show
-                  </Button>
+                  </PermissionButton>
                 )}
                 {canCancel && (
-                  <Button
+                  <PermissionButton
+                    permission="appointments.update_status"
+                    fallback="hide"
                     variant="outline"
                     className="text-destructive border-destructive/40 hover:bg-destructive/5"
                     onClick={() => setConfirmFor("cancel")}
-                    disabled={isUpdating}
                   >
                     Cancel
-                  </Button>
+                  </PermissionButton>
                 )}
               </div>
             </>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -360,38 +361,51 @@ export default function LabResultDetail() {
       {/* ── Actions ── */}
       <div className="flex justify-end gap-2">
         {result.status === "released" && (
-          <Button
+          <PermissionButton
+            permission="results.read"
+            fallback="hide"
             variant="outline"
             size="sm"
-            className="gap-1.5"
-            disabled={downloading}
+            isLoading={downloading}
+            leftIcon={<Download className="w-3.5 h-3.5" />}
             onClick={handleDownload}
           >
-            <Download className="w-3.5 h-3.5" />
-            {downloading ? "Downloading…" : "Download PDF"}
-          </Button>
+            Download PDF
+          </PermissionButton>
         )}
         {canReturn && (
-          <Button
+          <PermissionButton
+            permission="results.return"
+            fallback="hide"
             variant="outline"
             className="gap-1.5 text-destructive border-destructive/40 hover:bg-destructive/10"
+            leftIcon={<Undo2 className="w-4 h-4" />}
             onClick={() => { setReturnNote(""); setReturnOpen(true); }}
           >
-            <Undo2 className="w-4 h-4" />
             Return
-          </Button>
+          </PermissionButton>
         )}
         {canApprove && (
-          <Button className="gap-1.5" onClick={handleApprove} disabled={isApproving}>
-            <CheckCircle2 className="w-4 h-4" />
-            {isApproving ? "Approving…" : "Approve"}
-          </Button>
+          <PermissionButton
+            permission="results.approve"
+            fallback="hide"
+            isLoading={isApproving}
+            leftIcon={<CheckCircle2 className="w-4 h-4" />}
+            onClick={handleApprove}
+          >
+            Approve
+          </PermissionButton>
         )}
         {canRelease && (
-          <Button className="gap-1.5" onClick={handleRelease} disabled={isReleasing}>
-            <Send className="w-4 h-4" />
-            {isReleasing ? "Releasing…" : "Release to Patient"}
-          </Button>
+          <PermissionButton
+            permission="results.release"
+            fallback="hide"
+            isLoading={isReleasing}
+            leftIcon={<Send className="w-4 h-4" />}
+            onClick={handleRelease}
+          >
+            Release to Patient
+          </PermissionButton>
         )}
       </div>
 
@@ -419,15 +433,16 @@ export default function LabResultDetail() {
             <Button variant="outline" onClick={() => setReturnOpen(false)}>
               Cancel
             </Button>
-            <Button
+            <PermissionButton
               variant="destructive"
+              permission="results.return"
+              fallback="hide"
+              isLoading={isReturning}
+              leftIcon={<Undo2 className="w-4 h-4" />}
               onClick={handleReturn}
-              disabled={isReturning}
-              className="gap-2"
             >
-              <Undo2 className="w-4 h-4" />
-              {isReturning ? "Returning…" : "Confirm Return"}
-            </Button>
+              Confirm Return
+            </PermissionButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
