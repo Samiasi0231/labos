@@ -1,7 +1,12 @@
+<<<<<<< HEAD
+import { useState, useRef, useEffect, useMemo } from "react";
+=======
 import { useState, useRef, useEffect } from "react";
+>>>>>>> origin/main
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,8 +38,11 @@ import {
 } from "lucide-react";
 
 import { useApi, useMutation, useMyPermissions } from "@/hooks/use-api";
+<<<<<<< HEAD
+=======
 import { useStaffSearch } from "@/hooks/use-staff";
 import { useTestCatalogList } from "@/hooks/use-test-catalog";
+>>>>>>> origin/main
 import endpoint from "@/api/endpoints";
 import { downloadPDF } from "@/lib/utils";
 import type {
@@ -48,7 +56,8 @@ import type {
   AddTestOrderItemsPayload,
   UpdateTestOrderPayload,
 } from "@/api/types/test-order";
-import type { TestCatalogEntry } from "@/api/types/test-catalog";
+import type { TestCatalogEntry, TestCatalogListResponse } from "@/api/types/test-catalog";
+import type { StaffMember } from "@/api/types/staff";
 import { useToast } from "@/hooks/use-toast";
 
 // ── Badge components ──────────────────────────────────────────────────────────
@@ -236,7 +245,11 @@ function CollectSampleModal({ item, orderId, onClose, onDone }: CollectSampleMod
 
   const { trigger: collectSample, isLoading: isCollecting } = useMutation<TestOrderItem, CollectSamplePayload>(
     item ? endpoint.lab.testOrders.collectSample(orderId, item._id) : "test-orders/collect",
+<<<<<<< HEAD
+    { successToast: "Sample collected" },
+=======
     { skipErrorHandling: true },
+>>>>>>> origin/main
   );
 
   useEffect(() => {
@@ -264,12 +277,17 @@ function CollectSampleModal({ item, orderId, onClose, onDone }: CollectSampleMod
       { samples, materials },
       endpoint.lab.testOrders.collectSample(orderId, item._id),
     );
+<<<<<<< HEAD
+    if (!res) return;
+    onDone();
+=======
     if (res) {
       toast({ title: "Sample collected" });
       onDone();
     } else {
       toast({ title: "Failed to collect sample", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   return (
@@ -347,9 +365,21 @@ function CollectSampleModal({ item, orderId, onClose, onDone }: CollectSampleMod
         </div>
         <DialogFooter className="border-t border-border pt-4">
           <Button variant="outline" onClick={onClose} disabled={isCollecting}>Cancel</Button>
+<<<<<<< HEAD
+          <PermissionButton
+            permission="tests.update_status"
+            fallback="hide"
+            isLoading={isCollecting}
+            disabled={samples.length === 0}
+            onClick={handleSubmit}
+          >
+            Collect Sample
+          </PermissionButton>
+=======
           <Button onClick={handleSubmit} disabled={isCollecting || samples.length === 0}>
             {isCollecting ? "Collecting…" : "Collect Sample"}
           </Button>
+>>>>>>> origin/main
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -382,7 +412,11 @@ function EditParamsModal({ item, orderId, onClose, onDone }: EditParamsModalProp
 
   const { trigger: updateParams, isLoading: isSaving } = useMutation<TestOrderItem, UpdateTestOrderItemPayload>(
     item ? endpoint.lab.testOrders.updateItem(orderId, item._id) : "test-orders/update-item",
+<<<<<<< HEAD
+    { method: "PATCH", successToast: "Parameters updated" },
+=======
     { method: "PATCH", skipErrorHandling: true },
+>>>>>>> origin/main
   );
 
   const toggle = (id: string) => {
@@ -397,12 +431,17 @@ function EditParamsModal({ item, orderId, onClose, onDone }: EditParamsModalProp
       { parameterIds: selected },
       endpoint.lab.testOrders.updateItem(orderId, item._id),
     );
+<<<<<<< HEAD
+    if (!res) return;
+    onDone();
+=======
     if (res) {
       toast({ title: "Parameters updated" });
       onDone();
     } else {
       toast({ title: "Failed to update parameters", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   return (
@@ -464,7 +503,20 @@ function AddTestModal({ open, orderId, onClose, onDone }: AddTestModalProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paramSel, setParamSel] = useState<Record<string, string[]>>({});
 
+<<<<<<< HEAD
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("isActive", "true");
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.testCatalog.list}?${params.toString()}`;
+  }, []);
+
+  const { data, isLoading } = useApi<TestCatalogListResponse>(listUrl);
+  const tests = data?.data?.docs ?? [];
+=======
   const { tests, isLoading } = useTestCatalogList({ isActive: true, limit: 100 });
+>>>>>>> origin/main
 
   useEffect(() => {
     if (!open) { setStep("pick"); setSelectedIds([]); setParamSel({}); }
@@ -472,7 +524,11 @@ function AddTestModal({ open, orderId, onClose, onDone }: AddTestModalProps) {
 
   const { trigger: addItems, isLoading: isAdding } = useMutation<TestOrder, AddTestOrderItemsPayload>(
     endpoint.lab.testOrders.addItems(orderId),
+<<<<<<< HEAD
+    { successToast: "Tests added" },
+=======
     { skipErrorHandling: true },
+>>>>>>> origin/main
   );
 
   const toggleTest = (id: string) => {
@@ -507,12 +563,17 @@ function AddTestModal({ open, orderId, onClose, onDone }: AddTestModalProps) {
       parameterIds: paramSel[id] ?? [],
     }));
     const res = await addItems({ items });
+<<<<<<< HEAD
+    if (!res) return;
+    onDone();
+=======
     if (res) {
       toast({ title: "Tests added", description: `${selectedIds.length} test(s) added to the order.` });
       onDone();
     } else {
       toast({ title: "Failed to add tests", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const stepLabel =
@@ -592,9 +653,20 @@ function AddTestModal({ open, orderId, onClose, onDone }: AddTestModalProps) {
             </div>
             <DialogFooter className="border-t border-border pt-4">
               <Button variant="outline" onClick={() => setStep("pick")}>Back</Button>
+<<<<<<< HEAD
+              <PermissionButton
+                permission="tests.create"
+                fallback="hide"
+                isLoading={isAdding}
+                onClick={handleSubmit}
+              >
+                Add to Order
+              </PermissionButton>
+=======
               <Button onClick={handleSubmit} disabled={isAdding}>
                 {isAdding ? "Adding…" : "Add to Order"}
               </Button>
+>>>>>>> origin/main
             </DialogFooter>
           </>
         )}
@@ -624,7 +696,11 @@ export default function TestOrderDetail() {
   // ── Mutations ──────────────────────────────────────────────────────────────
   const { trigger: cancelOrder, isLoading: isCancelling } = useMutation<TestOrder, void>(
     "test-orders/cancel",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Order cancelled", invalidate },
+  );
+  const { trigger: updateOrder, isLoading: isUpdatingOrder } = useMutation<TestOrder, UpdateTestOrderPayload>(
+    orderId ? endpoint.lab.testOrders.update(orderId) : "test-orders/update",
+    { method: "PATCH", successToast: "Order updated", invalidate },
   );
   const { trigger: updateOrder, isLoading: isUpdatingOrder } = useMutation<TestOrder, UpdateTestOrderPayload>(
     orderId ? endpoint.lab.testOrders.update(orderId) : "test-orders/update",
@@ -632,12 +708,29 @@ export default function TestOrderDetail() {
   );
   const { trigger: assignTestOrderItem, isLoading: isAssigning } = useMutation<TestOrderItem, AssignTestOrderItemPayload>(
     "test-orders/assign-item",
-    { method: "PATCH", skipErrorHandling: true, invalidate },
+    { method: "PATCH", successToast: "Item assigned", invalidate },
   );
   const { trigger: startTest, isLoading: isStarting } = useMutation<TestOrderItem, StartTestPayload>(
     "test-orders/start-test",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Test started", invalidate },
   );
+  const { trigger: removeItemFn, isLoading: isRemoving } = useMutation<TestOrder, void>(
+    "test-orders/remove-item",
+    { method: "DELETE", successToast: "Item removed", invalidate },
+  );
+<<<<<<< HEAD
+
+  // ── UI State ───────────────────────────────────────────────────────────────
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [orderMenuOpen, setOrderMenuOpen] = useState(false);
+  const orderMenuRef = useRef<HTMLDivElement>(null);
+
+  // Edit Order modal
+  const [editOrderOpen, setEditOrderOpen] = useState(false);
+  const [eoPriority, setEoPriority] = useState<TestOrderPriority>("routine");
+  const [eoNotes, setEoNotes] = useState("");
+
+=======
   const { trigger: removeItemFn, isLoading: isRemoving } = useMutation<TestOrder, void>(
     "test-orders/remove-item",
     { method: "DELETE", skipErrorHandling: true, invalidate },
@@ -653,6 +746,7 @@ export default function TestOrderDetail() {
   const [eoPriority, setEoPriority] = useState<TestOrderPriority>("routine");
   const [eoNotes, setEoNotes] = useState("");
 
+>>>>>>> origin/main
   // Collect Sample modal
   const [collectItem, setCollectItem] = useState<TestOrderItem | null>(null);
 
@@ -675,7 +769,18 @@ export default function TestOrderDetail() {
   const [downloading, setDownloading] = useState(false);
 
   // Staff search for assign dialog
+<<<<<<< HEAD
+  const staffSearchUrl = useMemo(() => {
+    const trimmed = assignSearch.trim();
+    return trimmed.length >= 1
+      ? `${endpoint.lab.staff.search}?q=${encodeURIComponent(trimmed)}`
+      : null;
+  }, [assignSearch]);
+  const { data: staffSearchData, isLoading: isLoadingStaff } = useApi<StaffMember[]>(staffSearchUrl);
+  const scientists = staffSearchData?.data ?? [];
+=======
   const { staff: scientists, isLoading: isLoadingStaff } = useStaffSearch(assignSearch);
+>>>>>>> origin/main
 
   // Start test — fetch analysis materials
   const { data: catalogData, isLoading: isLoadingCatalog } = useApi<TestCatalogEntry>(
@@ -702,17 +807,27 @@ export default function TestOrderDetail() {
   const handleCancel = async () => {
     if (!order) return;
     const res = await cancelOrder(undefined, endpoint.lab.testOrders.cancel(order._id));
+<<<<<<< HEAD
+    if (!res) return;
+    navigate("/lab/tests");
+=======
     if (res) {
       toast({ title: "Order cancelled" });
       navigate("/lab/tests");
     } else {
       toast({ title: "Failed to cancel order", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const handleEditOrderSave = async () => {
     if (!order) return;
     const res = await updateOrder({ priority: eoPriority, notes: eoNotes });
+<<<<<<< HEAD
+    if (!res) return;
+    await refetch();
+    setEditOrderOpen(false);
+=======
     if (res) {
       toast({ title: "Order updated" });
       await refetch();
@@ -720,6 +835,7 @@ export default function TestOrderDetail() {
     } else {
       toast({ title: "Failed to update order", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const handleAssign = async () => {
@@ -728,6 +844,13 @@ export default function TestOrderDetail() {
       { assignedTo: assignScientist },
       endpoint.lab.testOrders.assignItem(order._id, assignItem._id),
     );
+<<<<<<< HEAD
+    if (!res) return;
+    await refetch();
+    setAssignItem(null);
+    setAssignScientist("");
+    setAssignSearch("");
+=======
     if (res) {
       await refetch();
       const sci = scientists.find((s) => s._id === assignScientist);
@@ -741,6 +864,7 @@ export default function TestOrderDetail() {
     } else {
       toast({ title: "Failed to assign", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const handleStartTest = async () => {
@@ -752,6 +876,12 @@ export default function TestOrderDetail() {
       }))
       .filter((m) => m.quantity > 0);
     const res = await startTest({ materials }, endpoint.lab.testOrders.startTest(order._id, startTestItem._id));
+<<<<<<< HEAD
+    if (!res) return;
+    await refetch();
+    setStartTestItem(null);
+    setMaterialQtys({});
+=======
     if (res) {
       await refetch();
       setStartTestItem(null);
@@ -760,17 +890,23 @@ export default function TestOrderDetail() {
     } else {
       toast({ title: "Failed to start test", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const handleRemoveItem = async (item: TestOrderItem) => {
     if (!order) return;
     const res = await removeItemFn(undefined, endpoint.lab.testOrders.removeItem(order._id, item._id));
+<<<<<<< HEAD
+    if (!res) return;
+    await refetch();
+=======
     if (res) {
       await refetch();
       toast({ title: "Item removed", description: `${item.testName} removed from order.` });
     } else {
       toast({ title: "Failed to remove item", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const handleDownloadAll = async () => {

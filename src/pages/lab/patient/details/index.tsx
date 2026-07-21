@@ -20,13 +20,24 @@ import {
 } from "lucide-react";
 import { PortalAccessBadge } from "@/components/lab/PortalAccessBadge";
 import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
+<<<<<<< HEAD
+=======
 import { usePortalAccess } from "@/hooks/use-portal-access";
+>>>>>>> origin/main
 import { derivePortalAccess } from "@/lib/utils";
-import { useApi } from "@/hooks/use-api";
+import { useApi, useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
+<<<<<<< HEAD
+import type {
+  GrantPortalAccessPayload,
+  ResendPortalInvitePayload,
+} from "@/api/types/lab";
+=======
+>>>>>>> origin/main
 import type { Patient } from "@/api/types/patients";
 import type { TestOrderListResponse } from "@/api/types/test-order";
 import { OrderTable } from "@/components/lab/OrderTable";
+import { AppointmentTable } from "@/components/lab/appointments-table";
 import { EditPatientSheet } from "./edit-sheet";
 
 
@@ -51,10 +62,38 @@ export default function PatientDetail() {
     patientId ? `${endpoint.lab.testOrders.list}?patient=${patientId}&page=1` : null,
   );
   const patientOrders = patientOrdersData?.data?.docs ?? [];
-  const { grant, resend, revoke } = usePortalAccess(
-    "patient",
-    patientId ? [`/patients/${patientId}`] : [],
-  );
+  const portalInvalidate = patientId ? [endpoint.lab.patients.get(patientId)] : [];
+  const grantMutation = useMutation<unknown, GrantPortalAccessPayload>(endpoint.lab.invite, {
+    successToast: "Portal access granted",
+    invalidate: portalInvalidate,
+  });
+  const resendMutation = useMutation<unknown, ResendPortalInvitePayload>(endpoint.lab.resendInvite, {
+    successToast: "Invite resent",
+    invalidate: portalInvalidate,
+  });
+  const revokeMutation = useMutation<unknown, void>("portal-access/revoke", {
+    method: "DELETE",
+    successToast: "Access revoked",
+    invalidate: portalInvalidate,
+  });
+  const grant = async (identifier: string) => {
+    const res = await grantMutation.trigger({ identifier, access_type: "patient" });
+    if (!res) return null;
+    return res.data;
+  };
+  const resend = async (identifier: string) => {
+    const res = await resendMutation.trigger({ type: "patient", identifier });
+    if (!res) return null;
+    return res.data;
+  };
+  const revoke = async (identifier: string) => {
+    const res = await revokeMutation.trigger(
+      undefined,
+      endpoint.lab.revokeInvite("patient", identifier),
+    );
+    if (!res) return null;
+    return res.data;
+  };
 
   const [editOpen, setEditOpen] = useState(false);
 
@@ -107,15 +146,9 @@ export default function PatientDetail() {
     });
   };
 
-  const handleGrant = async (id: string) => {
-    await grant(id);
-  };
-  const handleResend = async (id: string) => {
-    await resend(id);
-  };
-  const handleRevoke = async (id: string) => {
-    await revoke(id);
-  };
+  const handleGrant = (id: string) => grant(id);
+  const handleResend = (id: string) => resend(id);
+  const handleRevoke = (id: string) => revoke(id);
 
   const openEdit = () => setEditOpen(true);
 
@@ -271,6 +304,7 @@ export default function PatientDetail() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="appointments">Appointments</TabsTrigger>
         </TabsList>
 
         {/* ── Overview tab ─────────────────────────────── */}
@@ -377,10 +411,14 @@ export default function PatientDetail() {
 
         {/* ── Orders tab ───────────────────────────────── */}
         <TabsContent value="orders" className="mt-4">
-          <OrderTable
-            filters={{ patient: patientId }}
-            hideTabs
-          />
+          <OrderTable filters={{ patient: patientId }} />
+        </TabsContent>
+
+        {/* ── Appointments tab ─────────────────────────── */}
+        <TabsContent value="appointments" className="mt-4">
+          {patientId && (
+            <AppointmentTable filters={{ patient: patientId }} />
+          )}
         </TabsContent>
       </Tabs>
 

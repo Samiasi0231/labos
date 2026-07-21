@@ -1,0 +1,90 @@
+name: Build & Deploy to cPanel
+
+on:
+  push:
+    branches:
+      - main
+
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Fresh install on the Linux runner so platform optional deps
+      # (e.g. @rollup/rollup-linux-x64-gnu) are resolved correctly.
+      # package-lock from macOS often omits other OS binaries (npm#4828).
+      - name: Install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install --legacy-peer-deps
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      # Vite inlines VITE_* at build time — must be set here (not at deploy).
+      - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          # Required so public/.htaccess (SPA rewrite rules) is included
+          include-hidden-files: true
+          retention-days: 1
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Deploy to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          security: loose
+          # Changing state-name invalidates the old cached server state (which recorded
+          # stale folders like /***blogs from a previous Next.js deployment) and forces
+          # a clean diff on the next run, preventing FTP 550 errors on missing folders.
+          state-name: .ftp-deploy-sync-state-labos.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/*.map
+            **/stats.html
+            **/_next/**
+            **/_next
+            **/.next/**
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/cgi-bin/**
+            ***blogs
+            ***blogs/**
+            **/blogs/**
+            **/blogs

@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
+import { PermissionButton } from "@/components/button";
+=======
+>>>>>>> origin/main
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +24,17 @@ import {
 } from "@/components/ui/select";
 import { Pencil, Check, X, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+<<<<<<< HEAD
+import { useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import { unslugify } from "@/lib/utils";
+import type {
+  TestCatalogEntry,
+  ParamType,
+  UpdateTestCatalogPayload,
+  CreateParameterPayload,
+} from "@/api/types/test-catalog";
+=======
 import {
   useUpdateTest,
   useAddParameter,
@@ -28,6 +43,7 @@ import {
 import endpoint from "@/api/endpoints";
 import { unslugify } from "@/lib/utils";
 import type { TestCatalogEntry, ParamType } from "@/api/types/test-catalog";
+>>>>>>> origin/main
 import {
   CATEGORY_SUGGESTIONS,
   SAMPLE_TYPES,
@@ -45,9 +61,24 @@ interface EditDialogProps {
 export function EditDialog({ target, onClose }: EditDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
+<<<<<<< HEAD
+  const { trigger: triggerUpdate } = useMutation<TestCatalogEntry, UpdateTestCatalogPayload>(
+    "test-catalog/update",
+    { method: "PATCH", successToast: "Test updated", invalidate: [] },
+  );
+  const { trigger: triggerAddParameter } = useMutation<TestCatalogEntry, CreateParameterPayload>(
+    "test-catalog/add-parameter",
+    { successToast: "Parameter added", invalidate: [] },
+  );
+  const { trigger: triggerRemoveParameter } = useMutation<TestCatalogEntry, void>(
+    "test-catalog/remove-parameter",
+    { method: "DELETE", successToast: "Parameter removed", invalidate: [] },
+  );
+=======
   const { updateTest } = useUpdateTest([]);
   const { addParameter } = useAddParameter([]);
   const { removeParameter } = useRemoveParameter([]);
+>>>>>>> origin/main
 
   const [editForm, setEditForm] = useState<EditFormState>({
     name: "",
@@ -91,12 +122,25 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
       toast({ title: "Required fields missing", variant: "destructive" });
       return;
     }
+<<<<<<< HEAD
+    const res = await triggerUpdate(
+      {
+=======
     try {
       await updateTest(target._id, {
+>>>>>>> origin/main
         name: editForm.name,
         category: editForm.category,
         turnaroundTime: Number(editForm.turnaroundTime),
         samples: editForm.samples,
+<<<<<<< HEAD
+      },
+      endpoint.lab.testCatalog.update(target._id),
+    );
+    if (!res) return;
+    await invalidateList();
+    onClose();
+=======
       });
       await invalidateList();
       toast({
@@ -107,6 +151,7 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
     } catch {
       toast({ title: "Save failed", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const addParamToExistingTest = async () => {
@@ -115,8 +160,13 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
       toast({ title: "Parameter name required", variant: "destructive" });
       return;
     }
+<<<<<<< HEAD
+    const res = await triggerAddParameter(
+      {
+=======
     try {
       const updated = await addParameter(target._id, {
+>>>>>>> origin/main
         name: newParam.name,
         unit:
           newParam.type !== "select" ? newParam.unit || undefined : undefined,
@@ -130,6 +180,16 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
             : undefined,
         referenceRange: buildRangeForEdit(newParam),
         price: Number(newParam.price) || 0,
+<<<<<<< HEAD
+      },
+      endpoint.lab.testCatalog.addParameter(target._id),
+    );
+    if (!res) return;
+    const updated = res.data;
+    setEditForm((prev) => ({ ...prev, parameters: updated.parameters }));
+    setNewParam(emptyEditParam);
+    await invalidateList();
+=======
       });
       if (updated) {
         setEditForm((prev) => ({ ...prev, parameters: updated.parameters }));
@@ -140,10 +200,21 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
     } catch {
       toast({ title: "Failed to add parameter", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   const handleRemoveExistingParam = async (paramId: string) => {
     if (!target) return;
+<<<<<<< HEAD
+    const res = await triggerRemoveParameter(
+      undefined,
+      endpoint.lab.testCatalog.removeParameter(target._id, paramId),
+    );
+    if (!res) return;
+    const updated = res.data;
+    setEditForm((prev) => ({ ...prev, parameters: updated.parameters }));
+    await invalidateList();
+=======
     try {
       const updated = await removeParameter(target._id, paramId);
       if (updated) {
@@ -154,6 +225,7 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
     } catch {
       toast({ title: "Failed to remove parameter", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   return (
@@ -484,9 +556,20 @@ export function EditDialog({ target, onClose }: EditDialogProps) {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
+<<<<<<< HEAD
+          <PermissionButton
+            permission="test_catalog.update"
+            fallback="hide"
+            leftIcon={<Check className="w-4 h-4" />}
+            onClick={handleEditSave}
+          >
+            Save Changes
+          </PermissionButton>
+=======
           <Button onClick={handleEditSave} className="gap-2">
             <Check className="w-4 h-4" /> Save Changes
           </Button>
+>>>>>>> origin/main
         </DialogFooter>
       </DialogContent>
     </Dialog>

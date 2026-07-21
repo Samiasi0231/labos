@@ -72,7 +72,7 @@ const modules = [
     features: [
       { icon: Brain, title: "AI-Powered Insights", desc: "Predictive analytics for patient volume, reagent depletion, and revenue forecasting using historical data." },
       { icon: BarChart3, title: "Business Intelligence", desc: "Comprehensive dashboards with 30+ metrics covering tests, revenue, staff performance, and patient trends." },
-      { icon: Code2, title: "API Access", desc: "RESTful API for integrating LabOS with HIS, EMR, telehealth platforms, and custom hospital systems." },
+      { icon: Code2, title: "API Access", desc: "RESTful API for integrating Ezralabs with HIS, EMR, telehealth platforms, and custom hospital systems." },
       { icon: Shield, title: "Security & Compliance", desc: "NDPR-compliant data handling, AES-256 encryption, audit logs, IP whitelisting, and MFA enforcement." },
     ],
   },
@@ -87,7 +87,7 @@ export default function Features() {
           <Badge className="mb-6 bg-white/20 text-white border-white/30">Complete Feature Suite</Badge>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-5">Every tool your lab needs</h1>
           <p className="text-lg text-white/70 leading-relaxed">
-            LabOS is not just software — it's a complete laboratory operating system. Explore every module built to cover your entire diagnostic workflow.
+            Ezralabs is not just software — it's a complete laboratory operating system. Explore every module built to cover your entire diagnostic workflow.
           </p>
         </div>
       </section>

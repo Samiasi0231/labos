@@ -1,10 +1,17 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlaskConical, ClipboardList, CalendarDays } from "lucide-react";
-import { usePatientProfile, usePatientResults, usePatientOrders } from "@/hooks/use-patient-portal";
+import { useApi } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type {
+  PatientPortalProfile,
+  PatientOrderListResponse,
+  PatientResultListResponse,
+} from "@/api/types";
 
 // ── Mock appointments (no API yet) ────────────────────────────────────────────
 
@@ -34,11 +41,42 @@ function getTestName(result: { testOrderItem: unknown }): string {
 export default function PatientDashboard() {
   const navigate = useNavigate();
 
-  const { profile, isLoading: profileLoading } = usePatientProfile();
-  const { results, pagination: resultsPagination, isLoading: resultsLoading } =
-    usePatientResults({ limit: 3 });
-  const { pagination: ordersPagination, isLoading: ordersLoading } =
-    usePatientOrders({ limit: 1 });
+  const { data: profileData, isLoading: profileLoading } =
+    useApi<PatientPortalProfile>(endpoint.patient.me);
+  const profile = profileData?.data ?? null;
+
+  const resultsUrl = useMemo(() => {
+    const params = new URLSearchParams({ limit: "3" });
+    return `${endpoint.patient.results}?${params.toString()}`;
+  }, []);
+  const { data: resultsData, isLoading: resultsLoading } =
+    useApi<PatientResultListResponse>(resultsUrl);
+  const results = resultsData?.data?.docs ?? [];
+  const resultsPagination = resultsData?.data
+    ? {
+        page: resultsData.data.page,
+        totalPages: resultsData.data.totalPages,
+        totalDocs: resultsData.data.totalDocs,
+        hasNext: resultsData.data.hasNextPage,
+        hasPrev: resultsData.data.hasPrevPage,
+      }
+    : null;
+
+  const ordersUrl = useMemo(() => {
+    const params = new URLSearchParams({ limit: "1" });
+    return `${endpoint.patient.orders}?${params.toString()}`;
+  }, []);
+  const { data: ordersData, isLoading: ordersLoading } =
+    useApi<PatientOrderListResponse>(ordersUrl);
+  const ordersPagination = ordersData?.data
+    ? {
+        page: ordersData.data.page,
+        totalPages: ordersData.data.totalPages,
+        totalDocs: ordersData.data.totalDocs,
+        hasNext: ordersData.data.hasNextPage,
+        hasPrev: ordersData.data.hasPrevPage,
+      }
+    : null;
 
   const firstName  = profile?.firstName ?? "";
   const patientCode = profile?.patientCode ?? "";

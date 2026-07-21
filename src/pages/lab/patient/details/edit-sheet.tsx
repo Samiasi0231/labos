@@ -70,11 +70,19 @@ export function EditPatientSheet({
   const { toast } = useToast();
   const { trigger, isLoading } = useMutation<Patient, UpdatePatientPayload>(
     "patients/update",
+<<<<<<< HEAD
+    { method: "PATCH", successToast: "Patient updated", invalidate: [endpoint.lab.patients.list] },
+  );
+  const updatePatient = async (patientId: string, payload: UpdatePatientPayload) => {
+    const res = await trigger(payload, endpoint.lab.patients.update(patientId));
+    if (!res) return null;
+=======
     { method: "PATCH", skipErrorHandling: true, invalidate: [endpoint.lab.patients.list] },
   );
   const updatePatient = async (patientId: string, payload: UpdatePatientPayload) => {
     const res = await trigger(payload, endpoint.lab.patients.update(patientId));
     if (!res) throw new Error("Failed to update patient");
+>>>>>>> origin/main
     return res.data;
   };
 
@@ -96,33 +104,22 @@ export function EditPatientSheet({
       });
       return;
     }
-    try {
-      await updatePatient(patient._id, {
-        firstName: form.firstName,
-        lastName: form.lastName,
-        gender: form.gender as PatientGender,
-        dob: form.dob || undefined,
-        address: {
-          line1: form.line1,
-          line2: form.line2 || undefined,
-          city: form.city,
-          state: form.state,
-          country: form.country,
-        },
-      });
-      toast({
-        title: "Patient updated",
-        description: `${form.firstName} ${form.lastName}'s record has been updated.`,
-      });
-      onOpenChange(false);
-      onSuccess?.();
-    } catch {
-      toast({
-        title: "Update failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    }
+    const updated = await updatePatient(patient._id, {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      gender: form.gender as PatientGender,
+      dob: form.dob || undefined,
+      address: {
+        line1: form.line1,
+        line2: form.line2 || undefined,
+        city: form.city,
+        state: form.state,
+        country: form.country,
+      },
+    });
+    if (!updated) return;
+    onOpenChange(false);
+    onSuccess?.();
   };
 
   return (

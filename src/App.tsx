@@ -1,28 +1,18 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { routers } from "./router";
-import { OrderProvider } from "./context/OrderContext";
-import { RoleProvider } from "./context/RoleContext";
-
-const queryClient = new QueryClient();
+import { SWRProvider } from "./provider/swr-provider";
+import { StoreProvider } from "./hooks/use-store";
 
 const App = () => {
   const router = createBrowserRouter(routers);
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+    <SWRProvider>
+      <StoreProvider>
         <Toaster />
-        <Sonner />
-        <RoleProvider>
-          <OrderProvider>
-            <RouterProvider router={router} />
-          </OrderProvider>
-        </RoleProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+        <RouterProvider router={router} />
+      </StoreProvider>
+    </SWRProvider>
   );
 };
 

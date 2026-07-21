@@ -2,41 +2,33 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PrimaryButton, SecondaryButton } from "@/components/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  FlaskConical,
-  Eye,
-  EyeOff,
-  LogIn,
-  ArrowRight,
-  Shield,
-} from "lucide-react";
-import { toast } from "sonner";
+import { Form } from "@/components/ui/form";
+import { TextInput } from "@/components/form/text-input";
+import { PasswordInput } from "@/components/form/password-input";
+import { FlaskConical, LogIn, ArrowRight, Shield } from "lucide-react";
+import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
-import { setStoredAuth } from "@/api/client";
+import { useStore } from "@/hooks/use-store";
 import endpoint from "@/api/endpoints";
-import {
-  signInSchema,
-  type SignInValues,
-  forgotPasswordSchema,
-  type ForgotPasswordValues,
-} from "@/lib/validations/auth";
 import type {
   LoginPayload,
   LoginResponse,
   ForgotPasswordPayload,
 } from "@/api/types/auth";
+import { z } from "zod";
+
+export const signInSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+export type SignInValues = z.infer<typeof signInSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+});
+export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 function getRoleRedirect(role: string): string {
   switch (role) {
@@ -61,7 +53,7 @@ interface SignInProps {
 
 export default function SignIn({ accessType = "staff" }: SignInProps) {
   const navigate = useNavigate();
-  const [showPass, setShowPass] = useState(false);
+  const { setAuth } = useStore();
   const [forgotMode, setForgotMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -83,19 +75,25 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
       onSuccess: (res) => {
         const data = res.data;
         if (!data) return;
-        setStoredAuth({ ...data, access_type: accessType });
+        setAuth({ ...data, access_type: accessType });
 
-        toast.success("Welcome back!");
+        notify.success("Welcome back!");
         if (accessType === "staff") {
-          if (data.nextAction === "create_lab") { navigate("/create-lab"); return; }
-          if (data.nextAction === "select_lab") { navigate("/select-lab"); return; }
+          if (data.nextAction === "create_lab") {
+            navigate("/create-lab");
+            return;
+          }
+          if (data.nextAction === "select_lab") {
+            navigate("/select-lab");
+            return;
+          }
           navigate(getRoleRedirect(data.role));
         }
         if (accessType === "patient") {
           navigate("/patient");
         }
       },
-      onError: (err) => toast.error(err.message || "Invalid email or password"),
+      onError: (err) => notify.fromApiError(err, "Invalid email or password"),
     },
   );
 
@@ -104,7 +102,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
     {
       skipErrorHandling: true,
       onSuccess: () => setResetSent(true),
-      onError: (err) => toast.error(err.message || "Something went wrong"),
+      onError: (err) => notify.fromApiError(err, "Something went wrong"),
     },
   );
 
@@ -131,11 +129,11 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold">
-              <span className="text-primary">Lab</span>OS
+              <span className="text-primary">Ezra</span>Labs
             </span>
           </Link>
           <h1 className="text-2xl font-bold">
-            {forgotMode ? "Reset Password" : "Sign In to LabOS"}
+            {forgotMode ? "Reset Password" : "Sign In to Ezralabs"}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {forgotMode
@@ -149,94 +147,53 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
         <Card className="shadow-card border">
           <CardContent className="pt-7 pb-7">
             {!forgotMode ? (
-              <Form {...signInForm}>
+              <Form {...signInForm} key="signin">
                 <form
+                  key="signin-form"
                   onSubmit={signInForm.handleSubmit(onSignIn)}
                   className="space-y-5"
                 >
-                  <FormField
-                    control={signInForm.control}
+                  <TextInput
+                    form={signInForm}
                     name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="you@yourlab.ng"
-                            autoComplete="email"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Email Address"
+                    type="email"
+                    placeholder="you@yourlab.ng"
+                    autoComplete="email"
                   />
 
-                  <FormField
-                    control={signInForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between">
-                          <FormLabel>Password</FormLabel>
-                          <button
-                            type="button"
-                            onClick={() => setForgotMode(true)}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            Forgot password?
-                          </button>
-                        </div>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showPass ? "text" : "password"}
-                              placeholder="Enter your password"
-                              className="pr-10"
-                              autoComplete="current-password"
-                              {...field}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPass(!showPass)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                              {showPass ? (
-                                <EyeOff className="w-4 h-4" />
-                              ) : (
-                                <Eye className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setForgotMode(true)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <PasswordInput
+                      form={signInForm}
+                      name="password"
+                      label="Password"
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                    />
+                  </div>
 
-                  <Button
+                  <PrimaryButton
                     type="submit"
                     size="lg"
-                    className="w-full gap-2"
-                    disabled={loginMutation.isLoading}
+                    className="w-full"
+                    isLoading={loginMutation.isLoading}
+                    leftIcon={<LogIn className="w-4 h-4" />}
                   >
-                    {loginMutation.isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        Signing in...
-                      </span>
-                    ) : (
-                      <>
-                        <LogIn className="w-4 h-4" />
-                        Sign In
-                      </>
-                    )}
-                  </Button>
+                    Sign In
+                  </PrimaryButton>
                 </form>
               </Form>
             ) : resetSent ? (
-              <div className="text-center py-6 space-y-4">
+              <div key="reset-sent" className="text-center py-6 space-y-4">
                 <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto">
                   <Shield className="w-7 h-7 text-success" />
                 </div>
@@ -246,8 +203,7 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
                   password reset link has been sent. Check your inbox (and spam
                   folder).
                 </p>
-                <Button
-                  variant="outline"
+                <SecondaryButton
                   className="w-full"
                   onClick={() => {
                     setForgotMode(false);
@@ -256,48 +212,33 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
                   }}
                 >
                   Back to Sign In
-                </Button>
+                </SecondaryButton>
               </div>
             ) : (
-              <Form {...forgotForm}>
+              <Form {...forgotForm} key="forgot">
                 <form
+                  key="forgot-form"
                   onSubmit={forgotForm.handleSubmit(onForgot)}
                   className="space-y-5"
                 >
-                  <FormField
-                    control={forgotForm.control}
+                  <TextInput
+                    form={forgotForm}
                     name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="you@yourlab.ng"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    label="Email Address"
+                    type="email"
+                    placeholder="you@yourlab.ng"
                   />
-                  <Button
+
+                  <PrimaryButton
                     type="submit"
                     size="lg"
-                    className="w-full gap-2"
-                    disabled={forgotMutation.isLoading}
+                    className="w-full"
+                    isLoading={forgotMutation.isLoading}
+                    rightIcon={<ArrowRight className="w-4 h-4" />}
                   >
-                    {forgotMutation.isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        Sending...
-                      </span>
-                    ) : (
-                      <>
-                        Send Reset Link <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </Button>
+                    Send Reset Link
+                  </PrimaryButton>
+
                   <button
                     type="button"
                     onClick={() => setForgotMode(false)}
@@ -316,14 +257,20 @@ export default function SignIn({ accessType = "staff" }: SignInProps) {
             {accessType === "patient" ? (
               <>
                 Lab staff?{" "}
-                <Link to="/signin" className="text-primary font-medium hover:underline">
+                <Link
+                  to="/signin"
+                  className="text-primary font-medium hover:underline"
+                >
                   Sign in to Lab Portal
                 </Link>
               </>
             ) : (
               <>
                 Don't have an account?{" "}
-                <Link to="/signup" className="text-primary font-medium hover:underline">
+                <Link
+                  to="/signup"
+                  className="text-primary font-medium hover:underline"
+                >
                   Register your lab free
                 </Link>
               </>

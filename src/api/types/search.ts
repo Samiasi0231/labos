@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+export type SearchResourceType = "patients" | "staff" | "test_catalog" | "test_orders" | "appointments" | "inventory";
+=======
 export type SearchResourceType = "patients" | "staff" | "test_catalog" | "test_orders" | "appointments";
+>>>>>>> origin/main
 
 export interface SearchHit {
   id: string;

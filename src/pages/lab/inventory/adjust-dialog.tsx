@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+import { useState, useEffect, useMemo } from "react";
+=======
 import { useState, useEffect } from "react";
+>>>>>>> origin/main
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +24,14 @@ import {
 } from "@/components/ui/select";
 import { Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+<<<<<<< HEAD
+import { useApi, useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { AdjustStockPayload, InventoryListResponse, StockMutationResponse } from "@/api/types/inventory";
+=======
 import { useAdjustStock, useInventoryList } from "@/hooks/use-inventory";
 import endpoint from "@/api/endpoints";
+>>>>>>> origin/main
 
 interface AdjustDialogProps {
   open: boolean;
@@ -39,8 +49,25 @@ const EMPTY_FORM = {
 export function AdjustDialog({ open, defaultItemId = "", onClose }: AdjustDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
+<<<<<<< HEAD
+  const { trigger: triggerAdjust, isLoading: isAdjusting } = useMutation<
+    StockMutationResponse,
+    AdjustStockPayload
+  >("inventory/adjust", { successToast: "Stock adjusted", invalidate: [] });
+
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.inventory.list}?${params.toString()}`;
+  }, []);
+
+  const { data } = useApi<InventoryListResponse>(listUrl);
+  const allItems = data?.data?.docs ?? [];
+=======
   const { adjust, isLoading: isAdjusting } = useAdjustStock([]);
   const { items: allItems } = useInventoryList({ limit: 100 });
+>>>>>>> origin/main
 
   const [adjustItemId, setAdjustItemId] = useState(defaultItemId);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -80,6 +107,21 @@ export function AdjustDialog({ open, defaultItemId = "", onClose }: AdjustDialog
       return;
     }
     const quantityChange = form.direction === "add" ? qty : -qty;
+<<<<<<< HEAD
+    const res = await triggerAdjust(
+      {
+        quantityChange,
+        reason: form.reason.trim(),
+        type: form.type,
+      },
+      endpoint.lab.inventory.adjust(adjustItemId),
+    );
+    if (!res) return;
+    mutate((key: unknown) =>
+      typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+    );
+    onClose();
+=======
     try {
       await adjust(adjustItemId, {
         quantityChange,
@@ -99,6 +141,7 @@ export function AdjustDialog({ open, defaultItemId = "", onClose }: AdjustDialog
     } catch {
       toast({ title: "Adjustment failed", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   return (

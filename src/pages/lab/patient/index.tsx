@@ -21,12 +21,23 @@ import {
 import { Search, Plus, Filter } from "lucide-react";
 import { PortalAccessBadge } from "@/components/lab/PortalAccessBadge";
 import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
+<<<<<<< HEAD
+import { useApi, useMutation } from "@/hooks/use-api";
+=======
 import { useApi } from "@/hooks/use-api";
 import { usePortalAccess } from "@/hooks/use-portal-access";
+>>>>>>> origin/main
 import { derivePortalAccess } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import endpoint from "@/api/endpoints";
 import type { PatientGender, PatientListResponse } from "@/api/types/patients";
+<<<<<<< HEAD
+import type {
+  GrantPortalAccessPayload,
+  ResendPortalInvitePayload,
+} from "@/api/types/lab";
+=======
+>>>>>>> origin/main
 
 function calculateAge(dob: string): string {
   if (!dob) return "—";
@@ -50,21 +61,51 @@ export default function Patients() {
     if (genderFilter !== "All") params.set("gender", genderFilter);
     return `${endpoint.lab.patients.list}?${params.toString()}`;
   }, [search, genderFilter]);
+<<<<<<< HEAD
+=======
+
+  const { data: patientsData, isLoading } = useApi<PatientListResponse>(listUrl);
+  const patients = patientsData?.data?.docs ?? [];
+>>>>>>> origin/main
 
   const { data: patientsData, isLoading } = useApi<PatientListResponse>(listUrl);
   const patients = patientsData?.data?.docs ?? [];
 
-  const { grant, resend, revoke } = usePortalAccess("patient", [listUrl]);
+  const grantMutation = useMutation<unknown, GrantPortalAccessPayload>(endpoint.lab.invite, {
+    successToast: "Portal access granted",
+    invalidate: [listUrl],
+  });
+  const resendMutation = useMutation<unknown, ResendPortalInvitePayload>(endpoint.lab.resendInvite, {
+    successToast: "Invite resent",
+    invalidate: [listUrl],
+  });
+  const revokeMutation = useMutation<unknown, void>("portal-access/revoke", {
+    method: "DELETE",
+    successToast: "Access revoked",
+    invalidate: [listUrl],
+  });
+  const grant = async (identifier: string) => {
+    const res = await grantMutation.trigger({ identifier, access_type: "patient" });
+    if (!res) return null;
+    return res.data;
+  };
+  const resend = async (identifier: string) => {
+    const res = await resendMutation.trigger({ type: "patient", identifier });
+    if (!res) return null;
+    return res.data;
+  };
+  const revoke = async (identifier: string) => {
+    const res = await revokeMutation.trigger(
+      undefined,
+      endpoint.lab.revokeInvite("patient", identifier),
+    );
+    if (!res) return null;
+    return res.data;
+  };
 
-  const handleGrant = async (id: string) => {
-    await grant(id);
-  };
-  const handleResend = async (id: string) => {
-    await resend(id);
-  };
-  const handleRevoke = async (id: string) => {
-    await revoke(id);
-  };
+  const handleGrant = (id: string) => grant(id);
+  const handleResend = (id: string) => resend(id);
+  const handleRevoke = (id: string) => revoke(id);
 
   return (
     <div className="space-y-6 animate-fade-in">

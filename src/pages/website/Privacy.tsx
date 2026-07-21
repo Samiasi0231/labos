@@ -6,12 +6,12 @@ const sections = [
   {
     id: "introduction",
     title: "1. Introduction",
-    content: `LabOS Technologies Ltd. ("LabOS", "we", "us") is committed to protecting the privacy and security of all personal data processed through the LabOS platform. This Privacy Policy explains how we collect, use, store, and protect personal data in accordance with the Nigeria Data Protection Regulation (NDPR) 2019 and other applicable laws.
+    content: `Ezralabs Technologies Ltd. ("Ezralabs", "we", "us") is committed to protecting the privacy and security of all personal data processed through the Ezralabs platform. This Privacy Policy explains how we collect, use, store, and protect personal data in accordance with the Nigeria Data Protection Regulation (NDPR) 2019 and other applicable laws.
 
 This policy applies to:
-• Laboratory staff, owners, and administrators using the LabOS platform
+• Laboratory staff, owners, and administrators using the Ezralabs platform
 • Patients whose data is entered by registered laboratories
-• Visitors to our website (labos.ng)
+• Visitors to our website (ezralabs.ng)
 • Doctors and other professionals with portal access
 
 By using the Service, you acknowledge that you have read and understood this Privacy Policy.`,
@@ -49,7 +49,7 @@ We do NOT collect:
     content: `We process personal data for the following purposes:
 
 Provision of Service:
-• To operate, maintain, and improve the LabOS platform
+• To operate, maintain, and improve the Ezralabs platform
 • To process test requests, generate results, and deliver reports
 • To send result-ready notifications via email, SMS, or WhatsApp (as configured)
 
@@ -75,7 +75,7 @@ We do NOT use patient data for marketing, advertising, or any purpose other than
   {
     id: "storage",
     title: "4. Data Storage & Security",
-    content: `All data processed through LabOS is stored on secure cloud infrastructure within or accessible from Nigeria. We implement the following security measures:
+    content: `All data processed through Ezralabs is stored on secure cloud infrastructure within or accessible from Nigeria. We implement the following security measures:
 
 • AES-256 encryption for all data at rest
 • TLS 1.3 encryption for all data in transit
@@ -106,22 +106,22 @@ Legal Requirements:
 • We may disclose data if required to do so by applicable Nigerian law, court order, or lawful request from regulatory authorities (e.g., NITDA, NDPC).
 
 Business Transfers:
-• In the event of a merger, acquisition, or sale of LabOS, user data may be transferred to the acquiring entity, subject to the same privacy protections.
+• In the event of a merger, acquisition, or sale of Ezralabs, user data may be transferred to the acquiring entity, subject to the same privacy protections.
 
 We will notify affected laboratories of any material data sharing events where permitted by law.`,
   },
   {
     id: "patient-data",
     title: "6. Patient Data & NDPR Compliance",
-    content: `Under the NDPR, laboratories using LabOS are considered Data Controllers for patient data they collect and enter into the platform. LabOS acts as a Data Processor on your behalf.
+    content: `Under the NDPR, laboratories using Ezralabs are considered Data Controllers for patient data they collect and enter into the platform. Ezralabs acts as a Data Processor on your behalf.
 
 Laboratory Responsibilities (as Data Controller):
-• Obtain appropriate patient consent before entering their data into LabOS.
+• Obtain appropriate patient consent before entering their data into Ezralabs.
 • Inform patients about how their data is processed and their rights under NDPR.
 • Appoint a Data Protection Officer (DPO) if required by NDPR.
 • Conduct Data Protection Impact Assessments (DPIAs) for high-risk processing activities.
 
-LabOS Responsibilities (as Data Processor):
+Ezralabs Responsibilities (as Data Processor):
 • Process patient data only as instructed by the laboratory.
 • Implement appropriate technical and organisational security measures.
 • Notify laboratories of any confirmed data breaches within 72 hours of discovery.
@@ -131,7 +131,7 @@ LabOS Responsibilities (as Data Processor):
   {
     id: "cookies",
     title: "7. Cookies & Tracking",
-    content: `LabOS uses essential cookies and similar technologies to operate the platform:
+    content: `Ezralabs uses essential cookies and similar technologies to operate the platform:
 
 Essential Cookies (required):
 • Session authentication cookies to maintain your logged-in state
@@ -160,7 +160,7 @@ You can manage cookie preferences in your browser settings. Declining non-essent
 • Right to Withdraw Consent: Withdraw consent for any processing based solely on consent.
 
 To exercise your rights, contact our Data Protection Officer:
-Email: dpo@labos.ng
+Email: dpo@ezralabs.ng
 Response time: Within 30 days of receiving your request.
 
 If you believe your data rights have been violated, you may lodge a complaint with the Nigeria Data Protection Commission (NDPC) at ndpc.gov.ng.`,
@@ -169,11 +169,11 @@ If you believe your data rights have been violated, you may lodge a complaint wi
     id: "contact",
     title: "9. Contact & Updates",
     content: `Data Protection Officer:
-Email: dpo@labos.ng
+Email: dpo@ezralabs.ng
 Address: 14 Admiralty Way, Lekki Phase 1, Lagos, Nigeria
 
 General Privacy Inquiries:
-Email: privacy@labos.ng
+Email: privacy@ezralabs.ng
 Phone: +234 801 234 5678
 
 This Privacy Policy was last updated on June 18, 2026. We may update this policy from time to time. Material changes will be notified to registered laboratory accounts via email at least 14 days before the changes take effect.
@@ -241,7 +241,7 @@ export default function Privacy() {
 
             <div className="text-sm text-muted-foreground">
               <p>For privacy inquiries, contact our Data Protection Officer:</p>
-              <p className="mt-1"><strong>Email:</strong> dpo@labos.ng</p>
+              <p className="mt-1"><strong>Email:</strong> dpo@ezralabs.ng</p>
               <p><strong>Address:</strong> 14 Admiralty Way, Lekki Phase 1, Lagos, Nigeria</p>
             </div>
           </div>

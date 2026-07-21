@@ -66,7 +66,7 @@ export function AdminHeader({ onMenuClick, pageTitle }: AdminHeaderProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuLabel>super@labos.ng</DropdownMenuLabel>
+          <DropdownMenuLabel>super@ezralabs.ng</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>Profile</DropdownMenuItem>
           <DropdownMenuItem>Audit Logs</DropdownMenuItem>

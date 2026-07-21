@@ -1,4 +1,5 @@
 export const STORAGE_KEYS = {
-  AUTH: "labos_auth",
-  USER: "labos_user",
+  AUTH: "ezralabs_auth",
+  USER: "ezralabs_user",
+  LAB: "ezralabs_lab",
 } as const;

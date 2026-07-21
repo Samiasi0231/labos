@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+import { AppointmentTable } from "@/components/lab/appointments-table";
+
+export default function Appointments() {
+  return (
+    <div className="animate-fade-in">
+      <AppointmentTable />
+=======
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -385,6 +393,7 @@ export default function Appointments() {
         onClose={() => setCheckinAppointment(null)}
         onMutate={refetch}
       />
+>>>>>>> origin/main
     </div>
   );
 }

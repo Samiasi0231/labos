@@ -2,38 +2,58 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PrimaryButton } from "@/components/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
+import { TextInput } from "@/components/form/text-input";
+import { PasswordInput } from "@/components/form/password-input";
 import {
   FlaskConical,
   CheckCircle,
   ArrowRight,
-  Eye,
-  EyeOff,
   Shield,
   Mail,
 } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import { signUpSchema, type SignUpValues } from "@/lib/validations/auth";
 import type { RegisterPayload, RegisterResponse } from "@/api/types/auth";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+
+export const signUpSchema = z
+  .object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.email("Enter a valid email").nonempty("Email is required"),
+    phone: z.string().optional(),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/[0-9!@#$%^&*]/, "Must contain at least one number or symbol"),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type SignUpValues = z.infer<typeof signUpSchema>;
 
 export default function SignUp() {
   const navigate = useNavigate();
   const [done, setDone] = useState(false);
-  const [showPass, setShowPass] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+
+  const registerMutation = useMutation<RegisterResponse, RegisterPayload>(
+    endpoint.auth.register,
+    {
+      skipErrorHandling: true,
+      onSuccess: () => setDone(true),
+      onError: (err) => notify.fromApiError(err, "Registration failed"),
+    }
+  );
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -46,15 +66,6 @@ export default function SignUp() {
       confirmPassword: "",
     },
   });
-
-  const registerMutation = useMutation<RegisterResponse, RegisterPayload>(
-    endpoint.auth.register,
-    {
-      skipErrorHandling: true,
-      onSuccess: () => setDone(true),
-      onError: (err) => toast.error(err.message || "Registration failed"),
-    }
-  );
 
   const onSubmit = (values: SignUpValues) => {
     setSubmittedEmail(values.email);
@@ -96,11 +107,11 @@ export default function SignUp() {
           </div>
           <p className="text-xs text-muted-foreground mt-6">
             Need help? Contact{" "}
-            
-              href="mailto:hello@labos.ng"
-              className="text-primary hover:underline"
+
+            href="mailto:hello@ezralabs.ng"
+            className="text-primary hover:underline"
             <a>
-              hello@labos.ng
+              hello@ezralabs.ng
             </a>
           </p>
         </div>
@@ -118,7 +129,7 @@ export default function SignUp() {
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold">
-              <span className="text-primary">Lab</span>OS
+              <span className="text-primary">Ezra</span>Labs
             </span>
           </Link>
           <h1 className="text-2xl font-bold">Create your account</h1>
@@ -132,131 +143,40 @@ export default function SignUp() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Adaeze" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Okonkwo" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <TextInput form={form} name="firstName" label="First Name *" placeholder="Adaeze" />
+                  <TextInput form={form} name="lastName" label="Last Name *" placeholder="Okonkwo" />
                 </div>
 
-                <FormField
-                  control={form.control}
+                <TextInput
+                  form={form}
                   name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="you@yourlab.ng"
-                          autoComplete="email"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Email Address *"
+                  type="email"
+                  placeholder="you@yourlab.ng"
+                  autoComplete="email"
                 />
 
-                <FormField
-                  control={form.control}
+                <TextInput
+                  form={form}
                   name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+234 801 234 5678" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Phone Number"
+                  placeholder="+234 801 234 5678"
                 />
 
-                <FormField
-                  control={form.control}
+                <PasswordInput
+                  form={form}
                   name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password *</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPass ? "text" : "password"}
-                            placeholder="Min. 8 characters"
-                            className="pr-10"
-                            autoComplete="new-password"
-                            {...field}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPass(!showPass)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showPass ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Password *"
+                  placeholder="Min. 8 characters"
+                  autoComplete="new-password"
                 />
 
-                <FormField
-                  control={form.control}
+                <PasswordInput
+                  form={form}
                   name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password *</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showConfirm ? "text" : "password"}
-                            placeholder="Re-enter password"
-                            className="pr-10"
-                            autoComplete="new-password"
-                            {...field}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirm(!showConfirm)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showConfirm ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Confirm Password *"
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
                 />
 
                 <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
@@ -276,24 +196,15 @@ export default function SignUp() {
                   </span>
                 </div>
 
-                <Button
+                <PrimaryButton
                   type="submit"
                   size="lg"
-                  className="w-full gap-2"
-                  disabled={registerMutation.isLoading}
+                  className="w-full"
+                  isLoading={registerMutation.isLoading}
+                  leftIcon={<CheckCircle className="w-4 h-4" />}
                 >
-                  {registerMutation.isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Creating account...
-                    </span>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Create Account
-                    </>
-                  )}
-                </Button>
+                  Create Account
+                </PrimaryButton>
               </form>
             </Form>
           </CardContent>

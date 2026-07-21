@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import type { Activity } from "@/api/types/activity";
+import { initials } from "@/lib/utils";
 
 function actionLabel(action: string): string {
   const [res, verb] = action.split(".");
@@ -71,14 +72,6 @@ export function fullDate(dateStr: string): string {
   });
 }
 
-function actorInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export function ActorAvatar({ name, size = 30 }: { name: string; size?: number }) {
   return (
@@ -90,7 +83,7 @@ export function ActorAvatar({ name, size = 30 }: { name: string; size?: number }
         style={{ fontSize: size * 0.37 }}
         className="font-bold text-primary leading-none"
       >
-        {actorInitials(name)}
+        {initials(name)}
       </span>
     </div>
   );

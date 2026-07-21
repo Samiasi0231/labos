@@ -1,8 +1,19 @@
+<<<<<<< HEAD
+import { useState, useMemo } from "react";
+import { ChevronRight, ChevronDown, Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useApi } from "@/hooks/use-api";
+import { usePermission } from "@/hooks/use-permission";
+import endpoint from "@/api/endpoints";
+import type { StaffMember } from "@/api/types/staff";
+=======
 import { useState } from "react";
 import { ChevronRight, ChevronDown, Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useStaffSearch } from "@/hooks/use-staff";
+>>>>>>> origin/main
 import type { AssignScientistsSectionProps, AssigneeInfo } from "./types";
 
 export function AssignScientistsSection({
@@ -14,8 +25,22 @@ export function AssignScientistsSection({
   const [expanded, setExpanded] = useState(false);
   const [pickerOpenFor, setPickerOpenFor] = useState<string | null>(null);
   const [staffQuery, setStaffQuery] = useState("");
+<<<<<<< HEAD
+  const { can } = usePermission();
+  const canAssign = can("tests.assign");
+
+  const searchUrl = useMemo(() => {
+    const trimmed = staffQuery.trim();
+    return trimmed.length >= 1
+      ? `${endpoint.lab.staff.search}?q=${encodeURIComponent(trimmed)}`
+      : null;
+  }, [staffQuery]);
+  const { data: staffData, isLoading: isLoadingStaff } = useApi<StaffMember[]>(searchUrl);
+  const staff = staffData?.data ?? [];
+=======
 
   const { staff, isLoading: isLoadingStaff } = useStaffSearch(staffQuery);
+>>>>>>> origin/main
   const scientists = staff.filter(
     (s) => s.role === "scientist" || s.role === "manager",
   );
@@ -104,6 +129,28 @@ export function AssignScientistsSection({
                           {assignee.name}
                         </span>
                       </div>
+<<<<<<< HEAD
+                      {canAssign && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openPicker(test.testCatalogId)}
+                            className="text-[11.5px] font-semibold text-muted-foreground underline hover:text-foreground transition-colors"
+                          >
+                            Change
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => clearAssignee(test.testCatalogId)}
+                            className="text-[11.5px] font-semibold text-destructive/70 underline hover:text-destructive transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : canAssign ? (
+=======
                       <button
                         type="button"
                         onClick={() => openPicker(test.testCatalogId)}
@@ -120,6 +167,7 @@ export function AssignScientistsSection({
                       </button>
                     </div>
                   ) : (
+>>>>>>> origin/main
                     <Button
                       type="button"
                       size="sm"
@@ -130,7 +178,11 @@ export function AssignScientistsSection({
                       <Plus className="w-3 h-3" />
                       Assign
                     </Button>
+<<<<<<< HEAD
+                  ) : null}
+=======
                   )}
+>>>>>>> origin/main
                 </div>
 
                 {/* Inline staff picker */}

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { LabSidebar } from "./LabSidebar";
+import { LabSidebar } from "./lab-sidebar";
 import { LabHeader } from "./LabHeader";
-import { InventoryProvider } from "@/context/InventoryContext";
 
 const pageTitles: Record<string, string> = {
   '/lab':                   'Dashboard',
@@ -31,29 +30,29 @@ export function LabLayout() {
   const location = useLocation();
 
   const pageTitle = pageTitles[location.pathname]
-    ?? (location.pathname.startsWith('/lab/test-order')  ? 'New Test Order'
-      : location.pathname.startsWith('/lab/patients/')   ? 'Patient Details'
-      : 'LabOS');
+    ?? (location.pathname.startsWith('/lab/test-order')      ? 'New Test Order'
+      : location.pathname.startsWith('/lab/patients/')       ? 'Patient Details'
+      : location.pathname.startsWith('/lab/staff/')          ? 'Staff'
+      : location.pathname.startsWith('/lab/test-catalog/')   ? 'Test Catalog'
+      : 'Ezralabs');
 
   return (
-    <InventoryProvider>
-      <div className="flex h-full bg-background overflow-hidden">
-        <LabSidebar
-          collapsed={collapsed}
-          onCollapse={setCollapsed}
-          mobileOpen={mobileOpen}
-          onMobileClose={() => setMobileOpen(false)}
+    <div className="flex h-full bg-background overflow-hidden">
+      <LabSidebar
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <LabHeader
+          onMenuClick={() => setMobileOpen(true)}
+          pageTitle={pageTitle}
         />
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          <LabHeader
-            onMenuClick={() => setMobileOpen(true)}
-            pageTitle={pageTitle}
-          />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            <Outlet />
-          </main>
-        </div>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <Outlet />
+        </main>
       </div>
-    </InventoryProvider>
+    </div>
   );
 }

@@ -1,16 +1,38 @@
+<<<<<<< HEAD
+import { useMemo, useState } from "react";
+=======
 import { useState } from "react";
+>>>>>>> origin/main
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Package, Activity } from "lucide-react";
+<<<<<<< HEAD
+import { useApi } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { InventoryListResponse } from "@/api/types/inventory";
+=======
 import { useInventoryList } from "@/hooks/use-inventory";
+>>>>>>> origin/main
 import { ItemsTab } from "./items-tab";
 import { MovementsTab } from "./movements-tab";
 
 export default function Inventory() {
   const [activeTab, setActiveTab] = useState<"items" | "movements">("items");
 
+<<<<<<< HEAD
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.inventory.list}?${params.toString()}`;
+  }, []);
+
+  const { data } = useApi<InventoryListResponse>(listUrl);
+  const allItems = data?.data?.docs ?? [];
+=======
   const { items: allItems } = useInventoryList({ limit: 100 });
+>>>>>>> origin/main
   const lowStockItems = allItems.filter((i) => i.quantityOnHand <= i.reorderLevel);
 
   return (

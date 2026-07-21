@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { FlaskConical, Download, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { usePatientResults } from "@/hooks/use-patient-portal";
+import { notify } from "@/lib/notify";
+import { useApi } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
+import type { PatientResultListResponse } from "@/api/types";
 import { downloadPDF } from "@/lib/utils";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -35,7 +36,25 @@ export default function MyResults() {
   const [page, setPage] = useState(1);
   const [downloading, setDownloading] = useState<string | null>(null);
 
-  const { results, pagination, isLoading } = usePatientResults({ page, limit: 10 });
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: "10",
+    });
+    return `${endpoint.patient.results}?${params.toString()}`;
+  }, [page]);
+
+  const { data: resultsData, isLoading } = useApi<PatientResultListResponse>(listUrl);
+  const results = resultsData?.data?.docs ?? [];
+  const pagination = resultsData?.data
+    ? {
+        page: resultsData.data.page,
+        totalPages: resultsData.data.totalPages,
+        totalDocs: resultsData.data.totalDocs,
+        hasNext: resultsData.data.hasNextPage,
+        hasPrev: resultsData.data.hasPrevPage,
+      }
+    : null;
 
   const handleDownload = async (e: React.MouseEvent, resultId: string, testName: string) => {
     e.stopPropagation();
@@ -46,7 +65,7 @@ export default function MyResults() {
         `result-${testName}.pdf`
       );
     } catch {
-      toast.error("Download failed. Please try again.");
+      notify.error("Download failed. Please try again.");
     } finally {
       setDownloading(null);
     }

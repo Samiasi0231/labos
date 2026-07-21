@@ -4,8 +4,16 @@ import { useSWRConfig } from "swr";
 import { fetcher, get, post, put, patch, del } from "@/api/fetcher";
 import type { ApiError, ApiResponse } from "@/api/types/common";
 import type { GlobalSearchResult } from "@/api/types/search";
+<<<<<<< HEAD
+import type { CurrentUser } from "@/api/types/user";
+import type { Lab } from "@/api/types/lab";
+import { notify } from "@/lib/notify";
+import endpoint from "@/api/endpoints";
+import { useStore } from "@/hooks/use-store";
+=======
 import { toast } from "sonner";
 import endpoint from "@/api/endpoints";
+>>>>>>> origin/main
 export { default as useDebounce } from "./use-debounce";
 import useDebounce from "./use-debounce";
 
@@ -16,6 +24,8 @@ interface MyPermissionsResponse {
     permission: string;
     description: string;
   }[];
+<<<<<<< HEAD
+=======
 }
 
 const TOAST_IDS = {
@@ -41,8 +51,8 @@ function showApiErrorToast(err: ApiError) {
     return;
   }
   toast.error(err.message);
+>>>>>>> origin/main
 }
-
 
 export interface UseApiOptions {
   skipErrorHandling?: boolean;
@@ -67,7 +77,7 @@ export function useApi<T>(
   >(endpoint, (url) => fetcher<T>(url), {
     ...swrConfig,
     onError: (err) => {
-      if (!skipErrorHandling) showApiErrorToast(err);
+      if (!skipErrorHandling) notify.fromApiError(err);
       onError?.(err);
     },
     onSuccess: (data) => {
@@ -83,7 +93,13 @@ type Method = "POST" | "PUT" | "PATCH" | "DELETE" | "GET";
 
 export interface UseMutationOptions<TResponse> {
   method?: Method;
+  /** When true, errors are thrown and not auto-toasted. */
   skipErrorHandling?: boolean;
+  /**
+   * Show a success toast with the backend `message`.
+   * Pass a string as fallback when the response message is empty.
+   */
+  successToast?: boolean | string;
   onSuccess?: (data: ApiResponse<TResponse>) => void;
   onError?: (error: ApiError) => void;
   invalidate?: string[];
@@ -96,6 +112,7 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
   const {
     method = "POST",
     skipErrorHandling = false,
+    successToast,
     onSuccess,
     onError,
     invalidate = [],
@@ -126,13 +143,18 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
     endpoint,
     fetcherFn,
     {
-      throwOnError: false,
+      throwOnError: true,
       onSuccess: (data) => {
         invalidate.forEach((key) => globalMutate(key));
+        if (successToast) {
+          const fallback =
+            typeof successToast === "string" ? successToast : "Success";
+          notify.fromApiSuccess(data, fallback);
+        }
         onSuccess?.(data);
       },
       onError: (err: ApiError) => {
-        if (!skipErrorHandling) showApiErrorToast(err);
+        if (!skipErrorHandling) notify.fromApiError(err);
         onError?.(err);
       },
     }
@@ -156,6 +178,89 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
   };
 }
 
+<<<<<<< HEAD
+/** Fetch current user only when missing from the store / storage. */
+export function useCurrentUser() {
+  const { auth, user, hydrated, setUser } = useStore();
+  const needsFetch = hydrated && !!auth?.access_token && user === null;
+
+  const { isLoading, error, mutate } = useApi<CurrentUser>(
+    needsFetch ? endpoint.user.me : null,
+    {
+      onSuccess: (res) => {
+        if (res.data) setUser(res.data);
+      },
+    },
+  );
+
+  return {
+    user,
+    isLoading: !hydrated || (needsFetch && isLoading),
+    error,
+    refetch: mutate,
+  };
+}
+
+/** Fetch current lab only when missing from the store / storage. */
+export function useCurrentLab() {
+  const { auth, lab, hydrated, setLab } = useStore();
+  const needsFetch = hydrated && !!auth?.access_token && !!auth.labId && lab === null;
+
+  const { isLoading, error, mutate } = useApi<Lab>(
+    needsFetch ? endpoint.lab.me : null,
+    {
+      onSuccess: (res) => {
+        if (res.data) setLab(res.data);
+      },
+    },
+  );
+
+  return {
+    lab,
+    isLoading: !hydrated || (needsFetch && isLoading),
+    error,
+    refetch: mutate,
+  };
+}
+
+/** Fetch permissions only when missing from the store / storage. */
+export function useMyPermissions() {
+  const {
+    auth,
+    permissions,
+    role,
+    isAdmin,
+    hydrated,
+    setPermissions,
+    can: storeCan,
+  } = useStore();
+
+  const needsFetch =
+    hydrated && !!auth?.access_token && !!auth.labId && permissions === null;
+
+  const { isLoading } = useApi<MyPermissionsResponse>(
+    needsFetch ? endpoint.lab.staff.myPermissions : null,
+    {
+      onSuccess: (res) => {
+        const data = res.data;
+        if (!data) return;
+        setPermissions({
+          role: data.role,
+          isAdmin: data.isAdmin,
+          permissions: data.permissions.map((p) => p.permission),
+        });
+      },
+    },
+  );
+
+  return {
+    can: storeCan,
+    isAdmin,
+    role,
+    permissions: permissions ?? [],
+    isLoading: !hydrated || (needsFetch && isLoading),
+  };
+=======
 export function useMyPermissions() {
   const { data, isLoading } = useApi<MyPermissionsResponse>(
     endpoint.lab.staff.myPermissions
@@ -174,6 +279,7 @@ export function useMyPermissions() {
   const role = data?.data?.role ?? null;
 
   return { can, isAdmin, role, isLoading };
+>>>>>>> origin/main
 }
 
 export function useGlobalSearch(q: string, types?: string[]) {
@@ -191,4 +297,8 @@ export function useGlobalSearch(q: string, types?: string[]) {
     isLoading,
     hasQuery: debounced.length >= 2,
   };
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

@@ -18,8 +18,12 @@ import type {
   TestOrderItemStatus,
   TestOrderPriority,
 } from "@/api/types/test-order";
+<<<<<<< HEAD
+import { concatStrings, initials } from "@/lib/utils";
+=======
 
 // ── Config ────────────────────────────────────────────────────────────────────
+>>>>>>> origin/main
 
 export const TABS: TestOrderItemStatus[] = [
   "assigned",
@@ -83,6 +87,8 @@ export const STATUS_CONFIG: Record<
   },
 };
 
+<<<<<<< HEAD
+=======
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 export function initials(name: string) {
@@ -99,6 +105,7 @@ export function initials(name: string) {
 
 // ── TestCard ──────────────────────────────────────────────────────────────────
 
+>>>>>>> origin/main
 export function TestCard({
   item,
   canProcess,
@@ -114,7 +121,11 @@ export function TestCard({
 }) {
   const order = item.testOrder;
   const patient = order.patient;
+<<<<<<< HEAD
+  const patientName = concatStrings(patient.firstName, patient.lastName, " ");
+=======
   const patientName = `${patient.firstName} ${patient.lastName}`.trim();
+>>>>>>> origin/main
   const prio = PRIORITY_CONFIG[order.priority];
   const status = STATUS_CONFIG[item.status];
   const StatusIcon = status.icon;
@@ -184,16 +195,27 @@ export function TestCard({
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Beaker className="w-3 h-3" />
+<<<<<<< HEAD
+            Parameters ({(item?.parameters ?? []).filter((p) => p != null && !!p._id).length})
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {(item?.parameters ?? []).filter((p) => p != null && !!p._id).map((p) => (
+=======
             Parameters ({item.parameters?.length ?? 0})
           </p>
           <div className="flex flex-wrap gap-1.5">
             {(item.parameters ?? []).map((p) => (
+>>>>>>> origin/main
               <Badge
                 key={p._id}
                 variant="outline"
                 className="text-[10px] px-2 py-0.5 font-normal text-muted-foreground"
               >
+<<<<<<< HEAD
+                {p?.name ?? "—"}
+=======
                 {p.name}
+>>>>>>> origin/main
               </Badge>
             ))}
           </div>

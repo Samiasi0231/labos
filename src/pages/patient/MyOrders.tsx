@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronRight, Download, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { usePatientOrders } from "@/hooks/use-patient-portal";
+import { notify } from "@/lib/notify";
+import { useApi } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import { downloadPDF } from "@/lib/utils";
-import type { TestOrderStatus, TestOrderPriority } from "@/api/types";
+import type { TestOrderStatus, TestOrderPriority, PatientOrderListResponse } from "@/api/types";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -45,7 +45,25 @@ export default function MyOrders() {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
-  const { orders, pagination, isLoading } = usePatientOrders({ page, limit: 10 });
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: "10",
+    });
+    return `${endpoint.patient.orders}?${params.toString()}`;
+  }, [page]);
+
+  const { data: ordersData, isLoading } = useApi<PatientOrderListResponse>(listUrl);
+  const orders = ordersData?.data?.docs ?? [];
+  const pagination = ordersData?.data
+    ? {
+        page: ordersData.data.page,
+        totalPages: ordersData.data.totalPages,
+        totalDocs: ordersData.data.totalDocs,
+        hasNext: ordersData.data.hasNextPage,
+        hasPrev: ordersData.data.hasPrevPage,
+      }
+    : null;
 
   const toggle = (id: string) => setExpandedId((prev) => (prev === id ? null : id));
 
@@ -58,7 +76,7 @@ export default function MyOrders() {
         `results-order-${orderId}.pdf`
       );
     } catch {
-      toast.error("No released results available yet, or download failed.");
+      notify.error("No released results available yet, or download failed.");
     } finally {
       setDownloading(null);
     }

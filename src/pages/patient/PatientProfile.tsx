@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { usePatientProfile, useUpdatePatientProfile } from "@/hooks/use-patient-portal";
+import { notify } from "@/lib/notify";
+import { useApi, useMutation } from "@/hooks/use-api";
+import endpoint from "@/api/endpoints";
+import type { PatientPortalProfile, UpdatePatientPortalProfilePayload } from "@/api/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -26,8 +28,15 @@ function fmtAddress(addr?: {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function PatientProfile() {
-  const { profile, isLoading } = usePatientProfile();
-  const updateMutation = useUpdatePatientProfile();
+  const { data: profileData, isLoading } = useApi<PatientPortalProfile>(
+    endpoint.patient.me
+  );
+  const profile = profileData?.data ?? null;
+
+  const updateMutation = useMutation<PatientPortalProfile, UpdatePatientPortalProfilePayload>(
+    endpoint.patient.updateMe,
+    { method: "PATCH", successToast: "Profile updated", invalidate: [endpoint.patient.me] }
+  );
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -49,14 +58,12 @@ export default function PatientProfile() {
     if (phone !== profile?.phone) payload.phone = phone;
 
     if (Object.keys(payload).length === 0) {
-      toast.info("No changes to save.");
+      notify.info("No changes to save.");
       return;
     }
 
-    await updateMutation.trigger(payload);
-    if (!updateMutation.error) {
-      toast.success("Profile updated.");
-    }
+    const res = await updateMutation.trigger(payload);
+    if (!res) return;
   };
 
   return (

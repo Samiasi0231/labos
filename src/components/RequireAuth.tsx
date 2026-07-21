@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { getStoredAuth } from "@/api/client";
+import { useStore } from "@/hooks/use-store";
 
 const STAFF_ROLES = new Set(["lab_owner", "lab_manager", "manager", "scientist", "receptionist"]);
 const ADMIN_ROLES = new Set(["admin"]);
@@ -21,16 +21,16 @@ interface RequireAuthProps {
 }
 
 export function RequireAuth({ portal }: RequireAuthProps) {
-  const auth = getStoredAuth();
+  const { auth, hydrated } = useStore();
   const location = useLocation();
 
-  // Not authenticated → send to the correct sign-in page
+  if (!hydrated) return null;
+
   if (!auth?.access_token) {
     const to = portal === "patient" ? "/patient/signin" : "/signin";
     return <Navigate to={to} state={{ from: location }} replace />;
   }
 
-  // Authenticated but wrong portal → bounce to their actual portal
   const isAllowed =
     portal === "lab"   ? STAFF_ROLES.has(auth.role ?? "") :
     portal === "admin" ? ADMIN_ROLES.has(auth.role ?? "") :

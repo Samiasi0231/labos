@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { getStoredAuth } from "@/api/client";
 import type { PopulatedRef } from "@/api/types/results";
 import type { PortalAccess } from "@/data/mockData";
+import { mutate } from "swr";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -78,3 +79,28 @@ export async function downloadPDF(path: string, fallbackName: string): Promise<v
   document.body.removeChild(a);
   URL.revokeObjectURL(objectUrl);
 }
+
+export const concatStrings = (...args: any[]): string => {
+  if (args.length === 0) return '';
+  const separator = args[args.length - 1];
+  const strings = args.slice(0, -1);
+  return strings
+    .filter((str: any) => str && typeof str === 'string' && str.trim() !== '')
+    .join(separator || '');
+};
+
+export function initials(name: string) {
+  return (
+    name
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?"
+  );
+}
+
+export const clearCache = (exclude: string[] = []) => mutate((key) => {
+  return exclude?.every((k) => k !== key);
+}, undefined, { revalidate: true });

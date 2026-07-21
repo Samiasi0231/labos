@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PermissionButton } from "@/components/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -114,15 +115,15 @@ export default function LabResultDetail() {
 
   const { trigger: approveResult, isLoading: isApproving } = useMutation<LabResult, void>(
     "results/approve",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Result approved", invalidate },
   );
   const { trigger: returnResult, isLoading: isReturning } = useMutation<LabResult, ReturnResultPayload>(
     "results/return",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Result returned", invalidate },
   );
   const { trigger: releaseResult, isLoading: isReleasing } = useMutation<LabResult, void>(
     "results/release",
-    { skipErrorHandling: true, invalidate },
+    { successToast: "Result released", invalidate },
   );
 
   const [returnOpen, setReturnOpen] = useState(false);
@@ -131,24 +132,14 @@ export default function LabResultDetail() {
 
   const handleApprove = async () => {
     if (!result) return;
-    try {
-      const res = await approveResult(undefined, endpoint.lab.results.approve(result._id));
-      if (!res) throw new Error();
-      toast({ title: "Result Approved", description: "Ready to release to the patient." });
-    } catch {
-      toast({ title: "Approve failed", description: "Something went wrong.", variant: "destructive" });
-    }
+    const res = await approveResult(undefined, endpoint.lab.results.approve(result._id));
+    if (!res) return;
   };
 
   const handleRelease = async () => {
     if (!result) return;
-    try {
-      const res = await releaseResult(undefined, endpoint.lab.results.release(result._id));
-      if (!res) throw new Error();
-      toast({ title: "Result Released", description: "The patient can now view this result." });
-    } catch {
-      toast({ title: "Release failed", description: "Something went wrong.", variant: "destructive" });
-    }
+    const res = await releaseResult(undefined, endpoint.lab.results.release(result._id));
+    if (!res) return;
   };
 
   const handleReturn = async () => {
@@ -157,18 +148,13 @@ export default function LabResultDetail() {
       toast({ title: "Note required", description: "A note is required when returning a result.", variant: "destructive" });
       return;
     }
-    try {
-      const res = await returnResult(
-        { note: returnNote.trim() },
-        endpoint.lab.results.return(result._id),
-      );
-      if (!res) throw new Error();
-      setReturnOpen(false);
-      setReturnNote("");
-      toast({ title: "Result Returned", description: "Sent back to the lab scientist for correction." });
-    } catch {
-      toast({ title: "Return failed", description: "Something went wrong.", variant: "destructive" });
-    }
+    const res = await returnResult(
+      { note: returnNote.trim() },
+      endpoint.lab.results.return(result._id),
+    );
+    if (!res) return;
+    setReturnOpen(false);
+    setReturnNote("");
   };
 
   const handleDownload = async () => {
@@ -375,38 +361,51 @@ export default function LabResultDetail() {
       {/* ── Actions ── */}
       <div className="flex justify-end gap-2">
         {result.status === "released" && (
-          <Button
+          <PermissionButton
+            permission="results.read"
+            fallback="hide"
             variant="outline"
             size="sm"
-            className="gap-1.5"
-            disabled={downloading}
+            isLoading={downloading}
+            leftIcon={<Download className="w-3.5 h-3.5" />}
             onClick={handleDownload}
           >
-            <Download className="w-3.5 h-3.5" />
-            {downloading ? "Downloading…" : "Download PDF"}
-          </Button>
+            Download PDF
+          </PermissionButton>
         )}
         {canReturn && (
-          <Button
+          <PermissionButton
+            permission="results.return"
+            fallback="hide"
             variant="outline"
             className="gap-1.5 text-destructive border-destructive/40 hover:bg-destructive/10"
+            leftIcon={<Undo2 className="w-4 h-4" />}
             onClick={() => { setReturnNote(""); setReturnOpen(true); }}
           >
-            <Undo2 className="w-4 h-4" />
             Return
-          </Button>
+          </PermissionButton>
         )}
         {canApprove && (
-          <Button className="gap-1.5" onClick={handleApprove} disabled={isApproving}>
-            <CheckCircle2 className="w-4 h-4" />
-            {isApproving ? "Approving…" : "Approve"}
-          </Button>
+          <PermissionButton
+            permission="results.approve"
+            fallback="hide"
+            isLoading={isApproving}
+            leftIcon={<CheckCircle2 className="w-4 h-4" />}
+            onClick={handleApprove}
+          >
+            Approve
+          </PermissionButton>
         )}
         {canRelease && (
-          <Button className="gap-1.5" onClick={handleRelease} disabled={isReleasing}>
-            <Send className="w-4 h-4" />
-            {isReleasing ? "Releasing…" : "Release to Patient"}
-          </Button>
+          <PermissionButton
+            permission="results.release"
+            fallback="hide"
+            isLoading={isReleasing}
+            leftIcon={<Send className="w-4 h-4" />}
+            onClick={handleRelease}
+          >
+            Release to Patient
+          </PermissionButton>
         )}
       </div>
 
@@ -434,15 +433,16 @@ export default function LabResultDetail() {
             <Button variant="outline" onClick={() => setReturnOpen(false)}>
               Cancel
             </Button>
-            <Button
+            <PermissionButton
               variant="destructive"
+              permission="results.return"
+              fallback="hide"
+              isLoading={isReturning}
+              leftIcon={<Undo2 className="w-4 h-4" />}
               onClick={handleReturn}
-              disabled={isReturning}
-              className="gap-2"
             >
-              <Undo2 className="w-4 h-4" />
-              {isReturning ? "Returning…" : "Confirm Return"}
-            </Button>
+              Confirm Return
+            </PermissionButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

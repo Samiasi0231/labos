@@ -33,7 +33,7 @@ const steps = [
 const testimonials = [
   {
     name: "Dr. Adaeze Okonkwo", role: "Medical Director", lab: "HealthFirst Diagnostics, Lagos",
-    quote: "LabOS transformed how we operate. Results that used to take 3 days now go out in hours. Our patients love the WhatsApp notifications.",
+    quote: "Ezralabs transformed how we operate. Results that used to take 3 days now go out in hours. Our patients love the WhatsApp notifications.",
     rating: 5,
   },
   {
@@ -43,7 +43,7 @@ const testimonials = [
   },
   {
     name: "Mrs. Chioma Eze", role: "Lab Manager", lab: "Precision Labs, Port Harcourt",
-    quote: "Managing 4 branches used to be a nightmare. With LabOS, I have a real-time view of everything from my phone.",
+    quote: "Managing 4 branches used to be a nightmare. With Ezralabs, I have a real-time view of everything from my phone.",
     rating: 5,
   },
 ];
@@ -108,7 +108,7 @@ export default function Home() {
             <Badge variant="outline" className="mb-4 text-primary border-primary/30">Everything You Need</Badge>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Built for every role in your lab</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              From the lab owner to the receptionist, LabOS has purpose-built tools for every member of your team.
+              From the lab owner to the receptionist, Ezralabs has purpose-built tools for every member of your team.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -253,7 +253,7 @@ export default function Home() {
       <section className="gradient-hero py-20 text-white text-center">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to transform your laboratory?</h2>
-          <p className="text-white/70 text-lg mb-10">Join 500+ laboratories already running smarter with LabOS. Get started today — no credit card needed.</p>
+          <p className="text-white/70 text-lg mb-10">Join 500+ laboratories already running smarter with Ezralabs. Get started today — no credit card needed.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-white text-primary hover:bg-white/90 font-semibold gap-2 px-8 shadow-xl" asChild>
               <Link to="/signup">Create Free Account <ArrowRight className="w-5 h-5" /></Link>

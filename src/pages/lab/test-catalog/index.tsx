@@ -1,4 +1,8 @@
 import { useState, useMemo } from "react";
+<<<<<<< HEAD
+import { useNavigate } from "react-router-dom";
+=======
+>>>>>>> origin/main
 import { useSWRConfig } from "swr";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,11 +34,26 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
+<<<<<<< HEAD
+=======
   Pencil,
+>>>>>>> origin/main
   Trash2,
   MoreHorizontal,
   TestTube,
   Library,
+<<<<<<< HEAD
+  Eye,
+  PowerOff,
+  Power,
+} from "lucide-react";
+import { PresetLibrarySheet } from "@/components/lab/PresetLibrarySheet";
+import { useApi, useMutation } from "@/hooks/use-api";
+import { unslugify } from "@/lib/utils";
+import type { TestCatalogEntry, ReferenceRange, TestCatalogListResponse } from "@/api/types/test-catalog";
+import endpoint from "@/api/endpoints";
+import { AddWizard } from "./add-wizard";
+=======
 } from "lucide-react";
 import { PresetLibrarySheet } from "@/components/lab/PresetLibrarySheet";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +63,7 @@ import type { TestCatalogEntry, ReferenceRange } from "@/api/types/test-catalog"
 import endpoint from "@/api/endpoints";
 import { AddWizard } from "./add-wizard";
 import { EditDialog } from "./edit-dialog";
+>>>>>>> origin/main
 import { DeleteDialog } from "./delete-dialog";
 
 function formatRefRange(range?: ReferenceRange, key: "male" | "female" = "male") {
@@ -53,11 +73,42 @@ function formatRefRange(range?: ReferenceRange, key: "male" | "female" = "male")
 }
 
 export default function TestCatalog() {
+<<<<<<< HEAD
+  const navigate = useNavigate();
+=======
   const { toast } = useToast();
+>>>>>>> origin/main
   const { mutate } = useSWRConfig();
 
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
+<<<<<<< HEAD
+
+  const listUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (catFilter !== "All") params.set("category", catFilter);
+    params.set("page", "1");
+    params.set("limit", "100");
+    return `${endpoint.lab.testCatalog.list}?${params.toString()}`;
+  }, [search, catFilter]);
+
+  const { data, isLoading } = useApi<TestCatalogListResponse>(listUrl);
+  const tests = data?.data?.docs ?? [];
+
+  const { trigger: triggerUpdateStatus } = useMutation<
+    TestCatalogEntry,
+    { isActive: boolean }
+  >("test-catalog/update-status", {
+    method: "PATCH",
+    successToast: "Test status updated",
+    invalidate: [],
+  });
+
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [presetOpen, setPresetOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+=======
   const { tests, isLoading } = useTestCatalogList({
     search: search || undefined,
     category: catFilter === "All" ? undefined : catFilter,
@@ -70,6 +121,7 @@ export default function TestCatalog() {
   const [presetOpen, setPresetOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TestCatalogEntry | null>(null);
+>>>>>>> origin/main
   const [deleteTarget, setDeleteTarget] = useState<TestCatalogEntry | null>(null);
 
   const categoriesInUse = useMemo(() => {
@@ -94,6 +146,18 @@ export default function TestCatalog() {
   };
 
   const handleToggleActive = async (t: TestCatalogEntry) => {
+<<<<<<< HEAD
+    const res = await triggerUpdateStatus(
+      { isActive: !t.isActive },
+      endpoint.lab.testCatalog.updateStatus(t._id),
+    );
+    if (!res) return;
+    mutate(
+      (key: unknown) =>
+        typeof key === "string" &&
+        key.startsWith(endpoint.lab.testCatalog.list),
+    );
+=======
     try {
       await updateStatus(t._id, !t.isActive);
       mutate(
@@ -105,6 +169,7 @@ export default function TestCatalog() {
     } catch {
       toast({ title: "Failed to update status", variant: "destructive" });
     }
+>>>>>>> origin/main
   };
 
   return (
@@ -314,15 +379,28 @@ export default function TestCatalog() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             className="gap-2"
+<<<<<<< HEAD
+                            onClick={() => navigate(`/lab/test-catalog/${test._id}`)}
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View Details
+=======
                             onClick={() => setEditTarget(test)}
                           >
                             <Pencil className="w-3.5 h-3.5" /> Edit
+>>>>>>> origin/main
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2"
                             onClick={() => handleToggleActive(test)}
                           >
+<<<<<<< HEAD
+                            {test.isActive
+                              ? <><PowerOff className="w-3.5 h-3.5" /> Deactivate</>
+                              : <><Power className="w-3.5 h-3.5" /> Activate</>
+                            }
+=======
                             {test.isActive ? "Deactivate" : "Activate"}
+>>>>>>> origin/main
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2 text-destructive"
@@ -422,7 +500,10 @@ export default function TestCatalog() {
       </Card>
 
       <AddWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
+<<<<<<< HEAD
+=======
       <EditDialog target={editTarget} onClose={() => setEditTarget(null)} />
+>>>>>>> origin/main
       <DeleteDialog target={deleteTarget} onClose={() => setDeleteTarget(null)} />
 
       <PresetLibrarySheet

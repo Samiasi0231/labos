@@ -14,6 +14,7 @@ import ResetPassword from "./pages/website/ResetPassword";
 import VerifyEmail from "./pages/website/VerifyEmail";
 import CreateLab from "./pages/website/CreateLab";
 import AcceptInvite from "./pages/website/AcceptInvite";
+import SelectLab from "./pages/website/SelectLab";
 
 import { AdminLayout } from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -36,9 +37,11 @@ import Doctors from "./pages/lab/Doctors";
 import Inventory from "./pages/lab/inventory";
 import Finance from "./pages/lab/Finance";
 import Staff from "./pages/lab/staff";
+import StaffDetail from "./pages/lab/staff/detail";
 import Branches from "./pages/lab/Branches";
-import Settings from "./pages/lab/settings";
+import Settings from "./pages/lab/Settings";
 import TestCatalog from "./pages/lab/test-catalog";
+import TestCatalogDetail from "./pages/lab/test-catalog/detail";
 
 import PatientRegistration from "./pages/lab/patient/registration";
 import Appointments from "./pages/lab/appointments";
@@ -48,6 +51,7 @@ import ResultEntry from "./pages/lab/result/entry";
 import LabResultDetail from "./pages/lab/result/detail";
 import PendingReviews from "./pages/lab/result/pending-reviews";
 import ActivityLog from "./pages/lab/activities";
+import MyAccount from "./pages/lab/account";
 
 import { PatientLayout } from "./components/patient/PatientLayout";
 import PatientDashboard from "./pages/patient/PatientDashboard";
@@ -77,6 +81,7 @@ export const routers = [
       { path: "reset-password", element: <ResetPassword /> },
       { path: "verify-email", element: <VerifyEmail /> },
       { path: "create-lab", element: <CreateLab /> },
+      { path: "select-lab", element: <SelectLab /> },
       { path: "accept-invite", element: <AcceptInvite /> },
     ],
   },
@@ -101,9 +106,11 @@ export const routers = [
           { path: "inventory", element: <Inventory /> },
           { path: "finance", element: <Finance /> },
           { path: "staff", element: <Staff /> },
+          { path: "staff/:membershipId", element: <StaffDetail /> },
           { path: "branches", element: <Branches /> },
           { path: "settings", element: <Settings /> },
           { path: "test-catalog", element: <TestCatalog /> },
+          { path: "test-catalog/:testId", element: <TestCatalogDetail /> },
           // Receptionist pages
           { path: "register", element: <PatientRegistration /> },
           { path: "appointments", element: <Appointments /> },
@@ -113,6 +120,7 @@ export const routers = [
           { path: "result-entry", element: <ResultEntry /> },
           { path: "reviews", element: <PendingReviews /> },
           { path: "activity", element: <ActivityLog /> },
+          { path: "account", element: <MyAccount /> },
         ],
       },
     ],
