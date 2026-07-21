@@ -144,7 +144,7 @@ export function InviteDialog({
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
-              </Button>
+              </SecondaryButton>
               <PermissionButton
                 type="submit"
                 permission="staff.create"
