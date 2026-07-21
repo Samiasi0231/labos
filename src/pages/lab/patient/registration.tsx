@@ -1,27 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
 import { PermissionButton } from "@/components/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form } from "@/components/ui/form";
+import { TextInput } from "@/components/form/text-input";
+import { SelectInput } from "@/components/form/select-input";
 import { StateLgaFields } from "@/components/form/StateLgaField";
 import {
   UserPlus,
@@ -34,16 +20,34 @@ import {
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { Patient, CreatePatientPayload } from "@/api/types/patients";
-import {
-  patientRegistrationSchema,
-  type PatientRegistrationValues,
-} from "@/lib/validations/patients-registration";
+import { z } from "zod";
+import { concatStrings } from "@/lib/utils";
+
+export const patientRegistrationSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  gender: z.enum(["male", "female"], { message: "Gender is required" }),
+  dob: z.string().optional(),
+  phone: z.string().min(1, "Phone number is required"),
+  email: z.email("Invalid email").optional().or(z.literal("")),
+  addressLine1: z.string().optional(),
+  addressLine2: z.string().optional(),
+  state: z.string().min(1, "State is required"),
+  city: z.string().min(1, "Local Government is required"),
+});
+
+export type PatientRegistrationValues = z.infer<
+  typeof patientRegistrationSchema
+>;
 
 export default function PatientRegistration() {
-  const { trigger, isLoading: isSubmitting } = useMutation<Patient, CreatePatientPayload>(
-    endpoint.lab.patients.create,
-    { successToast: "Patient registered", invalidate: [endpoint.lab.patients.list] },
-  );
+  const { trigger, isLoading: isSubmitting } = useMutation<
+    Patient,
+    CreatePatientPayload
+  >(endpoint.lab.patients.create, {
+    successToast: "Patient registered",
+    invalidate: [endpoint.lab.patients.list],
+  });
   const createPatient = async (payload: CreatePatientPayload) => {
     const res = await trigger(payload);
     if (!res) return null;
@@ -51,8 +55,7 @@ export default function PatientRegistration() {
   };
   const [submitted, setSubmitted] = useState(false);
   const [patientCode, setPatientCode] = useState("");
-  const [submittedValues, setSubmittedValues] =
-    useState<PatientRegistrationValues | null>(null);
+  const [submittedValues, setSubmittedValues] = useState<PatientRegistrationValues | null>(null);
 
   const form = useForm<PatientRegistrationValues>({
     resolver: zodResolver(patientRegistrationSchema),
@@ -70,41 +73,31 @@ export default function PatientRegistration() {
     },
   });
 
- const onSubmit = async (values: PatientRegistrationValues) => {
-   const hasAddress =
-     values.addressLine1 ||
-     values.addressLine2 ||
-     values.city ||
-     values.state;
+  const onSubmit = async (values: PatientRegistrationValues) => {
+    const hasAddress =
+      values.addressLine1 || values.addressLine2 || values.city || values.state;
 
-   const patient = await createPatient({
-     firstName: values.firstName,
-     lastName: values.lastName,
-     phone: values.phone,
-     gender: values.gender,
-     dob: values.dob || undefined,
-     email: values.email || undefined,
-     address: hasAddress
-       ? {
-           line1: values.addressLine1 || "",
-           line2: values.addressLine2 || undefined,
-           city: values.city || "",
-           state: values.state || "",
-           country: "NG",
-         }
-       : undefined,
-   });
-   if (!patient) return;
-   setSubmittedValues(values);
-   setPatientCode(patient.code);
-   setSubmitted(true);
- };
-
-  const handleReset = () => {
-    form.reset();
-    setSubmitted(false);
-    setPatientCode("");
-    setSubmittedValues(null);
+    const patient = await createPatient({
+      firstName: values.firstName,
+      lastName: values.lastName,
+      phone: values.phone,
+      gender: values.gender,
+      dob: values.dob || undefined,
+      email: values.email || undefined,
+      address: hasAddress
+        ? {
+          line1: values.addressLine1 || "",
+          line2: values.addressLine2 || undefined,
+          city: values.city || "",
+          state: values.state || "",
+          country: "NG",
+        }
+        : undefined,
+    });
+    if (!patient) return;
+    setSubmittedValues(values);
+    setPatientCode(patient.code);
+    setSubmitted(true);
   };
 
   if (submitted && submittedValues) {
@@ -135,7 +128,7 @@ export default function PatientRegistration() {
             {[
               {
                 label: "Full Name",
-                value: `${submittedValues.firstName} ${submittedValues.lastName}`,
+                value: concatStrings(submittedValues.firstName, submittedValues.lastName, " "),
               },
               { label: "Gender", value: submittedValues.gender },
               {
@@ -167,21 +160,6 @@ export default function PatientRegistration() {
             ))}
           </CardContent>
         </Card>
-
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1 gap-2"
-            onClick={handleReset}
-          >
-            <RefreshCw className="w-4 h-4" />
-            Register Another
-          </Button>
-          <Button className="flex-1 gap-2">
-            <Printer className="w-4 h-4" />
-            Print Patient Card
-          </Button>
-        </div>
       </div>
     );
   }
@@ -190,106 +168,58 @@ export default function PatientRegistration() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-2xl space-y-10 animate-fade-in pb-12">
-
+        className="max-w-2xl space-y-10 animate-fade-in pb-12"
+      >
         <div className="space-y-5">
           <SectionHeading icon={User} label="Personal Information" index={1} />
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
+            <TextInput
+              form={form}
               name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="First name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="First Name *"
+              placeholder="First name"
             />
-            <FormField
-              control={form.control}
+            <TextInput
+              form={form}
               name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Last name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="gender"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Gender *</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dob"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date of Birth</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Last Name *"
+              placeholder="Last name"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+234 801 234 5678" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <SelectInput
+              form={form}
+              name="gender"
+              label="Gender *"
+              placeholder="Select"
+              options={[
+                { label: "Male", value: "male" },
+                { label: "Female", value: "female" },
+              ]}
             />
-            <FormField
-              control={form.control}
+            <TextInput
+              form={form}
+              name="dob"
+              label="Date of Birth"
+              type="date"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <TextInput
+              form={form}
+              name="phone"
+              label="Phone Number *"
+              placeholder="+234 801 234 5678"
+            />
+            <TextInput
+              form={form}
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="patient@email.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Email Address"
+              type="email"
+              placeholder="patient@email.com"
             />
           </div>
         </div>
@@ -297,37 +227,22 @@ export default function PatientRegistration() {
         <div className="space-y-5">
           <SectionHeading icon={MapPin} label="Address" index={2} optional />
 
-          <FormField
-            control={form.control}
+          <TextInput
+            form={form}
             name="addressLine1"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Street Address</FormLabel>
-                <FormControl>
-                  <Input placeholder="House number, street name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Street Address"
+            placeholder="House number, street name"
           />
-          <FormField
-            control={form.control}
+          <TextInput
+            form={form}
             name="addressLine2"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Apartment / Unit</FormLabel>
-                <FormControl>
-                  <Input placeholder="Optional" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Apartment / Unit"
+            placeholder="Optional"
           />
 
           <StateLgaFields form={form} />
         </div>
 
-        {/* ── Submit ── */}
         <div className="flex justify-end pt-2">
           <PermissionButton
             permission="patients.create"

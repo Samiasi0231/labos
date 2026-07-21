@@ -2,30 +2,28 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { StateLgaFields } from "@/components/form/StateLgaField";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PrimaryButton } from "@/components/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-
+import { Form } from "@/components/ui/form";
+import { TextInput } from "@/components/form/text-input";
 import { FlaskConical, Building2, ArrowRight, Phone } from "lucide-react";
-
 import { notify } from "@/lib/notify";
-
 import { useMutation } from "@/hooks/use-api";
 import { useStore } from "@/hooks/use-store";
 import endpoint from "@/api/endpoints";
-
-import { createLabSchema, type CreateLabValues } from "@/lib/validations/auth";
 import type { AuthTokens } from "@/api/types/auth";
 import type { CreateLabPayload } from "@/api/types/lab";
+import { z } from "zod";
 
+export const createLabSchema = z.object({
+  name: z.string().min(1, "Laboratory name is required"),
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  phone: z.string().min(1, "Phone number is required"),
+  line1: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().min(1, "State is required"),
+});
+export type CreateLabValues = z.infer<typeof createLabSchema>;
 
 function getRoleRedirect(role: string): string {
   switch (role) {
@@ -50,7 +48,6 @@ export default function CreateLab() {
 
   const form = useForm<CreateLabValues>({
     resolver: zodResolver(createLabSchema),
-
     defaultValues: {
       name: "",
       email: "",
@@ -65,17 +62,12 @@ export default function CreateLab() {
     endpoint.lab.create,
     {
       skipErrorHandling: true,
-
       onSuccess: (res) => {
         if (!res.data) return;
-
         setAuth({ ...res.data, access_type: "staff" });
-
         notify.fromApiSuccess(res, "Lab created successfully!");
-
         navigate(getRoleRedirect(res.data.role ?? "manager"));
       },
-
       onError: (err) => {
         notify.fromApiError(err, "Lab creation failed");
       },
@@ -85,11 +77,8 @@ export default function CreateLab() {
   const onSubmit = (values: CreateLabValues) => {
     createLabMutation.trigger({
       name: values.name.trim(),
-
       email: values.email.trim().toLowerCase(),
-
       phone: values.phone.trim(),
-
       address: {
         line1: values.line1?.trim() || "Not provided",
         city: values.city,
@@ -103,23 +92,19 @@ export default function CreateLab() {
     <div className="min-h-[90vh] flex items-center justify-center bg-muted/20 px-4 py-12">
       <div className="w-full max-w-lg">
         {/* Logo */}
-
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2.5 mb-5">
             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
-
             <span className="text-2xl font-bold">
               <span className="text-primary">Ezra</span>Labs
             </span>
           </Link>
-
           <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
             <Building2 className="w-6 h-6 text-primary" />
             Set up your laboratory
           </h1>
-
           <p className="text-muted-foreground text-sm mt-1">
             You're almost there — tell us about your lab.
           </p>
@@ -132,118 +117,51 @@ export default function CreateLab() {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
-                {/* Laboratory Name */}
-
-                <FormField
-                  control={form.control}
+                <TextInput
+                  form={form}
                   name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Laboratory Name *</FormLabel>
-
-                      <FormControl>
-                        <Input
-                          placeholder="HealthFirst Diagnostics"
-                          {...field}
-                        />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Laboratory Name *"
+                  placeholder="HealthFirst Diagnostics"
                 />
 
-                {/* Email */}
-
-                <FormField
-                  control={form.control}
+                <TextInput
+                  form={form}
                   name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Laboratory Email *</FormLabel>
-
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="info@yourlab.ng"
-                          {...field}
-                        />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Laboratory Email *"
+                  type="email"
+                  placeholder="info@yourlab.ng"
                 />
 
-                {/* Phone */}
+                <div className="relative">
+                  <TextInput
+                    form={form}
+                    name="phone"
+                    label="Phone Number *"
+                    placeholder="+234 801 234 5678"
+                    className="pl-9"
+                  />
+                  <Phone className="absolute left-3 top-[44px] w-4 h-4 text-muted-foreground" />
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number *</FormLabel>
-
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
-                          <Input
-                            className="pl-9"
-                            placeholder="+234 801 234 5678"
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Address */}
-
-                <FormField
-                  control={form.control}
+                <TextInput
+                  form={form}
                   name="line1"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Street Address</FormLabel>
-
-                      <FormControl>
-                        <Input
-                          placeholder="14 Medical Road, Victoria Island"
-                          {...field}
-                        />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Street Address"
+                  placeholder="14 Medical Road, Victoria Island"
                 />
 
                 {/* State & LGA */}
-
                 <StateLgaFields form={form} />
 
-                <Button
+                <PrimaryButton
                   type="submit"
                   size="lg"
-                  className="w-full gap-2"
-                  disabled={createLabMutation.isLoading}
+                  className="w-full"
+                  isLoading={createLabMutation.isLoading}
+                  rightIcon={<ArrowRight className="w-4 h-4" />}
                 >
-                  {createLabMutation.isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Creating Lab...
-                    </span>
-                  ) : (
-                    <>
-                      Create Lab
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </Button>
+                  Create Lab
+                </PrimaryButton>
               </form>
             </Form>
           </CardContent>

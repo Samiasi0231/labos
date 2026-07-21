@@ -11,30 +11,29 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Form } from "@/components/ui/form";
+import { TextInput } from "@/components/form/text-input";
+import { SelectInput } from "@/components/form/select-input";
+import { PrimaryButton, SecondaryButton } from "@/components/button";
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
-import type { InviteStaffPayload, InviteStaffResponse } from "@/api/types/staff";
-import {
-  inviteStaffSchema,
-  type InviteStaffValues,
-} from "@/lib/validations/staff";
+import type {
+  InviteStaffPayload,
+  InviteStaffResponse,
+} from "@/api/types/staff";
 import { INVITEABLE_ROLES, ROLE_LABELS } from "./shared";
+import { z } from "zod";
+
+export const inviteStaffSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().min(1, "Email is required").email("Enter a valid email"),
+  phone: z.string().optional(),
+  role: z.enum(["scientist", "receptionist"], {
+    message: "Please select a role",
+  }),
+});
+export type InviteStaffValues = z.infer<typeof inviteStaffSchema>;
 
 interface InviteDialogProps {
   open: boolean;
@@ -50,19 +49,24 @@ const defaultValues: InviteStaffValues = {
   role: "scientist",
 };
 
-export function InviteDialog({ open, onOpenChange, listUrl }: InviteDialogProps) {
+export function InviteDialog({
+  open,
+  onOpenChange,
+  listUrl,
+}: InviteDialogProps) {
   const form = useForm<InviteStaffValues>({
     resolver: zodResolver(inviteStaffSchema),
     defaultValues,
   });
 
   const { trigger, isLoading } = useMutation<
-    InviteStaffResponse,
-    InviteStaffPayload
-  >(endpoint.lab.staff.invite, {
-    successToast: "Invite sent",
-    invalidate: [listUrl],
-  });
+  InviteStaffResponse,
+    InviteStaffPayload >
+      (endpoint.lab.staff.invite,
+      {
+        successToast: "Invite sent",
+        invalidate: [listUrl],
+      });
 
   useEffect(() => {
     if (!open) form.reset(defaultValues);
@@ -88,106 +92,55 @@ export function InviteDialog({ open, onOpenChange, listUrl }: InviteDialogProps)
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 py-2"
+          >
             <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
+              <TextInput
+                form={form}
                 name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      First Name <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Jane" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="First Name *"
+                placeholder="Jane"
               />
-              <FormField
-                control={form.control}
+              <TextInput
+                form={form}
                 name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Last Name <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Last Name *"
+                placeholder="Doe"
               />
             </div>
 
-            <FormField
-              control={form.control}
+            <SelectInput
+              form={form}
               name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Role <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {INVITEABLE_ROLES.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {ROLE_LABELS[role]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Role *"
+              placeholder="Select role"
+              options={INVITEABLE_ROLES.map((role) => ({
+                label: ROLE_LABELS[role],
+                value: role,
+              }))}
             />
 
             <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
+              <TextInput
+                form={form}
                 name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Email <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="email@ezralabs.ng"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Email *"
+                type="email"
+                placeholder="email@ezralabs.ng"
               />
-              <FormField
-                control={form.control}
+              <TextInput
+                form={form}
                 name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+234..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Phone"
+                placeholder="+234..."
               />
             </div>
 
             <DialogFooter>
-              <Button
+              <SecondaryButton
                 type="button"
-                variant="outline"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
