@@ -12,11 +12,32 @@ export default function Staff() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
 
+<<<<<<< HEAD
   const debouncedSearch = useDebounce(search.trim(), 350);
   const listUrl = useMemo(
     () => staffListUrl(debouncedSearch),
     [debouncedSearch],
   );
+=======
+  const handleResend = async (id: string) => {
+    await resend(id);
+  };
+  const handleEditRole = async (id: string, newRole: StaffRole) => {
+    await updateRole(id, newRole);
+  };
+  const handleDeactivate = async (id: string) => {
+    await updateStatus(id, "inactive");
+  };
+  const handleActivate = async (id: string) => {
+    await updateStatus(id, "active");
+  };
+  const handleRemove = async (id: string) => {
+    await remove(id);
+  };
+
+  const initials = (first: string, last: string) =>
+    `${first[0] ?? ""}${last[0] ?? ""}`.toUpperCase();
+>>>>>>> origin/main
 
   const handleStaffChange = useCallback((next: StaffMember[]) => {
     setStaff(next);

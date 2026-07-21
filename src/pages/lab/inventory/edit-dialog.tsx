@@ -18,13 +18,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+<<<<<<< HEAD
 import { useMutation } from "@/hooks/use-api";
+=======
+import { useUpdateInventoryItem } from "@/hooks/use-inventory";
+>>>>>>> origin/main
 import endpoint from "@/api/endpoints";
 import type {
   InventoryItem,
   InventoryCategory,
   InventoryStatus,
+<<<<<<< HEAD
   UpdateInventoryItemPayload,
+=======
+>>>>>>> origin/main
 } from "@/api/types/inventory";
 
 interface EditItemDialogProps {
@@ -47,6 +54,7 @@ const EMPTY_FORM = {
 export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
+<<<<<<< HEAD
   const { trigger: triggerUpdate, isLoading: isUpdating } = useMutation<
     InventoryItem,
     UpdateInventoryItemPayload
@@ -55,6 +63,9 @@ export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
     successToast: "Item updated",
     invalidate: [],
   });
+=======
+  const { updateItem, isLoading: isUpdating } = useUpdateInventoryItem([]);
+>>>>>>> origin/main
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => {
@@ -83,8 +94,13 @@ export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
       });
       return;
     }
+<<<<<<< HEAD
     const res = await triggerUpdate(
       {
+=======
+    try {
+      await updateItem(target._id, {
+>>>>>>> origin/main
         name: form.name,
         sku: form.sku || undefined,
         category: form.category as InventoryCategory,
@@ -94,6 +110,7 @@ export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
         supplier: form.supplier || undefined,
         expiryDate: form.expiryDate || undefined,
         status: form.status,
+<<<<<<< HEAD
       },
       endpoint.lab.inventory.update(target._id),
     );
@@ -102,6 +119,17 @@ export function EditItemDialog({ target, onClose }: EditItemDialogProps) {
       typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
     );
     onClose();
+=======
+      });
+      mutate((key: unknown) =>
+        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+      );
+      toast({ title: "Item updated" });
+      onClose();
+    } catch {
+      toast({ title: "Failed to update item", variant: "destructive" });
+    }
+>>>>>>> origin/main
   };
 
   return (

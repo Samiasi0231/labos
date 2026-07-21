@@ -41,7 +41,10 @@ import StaffDetail from "./pages/lab/staff/detail";
 import Branches from "./pages/lab/Branches";
 import Settings from "./pages/lab/settings";
 import TestCatalog from "./pages/lab/test-catalog";
+<<<<<<< HEAD
 import TestCatalogDetail from "./pages/lab/test-catalog/detail";
+=======
+>>>>>>> origin/main
 
 import PatientRegistration from "./pages/lab/patient/registration";
 import Appointments from "./pages/lab/appointments";

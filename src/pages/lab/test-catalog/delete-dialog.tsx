@@ -1,6 +1,9 @@
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import { PermissionButton } from "@/components/button";
+=======
+>>>>>>> origin/main
 import {
   Dialog,
   DialogContent,
@@ -9,7 +12,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
+<<<<<<< HEAD
 import { useMutation } from "@/hooks/use-api";
+=======
+import { useToast } from "@/hooks/use-toast";
+import { useRemoveTest } from "@/hooks/use-test-catalog";
+>>>>>>> origin/main
 import endpoint from "@/api/endpoints";
 import type { TestCatalogEntry } from "@/api/types/test-catalog";
 
@@ -19,6 +27,7 @@ interface DeleteDialogProps {
 }
 
 export function DeleteDialog({ target, onClose }: DeleteDialogProps) {
+<<<<<<< HEAD
   const { mutate } = useSWRConfig();
   const { trigger: triggerRemove } = useMutation<unknown, void>(
     "test-catalog/remove",
@@ -33,6 +42,29 @@ export function DeleteDialog({ target, onClose }: DeleteDialogProps) {
       typeof key === "string" && key.startsWith(endpoint.lab.testCatalog.list),
     );
     onClose();
+=======
+  const { toast } = useToast();
+  const { mutate } = useSWRConfig();
+  const { removeTest } = useRemoveTest([]);
+
+  const handleConfirm = async () => {
+    if (!target) return;
+    try {
+      await removeTest(target._id);
+      mutate((key: unknown) =>
+        typeof key === "string" && key.startsWith(endpoint.lab.testCatalog.list),
+      );
+      toast({ title: "Test deleted", description: `${target.name} removed.` });
+      onClose();
+    } catch {
+      toast({
+        title: "Cannot delete test",
+        description: "This test has existing orders. Deactivate it instead.",
+        variant: "destructive",
+      });
+      onClose();
+    }
+>>>>>>> origin/main
   };
 
   return (
@@ -53,6 +85,7 @@ export function DeleteDialog({ target, onClose }: DeleteDialogProps) {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
+<<<<<<< HEAD
           <PermissionButton
             variant="destructive"
             permission="test_catalog.delete"
@@ -62,6 +95,11 @@ export function DeleteDialog({ target, onClose }: DeleteDialogProps) {
           >
             Delete
           </PermissionButton>
+=======
+          <Button variant="destructive" onClick={handleConfirm} className="gap-2">
+            <Trash2 className="w-4 h-4" /> Delete
+          </Button>
+>>>>>>> origin/main
         </DialogFooter>
       </DialogContent>
     </Dialog>

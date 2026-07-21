@@ -22,10 +22,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+<<<<<<< HEAD
 import { useCurrentUser, useGlobalSearch, useMutation } from "@/hooks/use-api";
 import { useStore } from "@/hooks/use-store";
 import endpoint from "@/api/endpoints";
 import type { LogoutPayload } from "@/api/types/auth";
+=======
+import { useCurrentUser } from "@/hooks/use-user";
+import { useLogout } from "@/hooks/use-auth";
+import { useGlobalSearch } from "@/hooks/use-api";
+>>>>>>> origin/main
 import type { SearchResourceType, SearchHit } from "@/api/types/search";
 
 interface LabHeaderProps {
@@ -52,7 +58,10 @@ const GROUP_META: Record<
 
 export function LabHeader({ onMenuClick, pageTitle }: LabHeaderProps) {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const { auth, unsetAuth } = useStore();
+=======
+>>>>>>> origin/main
   const { user } = useCurrentUser();
   const logoutMutation = useMutation<unknown, LogoutPayload>(endpoint.auth.logout, {
     method: "POST",

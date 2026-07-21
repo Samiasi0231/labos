@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/tokens/base.css">
+  <link rel="stylesheet" href="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/styles.css">
+  <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+  <script src="_ds/labos-design-system-ab2dfeec-7127-4d83-b9fa-cf37341ec2c6/_ds_bundle.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    @keyframes labos-spin { to { transform: rotate(360deg); } }
+    .labos-spin { animation: labos-spin .8s linear infinite; }
+  </style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans)">
+
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Sidebar" groups="{{ navGroups }}" active-id="orders" brand="{{ brandCfg }}" user="{{ sidebarUser }}" hint-size="240px,100%"></x-import>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+    <header style="height:64px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 24px;background:hsl(var(--card));border-bottom:1px solid hsl(var(--border))">
+      <div style="flex:1"><h1 style="margin:0;font-size:18px;font-weight:600">Test Orders</h1></div>
+      <button class="labos-btn labos-btn-default labos-btn-sz-default" onClick="{{ openSheet }}">{{ ic.plus }}New Order</button>
+    </header>
+    <main style="flex:1;overflow-y:auto;padding:24px">
+      <div class="animate-fade-in" style="max-width:640px">
+        <p style="margin:0 0 8px;font-size:14px;color:hsl(var(--muted-foreground))">Screen 1 — trigger. Click "New Order" above to open the redesigned creation sheet.</p>
+        <div class="labos-card" style="padding:16px 18px">
+          <p style="margin:0;font-size:13px;color:hsl(var(--muted-foreground))">This preview stands in for the Test Orders list page — the "New Order" button in the header is the entry point for Screens 2–5 below.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============ CREATE ORDER SHEET ============ -->
+  <x-import component-from-global-scope="LabOSDesignSystem_ab2dfe.Sheet" open="{{ sheetOpen }}" on-close="{{ closeSheet }}" width="{{ sheetWidth }}" hint-size="0px,0px">
+    <div style="display:flex;flex-direction:column;height:calc(100vh - 48px);margin:-24px;padding:24px;box-sizing:border-box">
+
+      <sc-if value="{{ formMode }}" hint-placeholder-val="{{ true }}">
+        <div style="flex-shrink:0;margin-bottom:16px">
+          <h2 style="margin:0;font-size:18px;font-weight:600">New Test Order</h2>
+          <p style="margin:3px 0 0;font-size:12.5px;color:hsl(var(--muted-foreground))">Patient and tests are required. Samples and assignments can be done now or later from order detail.</p>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:20px">
+
+          <!-- A — Patient -->
+          <div>
+            <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:hsl(var(--muted-foreground));display:block;margin-bottom:8px">Patient <span style="color:hsl(var(--destructive))">*</span></label>
+            <sc-if value="{{ patient }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:10px;border:1px solid hsl(var(--primary)/.3);background:hsl(var(--primary)/.05);border-radius:var(--radius);padding:9px 12px">
+                {{ patientAvatarEl }}
+                <div style="flex:1;min-width:0">
+                  <p style="margin:0;font-size:13.5px;font-weight:700">{{ patientName }}</p>
+                  <p style="margin:0;font-size:11px;font-family:var(--font-mono);color:hsl(var(--muted-foreground))">{{ patientCode }}</p>
+                </div>
+                <button style="border:none;background:transparent;cursor:pointer;color:hsl(var(--muted-foreground))" onClick="{{ clearPatient }}">{{ ic.x }}</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ patientEmpty }}" hint-placeholder-val="{{ true }}">
+              <div style="position:relative">
+                <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:hsl(var(--muted-foreground))">{{ ic.search }}</span>
+                <input class="labos-input" style="padding-left:34px;width:100%;box-sizing:border-box" placeholder="Search by patient name or code…" value="{{ patientQuery }}" onChange="{{ onPatientQuery }}">
+                <sc-if value="{{ patientDropdownOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;top:42px;left:0;width:100%;background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:var(--radius);box-shadow:var(--shadow-elevated);z-index:20;max-height:170px;overflow-y:auto">
+                    <sc-for list="{{ patientResults }}" as="pr" hint-placeholder-count="0">
+                      <button style="display:flex;flex-direction:column;align-items:flex-start;width:100%;border:none;background:transparent;padding:8px 12px;cursor:pointer;text-align:left" onClick="{{ pr.select }}">
+                        <span style="font-size:13px;font-weight:600">{{ pr.name }}</span><span style="font-size:11px;font-family:var(--font-mono);color:hsl(var(--muted-foreground))">{{ pr.code }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+              <sc-if value="{{ patientErrorShown }}" hint-placeholder-val="{{ false }}"><p style="margin:6px 0 0;font-size:11.5px;color:hsl(var(--destructive))">{{ ic.alertSmall }}Select a patient to continue.</p></sc-if>
+            </sc-if>
+          </div>
+
+          <!-- B — Priority -->
+          <div>
+            <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:hsl(var(--muted-foreground));display:block;margin-bottom:8px">Priority</label>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ priorityOptions }}" as="pri" hint-placeholder-count="3"><button style="{{ pri.style }}" onClick="{{ pri.select }}">{{ pri.label }}</button></sc-for>
+            </div>
+          </div>
+
+          <!-- C — Tests -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:hsl(var(--muted-foreground))">Tests <span style="color:hsl(var(--destructive))">*</span></label>
+              <sc-if value="{{ testsErrorShown }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:hsl(var(--destructive))">Add at least one test</span></sc-if>
+            </div>
+            <div style="position:relative;margin-bottom:8px">
+              <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:hsl(var(--muted-foreground))">{{ ic.search }}</span>
+              <input class="labos-input" style="padding-left:34px;width:100%;box-sizing:border-box" placeholder="Search test catalog…" value="{{ catalogQuery }}" onChange="{{ onCatalogQuery }}">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;border:1px solid hsl(var(--border));border-radius:var(--radius);padding:6px">
+              <sc-for list="{{ catalogRows }}" as="cr" hint-placeholder-count="4">
+                <div style="{{ cr.rowStyle }}">
+                  <button style="{{ cr.headerStyle }}" onClick="{{ cr.toggleExpand }}" disabled="{{ cr.added }}">
+                    <span style="flex:1;min-width:0;text-align:left">
+                      <span style="display:block;font-size:13px;font-weight:600">{{ cr.name }}</span>
+                      <span style="display:block;font-size:11px;color:hsl(var(--muted-foreground))">{{ cr.category }} · {{ cr.priceRange }}</span>
+                    </span>
+                    <sc-if value="{{ cr.added }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:hsl(var(--success))">{{ ic.checkSmall }}Added</span></sc-if>
+                    <sc-if value="{{ cr.notAdded }}" hint-placeholder-val="{{ true }}">{{ cr.chevronEl }}</sc-if>
+                  </button>
+                  <sc-if value="{{ cr.expanded }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:4px 12px 12px;display:flex;flex-direction:column;gap:6px">
+                      <sc-for list="{{ cr.params }}" as="cp" hint-placeholder-count="0">
+                        <label style="display:flex;align-items:center;gap:9px;font-size:12.5px;cursor:pointer">
+                          <input type="checkbox" checked="{{ cp.checked }}" onChange="{{ cp.toggle }}"> {{ cp.name }}
+                        </label>
+                      </sc-for>
+                      <div style="display:flex;justify-content:flex-end;margin-top:4px" title="{{ cr.addTooltip }}">
+                        <button class="labos-btn labos-btn-default labos-btn-sz-sm" disabled="{{ cr.addDisabled }}" onClick="{{ cr.addToOrder }}">Add to Order</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+
+            <!-- Selected tests summary -->
+            <sc-if value="{{ hasSelectedTests }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:10px;border:1px solid hsl(var(--border));border-radius:var(--radius);overflow:hidden">
+                <sc-for list="{{ selectedTestRows }}" as="sel" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid hsl(var(--border))">
+                    <div style="min-width:0">
+                      <p style="margin:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ sel.name }}</p>
+                      <p style="margin:0;font-size:11px;color:hsl(var(--muted-foreground))">{{ sel.paramCount }} parameter{{ sel.paramPlural }}</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+                      <span style="font-size:13px;font-weight:700">{{ sel.priceFmt }}</span>
+                      <button style="border:none;background:transparent;cursor:pointer;color:hsl(var(--muted-foreground))" onClick="{{ sel.remove }}">{{ ic.x }}</button>
+                    </div>
+                  </div>
+                </sc-for>
+                <div style="display:flex;justify-content:space-between;padding:9px 12px;background:hsl(var(--muted)/.3)">
+                  <span style="font-size:13px;font-weight:700">Total</span><span style="font-size:14px;font-weight:700">{{ grandTotalFmt }}</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- D — Notes -->
+          <div>
+            <sc-if value="{{ notesCollapsed }}" hint-placeholder-val="{{ true }}">
+              <button style="display:flex;align-items:center;gap:6px;border:none;background:transparent;color:hsl(var(--primary));font-size:12.5px;font-weight:600;cursor:pointer;padding:0" onClick="{{ expandNotes }}">{{ ic.plus }}Add notes</button>
+            </sc-if>
+            <sc-if value="{{ notesExpanded }}" hint-placeholder-val="{{ false }}">
+              <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:hsl(var(--muted-foreground));display:block;margin-bottom:6px">Notes</label>
+              <textarea class="labos-input" style="height:auto;min-height:64px;padding-top:10px;resize:vertical;width:100%;box-sizing:border-box" placeholder="Add any context for this order…" value="{{ notes }}" onChange="{{ onNotes }}" onBlur="{{ collapseNotesIfEmpty }}"></textarea>
+            </sc-if>
+          </div>
+
+          <!-- E — Collect Samples Now -->
+          <div style="border-top:1px solid hsl(var(--border));padding-top:16px">
+            <button style="display:flex;align-items:center;justify-content:space-between;width:100%;border:none;background:transparent;cursor:pointer;padding:0" onClick="{{ toggleSamplesSection }}">
+              <span style="font-size:13px;font-weight:600;text-align:left">Collect samples now <span style="font-weight:400;color:hsl(var(--muted-foreground))">— optional, can be done from order detail later</span></span>
+              {{ samplesChevronEl }}
+            </button>
+            <sc-if value="{{ samplesExpanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+                <sc-if value="{{ samplesNeedTestsFirst }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:12px;color:hsl(var(--muted-foreground))">Add tests above to record samples for them.</p></sc-if>
+                <sc-for list="{{ sampleCards }}" as="sc3" hint-placeholder-count="0">
+                  <div style="border:1px solid hsl(var(--border));border-radius:var(--radius);padding:10px 12px">
+                    <p style="margin:0 0 6px;font-size:12.5px;font-weight:700">{{ sc3.testName }}</p>
+                    <input class="labos-input" style="width:100%;box-sizing:border-box;height:32px" placeholder="{{ sc3.placeholder }}" value="{{ sc3.draft }}" onChange="{{ sc3.onDraft }}" onKeyDown="{{ sc3.onKeyDown }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:7px">
+                      <sc-for list="{{ sc3.chips }}" as="sch" hint-placeholder-count="0">
+                        <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;background:hsl(var(--muted));border-radius:999px;padding:2px 5px 2px 9px">{{ sch.value }}<button style="border:none;background:transparent;cursor:pointer;padding:1px;color:hsl(var(--muted-foreground))" onClick="{{ sch.remove }}">{{ ic.xSmall }}</button></span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <!-- F — Assign Scientists -->
+          <div style="border-top:1px solid hsl(var(--border));padding-top:16px">
+            <button style="{{ assignHeaderStyle }}" onClick="{{ toggleAssignSection }}" title="{{ assignDisabledTooltip }}">
+              <span style="font-size:13px;font-weight:600;text-align:left">Assign scientists <span style="font-weight:400;color:hsl(var(--muted-foreground))">— optional, can be done from order detail later</span></span>
+              {{ assignChevronEl }}
+            </button>
+            <sc-if value="{{ assignExpanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+                <sc-for list="{{ assignRows }}" as="asg" hint-placeholder-count="0">
+                  <div style="border:1px solid hsl(var(--border));border-radius:var(--radius);padding:9px 12px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                      <span style="font-size:13px;font-weight:600">{{ asg.testName }}</span>
+                      <sc-if value="{{ asg.hasAssignee }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;font-weight:600;color:hsl(var(--primary))">{{ asg.assigneeName }}</span><button style="border:none;background:transparent;color:hsl(var(--muted-foreground));font-size:11.5px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0" onClick="{{ asg.openPicker }}">Change</button></span></sc-if>
+                      <sc-if value="{{ asg.noAssignee }}" hint-placeholder-val="{{ true }}"><button class="labos-btn labos-btn-outline labos-btn-sz-sm" onClick="{{ asg.openPicker }}">{{ ic.plus }}Assign</button></sc-if>
+                    </div>
+                    <sc-if value="{{ asg.pickerOpen }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+                        <sc-if value="{{ asg.noScientists }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:11.5px;color:hsl(var(--muted-foreground))">No scientists available right now.</p></sc-if>
+                        <sc-for list="{{ asg.scientistOptions }}" as="sci" hint-placeholder-count="0">
+                          <button style="{{ sci.style }}" onClick="{{ sci.select }}">{{ sci.name }}</button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <!-- G — Footer -->
+        <div style="flex-shrink:0;margin-top:16px;padding-top:14px;border-top:1px solid hsl(var(--border));display:flex;justify-content:space-between">
+          <button class="labos-btn labos-btn-outline labos-btn-sz-default" onClick="{{ closeSheet }}">Cancel</button>
+          <button class="labos-btn labos-btn-default labos-btn-sz-default" disabled="{{ createDisabled }}" onClick="{{ submitOrder }}">Create Order</button>
+        </div>
+      </sc-if>
+
+      <!-- ===== SUBMISSION PROGRESS ===== -->
+      <sc-if value="{{ progressMode }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px;padding:0 20px">
+          <sc-if value="{{ progressRunning }}" hint-placeholder-val="{{ true }}">
+            <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ progressSteps }}" as="ps" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px">
+                  {{ ps.icon }}
+                  <span style="font-size:13.5px;font-weight:500;color:{{ ps.textColor }}">{{ ps.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ progressSuccess }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+              {{ ic.checkHuge }}
+              <p style="margin:0;font-size:16px;font-weight:700">Order placed successfully</p>
+              <p style="margin:0;font-size:12.5px;color:hsl(var(--muted-foreground))">{{ successSummary }}</p>
+              <div style="display:flex;gap:10px;margin-top:6px">
+                <button class="labos-btn labos-btn-outline labos-btn-sz-default" onClick="{{ createAnother }}">Create Another</button>
+                <button class="labos-btn labos-btn-default labos-btn-sz-default" onClick="{{ closeSheet }}">View Order →</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ progressPartialFail }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;width:100%;max-width:360px">
+              {{ ic.alertHuge }}
+              <p style="margin:0;font-size:15px;font-weight:700">Order created — some steps failed</p>
+              <div style="width:100%;display:flex;flex-direction:column;gap:8px;text-align:left">
+                <sc-for list="{{ failedItems }}" as="fi" hint-placeholder-count="0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid hsl(var(--destructive)/.3);background:hsl(var(--destructive)/.05);border-radius:var(--radius);padding:8px 12px">
+                    <span style="font-size:12.5px">{{ fi.label }}</span><span style="font-size:11px;font-weight:600;color:hsl(var(--destructive))">Failed</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:6px">
+                <button class="labos-btn labos-btn-outline labos-btn-sz-default" onClick="{{ closeSheet }}">View Order Anyway</button>
+                <button class="labos-btn labos-btn-default labos-btn-sz-default" onClick="{{ retryFailed }}">Retry Failed</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </x-import>
+
+  {{ toastEl }}
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  PATIENTS = [
+    { name: 'Ngozi Chukwuemeka', code: 'PAT-04821' }, { name: 'Musa Ibrahim', code: 'PAT-04790' },
+    { name: 'Aisha Mahmoud', code: 'PAT-04655' }, { name: 'Emeka Chukwu', code: 'PAT-04980' },
+  ];
+  SCIENTISTS = ['Adaeze Okonkwo', 'Dr. Chidi Nwosu', 'Bisi Adeola'];
+  CATALOG = [
+    { id: 'c1', name: 'Full Blood Count', category: 'Haematology', priceRange: '₦8,500', sampleHint: 'EDTA Whole Blood', params: ['Haemoglobin', 'White Blood Cells', 'Platelet Count'], unitPrice: 8500 },
+    { id: 'c2', name: 'Liver Function Test', category: 'Biochemistry', priceRange: '₦12,000', sampleHint: 'Serum', params: ['ALT', 'AST', 'Bilirubin'], unitPrice: 12000 },
+    { id: 'c3', name: 'Urinalysis', category: 'Microbiology', priceRange: '₦4,500', sampleHint: 'Urine', params: ['Protein', 'Glucose', 'pH'], unitPrice: 4500 },
+    { id: 'c4', name: 'Comprehensive Metabolic and Electrolyte Panel', category: 'Biochemistry', priceRange: '₦15,000', sampleHint: 'Serum', params: ['Sodium', 'Potassium', 'Chloride', 'Bicarbonate', 'Creatinine'], unitPrice: 15000 },
+  ];
+
+  emptyState() {
+    return {
+      patient: null, patientQuery: '', patientDropdownOpen: false, showPatientError: false,
+      priority: 'Routine', catalogQuery: '', expandedTestId: null, testParamSel: {},
+      selectedTests: [], showTestsError: false,
+      notesExpanded: false, notes: '',
+      samplesExpanded: false, sampleDrafts: {}, sampleChips: {},
+      assignExpanded: false, assignees: {}, assignPickerOpenFor: null,
+    };
+  }
+
+  state = {
+    sheetOpen: false, mode: 'form', // form | progress
+    progressPhase: 'running', // running | success | partialFail
+    progressLog: [], failedItems: [],
+    ...this.emptyState(),
+    toast: null,
+  };
+
+  get DS() { return window.LabOSDesignSystem_ab2dfe || null; }
+  componentDidMount() { if (!this.DS) { this._poll = setInterval(() => { if (this.DS) { clearInterval(this._poll); this.forceUpdate(); } }, 100); } }
+  componentWillUnmount() { clearInterval(this._poll); clearTimeout(this._t); Object.values(this._timers || {}).forEach(clearTimeout); }
+
+  i(name, size, color) { return React.createElement(this.DS.Icon, { name, size: size || 14, color: color || 'currentColor' }); }
+  avatar(name) { const p = String(name).split(' '); return React.createElement(this.DS.Avatar, { initials: ((p[0]||'')[0]+(p[1]||'')[0]).toUpperCase(), size: 32 }); }
+  showToast(title, description) { clearTimeout(this._t); this.setState({ toast: { title, description } }); this._t = setTimeout(() => this.setState({ toast: null }), 3200); }
+
+  openSheet() { this.setState({ sheetOpen: true, mode: 'form', ...this.emptyState() }); }
+  closeSheet() { this.setState({ sheetOpen: false }); }
+  createAnother() { this.setState({ mode: 'form', ...this.emptyState() }); }
+
+  submitOrder() {
+    const s = this.state;
+    if (!s.patient || s.selectedTests.length === 0) { this.setState({ showPatientError: !s.patient, showTestsError: s.selectedTests.length === 0 }); return; }
+
+    const hasSamples = s.selectedTests.some((t) => (s.sampleChips[t.id] || []).length > 0);
+    const hasAssignments = s.selectedTests.some((t) => !!s.assignees[t.id]);
+
+    const steps = [{ key: 'create', label: 'Creating order…', doneLabel: 'Order created' }];
+    if (hasSamples) steps.push({ key: 'samples', label: 'Recording samples…', doneLabel: 'Samples recorded' });
+    if (hasAssignments) steps.push({ key: 'assign', label: 'Assigning scientists…', doneLabel: 'Assignments saved' });
+
+    this.setState({ mode: 'progress', progressPhase: 'running', progressLog: steps.map((st) => ({ ...st, status: 'pending' })) });
+    this._timers = {};
+    let delay = 500;
+    steps.forEach((st, idx) => {
+      this._timers[st.key] = setTimeout(() => {
+        this.setState((prev) => {
+          const log = prev.progressLog.map((l, i) => (i === idx ? { ...l, status: 'done' } : l));
+          return { progressLog: log };
+        });
+        if (idx === steps.length - 1) {
+          setTimeout(() => {
+            // simulate rare partial failure only if samples step exists and random flag (deterministic: never fail for smooth demo, but structure supports it)
+            this.setState({ progressPhase: 'success' });
+          }, 400);
+        }
+      }, delay);
+      delay += 700;
+    });
+  }
+
+  retryFailed() { this.setState({ progressPhase: 'running' }); setTimeout(() => this.setState({ progressPhase: 'success' }), 900); }
+
+  renderVals() {
+    const DS = this.DS;
+    if (!DS) return { sheetOpen: false };
+    const s = this.state;
+    const set = (patch) => this.setState(patch);
+
+    const ic = {
+      plus: this.i('plus', 13), x: this.i('x', 14), xSmall: this.i('x', 10), search: this.i('search', 13),
+      checkSmall: this.i('check', 11, 'hsl(var(--success))'), alertSmall: this.i('alert-circle', 12, 'hsl(var(--destructive))'),
+      checkHuge: this.i('check-circle-2', 40, 'hsl(var(--success))'), alertHuge: this.i('alert-triangle', 36, 'hsl(var(--warning))'),
+    };
+    const chevron = (open) => this.i(open ? 'chevron-down' : 'chevron-right', 15, 'hsl(var(--muted-foreground))');
+
+    const navGroups = [{ group: 'Preview', items: [{ id: 'orders', label: 'Test Orders', icon: 'clipboard-list' }] }];
+
+    // ── patient ──
+    const pq = s.patientQuery.trim().toLowerCase();
+    const patientResults = pq ? this.PATIENTS.filter((p) => p.name.toLowerCase().includes(pq) || p.code.toLowerCase().includes(pq)).slice(0, 5).map((p) => ({
+      name: p.name, code: p.code, select: () => set({ patient: p, patientQuery: '', patientDropdownOpen: false, showPatientError: false }),
+    })) : [];
+
+    // ── priority ──
+    const prioTint = { Routine: null, Urgent: 'warning', Stat: 'destructive' };
+    const priorityOptions = ['Routine', 'Urgent', 'Stat'].map((p) => {
+      const sel = s.priority === p;
+      const tint = prioTint[p];
+      return { label: p === 'Stat' ? 'STAT' : p, select: () => set({ priority: p }), style: {
+        flex: 1, fontSize: 12.5, fontWeight: 700, padding: '8px 0', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+        border: sel ? (tint ? '1px solid hsl(var(--' + tint + ')/.5)' : '1px solid hsl(var(--foreground)/.3)') : '1px solid hsl(var(--border))',
+        background: sel ? (tint ? 'hsl(var(--' + tint + ')/.15)' : 'transparent') : 'transparent',
+        color: sel ? (tint ? 'hsl(var(--' + tint + '))' : 'hsl(var(--foreground))') : 'hsl(var(--muted-foreground))',
+      } };
+    });
+
+    // ── catalog ──
+    const cq = s.catalogQuery.trim().toLowerCase();
+    const selectedIds = s.selectedTests.map((t) => t.id);
+    const filteredCatalog = this.CATALOG.filter((c) => !cq || c.name.toLowerCase().includes(cq));
+    const catalogRows = filteredCatalog.map((c) => {
+      const added = selectedIds.includes(c.id);
+      const expanded = s.expandedTestId === c.id;
+      const sel = s.testParamSel[c.id] || [];
+      const params = c.params.map((p) => ({ name: p, checked: sel.includes(p), toggle: () => {
+        const cur = s.testParamSel[c.id] || [];
+        const next = cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p];
+        set({ testParamSel: { ...s.testParamSel, [c.id]: next } });
+      } }));
+      return {
+        name: c.name, category: c.category, priceRange: c.priceRange, added, notAdded: !added, expanded: expanded && !added,
+        rowStyle: { border: expanded && !added ? '1px solid hsl(var(--primary)/.3)' : '1px solid transparent', borderRadius: 'var(--radius)', background: expanded && !added ? 'hsl(var(--primary)/.03)' : 'transparent' },
+        headerStyle: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', border: 'none', background: 'transparent', padding: '9px 10px', cursor: added ? 'default' : 'pointer', opacity: added ? 0.55 : 1 },
+        chevronEl: chevron(expanded),
+        toggleExpand: () => { if (!added) set({ expandedTestId: expanded ? null : c.id, testParamSel: { ...s.testParamSel, [c.id]: s.testParamSel[c.id] || [] } }); },
+        params, addDisabled: sel.length === 0, addTooltip: sel.length === 0 ? 'Select at least one parameter' : '',
+        addToOrder: () => {
+          if (sel.length === 0) return;
+          set({ selectedTests: [...s.selectedTests, { id: c.id, name: c.name, unitPrice: c.unitPrice, sampleHint: c.sampleHint, paramCount: sel.length }], expandedTestId: null, showTestsError: false });
+        },
+      };
+    });
+
+    const selectedTestRows = s.selectedTests.map((t) => ({
+      name: t.name, paramCount: t.paramCount, paramPlural: t.paramCount === 1 ? '' : 's', priceFmt: '₦' + t.unitPrice.toLocaleString(),
+      remove: () => set({ selectedTests: s.selectedTests.filter((x) => x.id !== t.id) }),
+    }));
+    const grandTotal = s.selectedTests.reduce((sum, t) => sum + t.unitPrice, 0);
+
+    // ── samples ──
+    const sampleCards = s.samplesExpanded ? s.selectedTests.map((t) => {
+      const chips = s.sampleChips[t.id] || [];
+      const draft = s.sampleDrafts[t.id] || '';
+      return {
+        testName: t.name, placeholder: t.sampleHint + ' (press Enter to add)', draft,
+        onDraft: (e) => set({ sampleDrafts: { ...s.sampleDrafts, [t.id]: e.target.value } }),
+        onKeyDown: (e) => { if (e.key === 'Enter' && draft.trim()) { e.preventDefault(); set({ sampleChips: { ...s.sampleChips, [t.id]: [...chips, draft.trim()] }, sampleDrafts: { ...s.sampleDrafts, [t.id]: '' } }); } },
+        chips: chips.map((v, idx) => ({ value: v, remove: () => set({ sampleChips: { ...s.sampleChips, [t.id]: chips.filter((_, i) => i !== idx) } }) })),
+      };
+    }) : [];
+
+    const anySamplesEntered = s.selectedTests.some((t) => (s.sampleChips[t.id] || []).length > 0);
+    const assignDisabled = !anySamplesEntered;
+
+    // ── assign ──
+    const assignRows = s.assignExpanded ? s.selectedTests.map((t) => {
+      const assignee = s.assignees[t.id];
+      const pickerOpen = s.assignPickerOpenFor === t.id;
+      return {
+        testName: t.name, hasAssignee: !!assignee, noAssignee: !assignee, assigneeName: assignee || '',
+        openPicker: () => set({ assignPickerOpenFor: pickerOpen ? null : t.id }),
+        pickerOpen, noScientists: this.SCIENTISTS.length === 0,
+        scientistOptions: this.SCIENTISTS.map((name) => ({ name, style: { textAlign: 'left', width: '100%', padding: '7px 10px', fontSize: 12.5, borderRadius: 'var(--radius)', border: assignee === name ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border))', background: assignee === name ? 'hsl(var(--primary)/.06)' : 'transparent', cursor: 'pointer' }, select: () => set({ assignees: { ...s.assignees, [t.id]: name }, assignPickerOpenFor: null }) })),
+      };
+    }) : [];
+
+    const createDisabled = !s.patient || s.selectedTests.length === 0;
+
+    // ── progress ──
+    const progressSteps = s.progressLog.map((l) => ({
+      label: l.status === 'done' ? l.doneLabel : l.label,
+      icon: l.status === 'done' ? this.i('check-circle-2', 18, 'hsl(var(--success))') : this.i('loader-2', 18, 'hsl(var(--primary))', 'labos-spin'),
+      textColor: l.status === 'done' ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+    }));
+    const successParts = [];
+    if (s.progressLog.length) successParts.push(s.progressLog.length + ' step' + (s.progressLog.length === 1 ? '' : 's') + ' completed');
+    const successSummary = 'Order ' + (s.progressLog[0] ? 'ORD-NEW' : '') + ' created with ' + s.selectedTests.length + ' test' + (s.selectedTests.length === 1 ? '' : 's') + '.';
+
+    return {
+      navGroups, brandCfg: { icon: 'activity', caption: 'Laboratory Management' }, sidebarUser: { initials: 'KA', name: 'Kemi Adewale', title: 'Receptionist' },
+      ic, openSheet: () => this.openSheet(), closeSheet: () => this.closeSheet(), sheetOpen: s.sheetOpen, sheetWidth: 560,
+
+      formMode: s.mode === 'form', progressMode: s.mode === 'progress',
+
+      patient: s.patient, patientEmpty: !s.patient, patientName: s.patient ? s.patient.name : '', patientCode: s.patient ? s.patient.code : '',
+      patientAvatarEl: s.patient ? this.avatar(s.patient.name) : null, clearPatient: () => set({ patient: null }),
+      patientQuery: s.patientQuery, onPatientQuery: (e) => set({ patientQuery: e.target.value, patientDropdownOpen: true }),
+      patientDropdownOpen: s.patientDropdownOpen && patientResults.length > 0, patientResults, patientErrorShown: s.showPatientError,
+
+      priorityOptions,
+
+      catalogQuery: s.catalogQuery, onCatalogQuery: (e) => set({ catalogQuery: e.target.value }), catalogRows,
+      hasSelectedTests: s.selectedTests.length > 0, selectedTestRows, grandTotalFmt: '₦' + grandTotal.toLocaleString(),
+      testsErrorShown: s.showTestsError,
+
+      notesCollapsed: !s.notesExpanded, notesExpanded: s.notesExpanded, expandNotes: () => set({ notesExpanded: true }),
+      notes: s.notes, onNotes: (e) => set({ notes: e.target.value }),
+      collapseNotesIfEmpty: () => { if (!s.notes.trim()) set({ notesExpanded: false }); },
+
+      samplesExpanded: s.samplesExpanded, samplesChevronEl: chevron(s.samplesExpanded),
+      toggleSamplesSection: () => set({ samplesExpanded: !s.samplesExpanded }),
+      samplesNeedTestsFirst: s.samplesExpanded && s.selectedTests.length === 0, sampleCards,
+
+      assignExpanded: s.assignExpanded, assignChevronEl: chevron(s.assignExpanded),
+      assignHeaderStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', border: 'none', background: 'transparent', cursor: assignDisabled ? 'not-allowed' : 'pointer', padding: 0, opacity: assignDisabled ? 0.5 : 1 },
+      assignDisabledTooltip: assignDisabled ? 'Collect samples first to enable assignment' : '',
+      toggleAssignSection: () => { if (!assignDisabled) set({ assignExpanded: !s.assignExpanded }); },
+      assignRows,
+
+      createDisabled, submitOrder: () => this.submitOrder(),
+
+      progressRunning: s.progressPhase === 'running', progressSuccess: s.progressPhase === 'success', progressPartialFail: s.progressPhase === 'partialFail',
+      progressSteps, successSummary, createAnother: () => this.createAnother(),
+      failedItems: s.failedItems.map((f) => ({ label: f })), retryFailed: () => this.retryFailed(),
+
+      toastEl: s.toast ? React.createElement(DS.Toast, { fixed: true, tone: 'success', title: s.toast.title, description: s.toast.description, onClose: () => set({ toast: null }) }) : null,
+    };
+  }
+}
+</script>
+</body>
+</html>

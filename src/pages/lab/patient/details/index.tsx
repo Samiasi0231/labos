@@ -20,13 +20,20 @@ import {
 } from "lucide-react";
 import { PortalAccessBadge } from "@/components/lab/PortalAccessBadge";
 import { PortalActionMenu } from "@/components/lab/PortalActionMenu";
+<<<<<<< HEAD
+=======
+import { usePortalAccess } from "@/hooks/use-portal-access";
+>>>>>>> origin/main
 import { derivePortalAccess } from "@/lib/utils";
 import { useApi, useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
+<<<<<<< HEAD
 import type {
   GrantPortalAccessPayload,
   ResendPortalInvitePayload,
 } from "@/api/types/lab";
+=======
+>>>>>>> origin/main
 import type { Patient } from "@/api/types/patients";
 import type { TestOrderListResponse } from "@/api/types/test-order";
 import { OrderTable } from "@/components/lab/OrderTable";

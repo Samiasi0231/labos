@@ -24,6 +24,10 @@ import {
   Check,
 } from "lucide-react";
 import { useApi, useMutation } from "@/hooks/use-api";
+<<<<<<< HEAD
+=======
+import { useToast } from "@/hooks/use-toast";
+>>>>>>> origin/main
 import endpoint from "@/api/endpoints";
 import type { TestCatalogPreset, InventoryPreset, ImportPresetsPayload } from "@/api/types/presets";
 
@@ -61,6 +65,10 @@ function SkeletonCard() {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export function PresetLibrarySheet({ type, open, onOpenChange }: PresetLibrarySheetProps) {
+<<<<<<< HEAD
+=======
+  const { toast } = useToast();
+>>>>>>> origin/main
   const isCatalog = type === "testCatalog";
 
   // ── Fetch presets ────────────────────────────────────────────────────────────
@@ -85,7 +93,11 @@ export function PresetLibrarySheet({ type, open, onOpenChange }: PresetLibrarySh
 
   const { trigger: triggerImport, isLoading: importing } = useMutation<null, ImportPresetsPayload>(
     importUrl,
+<<<<<<< HEAD
     { successToast: "Presets imported", invalidate: [invalidateUrl, presetsUrl] },
+=======
+    { skipErrorHandling: true, invalidate: [invalidateUrl, presetsUrl] },
+>>>>>>> origin/main
   );
 
   // ── Local state ──────────────────────────────────────────────────────────────
@@ -134,12 +146,26 @@ export function PresetLibrarySheet({ type, open, onOpenChange }: PresetLibrarySh
   const handleImport = async () => {
     if (selectedIds.length === 0 || importing) return;
     setImportError("");
+<<<<<<< HEAD
     const res = await triggerImport({ ids: selectedIds });
     if (!res) {
       setImportError("Something went wrong while importing presets. Please try again.");
       return;
     }
     onOpenChange(false);
+=======
+    try {
+      await triggerImport({ ids: selectedIds });
+      const count = selectedIds.length;
+      onOpenChange(false);
+      toast({
+        title: "Presets Imported",
+        description: `${count} preset${count === 1 ? "" : "s"} added to your ${isCatalog ? "test catalog" : "inventory"}.`,
+      });
+    } catch {
+      setImportError("Something went wrong while importing presets. Please try again.");
+    }
+>>>>>>> origin/main
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────

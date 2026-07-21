@@ -3,9 +3,13 @@ import { Search, ChevronRight, ChevronDown, X, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import { useApi } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { TestCatalogListResponse } from "@/api/types/test-catalog";
+=======
+import { useTestCatalogList } from "@/hooks/use-test-catalog";
+>>>>>>> origin/main
 import type { TestSelectionSectionProps, StagedItem } from "./types";
 
 export function TestSelectionSection({
@@ -18,6 +22,7 @@ export function TestSelectionSection({
   // testCatalogId → Set of selected parameterIds
   const [paramSel, setParamSel] = useState<Record<string, Set<string>>>({});
 
+<<<<<<< HEAD
   const listUrl = useMemo(() => {
     const params = new URLSearchParams();
     params.set("isActive", "true");
@@ -28,6 +33,9 @@ export function TestSelectionSection({
 
   const { data, isLoading } = useApi<TestCatalogListResponse>(listUrl);
   const catalog = data?.data?.docs ?? [];
+=======
+  const { tests: catalog, isLoading } = useTestCatalogList({ isActive: true, limit: 100 });
+>>>>>>> origin/main
 
   const selectedIds = useMemo(() => new Set(selectedTests.map((t) => t.testCatalogId)), [selectedTests]);
 

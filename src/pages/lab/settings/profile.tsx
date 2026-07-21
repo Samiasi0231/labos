@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { TabsContent } from "@/components/ui/tabs";
+=======
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+>>>>>>> origin/main
 import {
   Card,
   CardContent,
@@ -9,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+<<<<<<< HEAD
 import { useEffect, useRef, useState } from "react";
 import { Camera, Loader2, Upload } from "lucide-react";
 import { useCurrentLab, useMutation, useMyPermissions } from "@/hooks/use-api";
@@ -17,6 +22,13 @@ import { useToast } from "@/hooks/use-toast";
 import endpoint from "@/api/endpoints";
 import type { Lab, UpdateLabPayload, UpdateLabLogoResponse } from "@/api/types/lab";
 import { cn } from "@/lib/utils";
+=======
+import { useEffect, useState } from "react";
+import { Camera, Loader2 } from "lucide-react";
+import { useUpdateLab, useUpdateLabLogo, useLab } from "@/hooks/use-lab";
+import { useToast } from "@/hooks/use-toast";
+import { UpdateLabPayload } from "@/api";
+>>>>>>> origin/main
 
 const emptyLabForm: LabFormState = {
   name: "",
@@ -40,6 +52,7 @@ interface LabFormState {
   country: string;
 }
 
+<<<<<<< HEAD
 const ALLOWED_LOGO_TYPES = new Set([
   "image/jpeg",
   "image/jpg",
@@ -228,6 +241,13 @@ export default function Profile() {
     Lab,
     UpdateLabPayload
   >(endpoint.lab.update, { method: "PATCH", successToast: "Lab updated" });
+=======
+export default function Profile() {
+  const { toast } = useToast();
+  const { lab, isLoading: isLabLoading, refetch } = useLab();
+  const { updateLab, isLoading: isSaving } = useUpdateLab();
+  const { updateLogo, isLoading: isUploadingLogo } = useUpdateLabLogo();
+>>>>>>> origin/main
   const [labForm, setLabForm] = useState<LabFormState>(emptyLabForm);
 
   useEffect(() => {
@@ -267,18 +287,112 @@ export default function Profile() {
       },
     };
 
+<<<<<<< HEAD
     const updated = await updateLab(payload);
     if (!updated?.data) return;
     setLab(updated.data);
+=======
+    try {
+      await updateLab(payload);
+      toast({
+        title: "Settings Saved",
+        description: "Lab Profile settings have been updated.",
+      });
+      refetch();
+    } catch {
+      toast({
+        title: "Save failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLogoFileSelected = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // NOTE: /labs/logo expects a URL string, not a file — this assumes
+    // you upload the file to your existing Cloudinary flow first (same
+    // pattern you used for HotelMS branding) and get a URL back.
+    // Plug your actual upload call in here, e.g.:
+    // const url = await uploadToCloudinary(file);
+    toast({
+      title: "Wire up file upload",
+      description:
+        "Upload the file to Cloudinary, then call updateLogo(url) with the returned URL.",
+    });
+>>>>>>> origin/main
   };
 
   return (
     <TabsContent value="profile" className="mt-6 space-y-6">
+<<<<<<< HEAD
       <LabLogoUpload lab={lab} canUpdate={canUpdateLab} />
 
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Laboratory Information</CardTitle>
+=======
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="text-base">Laboratory Logo</CardTitle>
+          <CardDescription>
+            Upload your laboratory logo for reports and invoices
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-5">
+            <div className="w-20 h-20 rounded-xl bg-primary/10 flex items-center justify-center border-2 border-dashed border-primary/30 overflow-hidden">
+              {lab?.logo ? (
+                <img
+                  src={lab.logo}
+                  alt="Lab logo"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Camera className="w-8 h-8 text-primary/50" />
+              )}
+            </div>
+            <div>
+              <Label htmlFor="logo-upload">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  disabled={isUploadingLogo}
+                >
+                  <span>
+                    {isUploadingLogo ? (
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    ) : null}
+                    Upload Logo
+                  </span>
+                </Button>
+              </Label>
+              <input
+                id="logo-upload"
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={handleLogoFileSelected}
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                PNG or JPG, max 2MB. Recommended: 200×200px
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="text-base">
+            Laboratory Information
+          </CardTitle>
+>>>>>>> origin/main
           {lab?.code && (
             <CardDescription>Lab code: {lab.code}</CardDescription>
           )}
@@ -298,7 +412,10 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, name: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
+=======
+>>>>>>> origin/main
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -309,7 +426,10 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, email: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
+=======
+>>>>>>> origin/main
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -319,7 +439,10 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, phone: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
+=======
+>>>>>>> origin/main
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -329,7 +452,10 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, country: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
+=======
+>>>>>>> origin/main
                   />
                 </div>
               </div>
@@ -341,7 +467,10 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, line1: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
+=======
+>>>>>>> origin/main
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -351,7 +480,10 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, line2: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
+=======
+>>>>>>> origin/main
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -361,7 +493,10 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, city: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
+=======
+>>>>>>> origin/main
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -371,6 +506,7 @@ export default function Profile() {
                     onChange={(e) =>
                       setLabForm((p) => ({ ...p, state: e.target.value }))
                     }
+<<<<<<< HEAD
                     disabled={!canUpdateLab}
                   />
                 </div>
@@ -385,10 +521,28 @@ export default function Profile() {
                   </Button>
                 </div>
               )}
+=======
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleSaveProfile} disabled={isSaving}>
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  ) : null}
+                  Save Changes
+                </Button>
+              </div>
+>>>>>>> origin/main
             </>
           )}
         </CardContent>
       </Card>
     </TabsContent>
+<<<<<<< HEAD
   );
 }
+=======
+  )
+}
+>>>>>>> origin/main

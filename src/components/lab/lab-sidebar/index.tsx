@@ -10,9 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
+<<<<<<< HEAD:src/components/lab/lab-sidebar/index.tsx
 import { useCurrentUser, useMyPermissions } from "@/hooks/use-api";
 import { useMemo } from "react";
 import { LabSwitcher } from "./lab-switcher";
+=======
+import { useMyPermissions } from "@/hooks/use-api";
+>>>>>>> origin/main:src/components/lab/LabSidebar.tsx
 
 // ─── Nav item / group types ─────────────────────────────────────
 

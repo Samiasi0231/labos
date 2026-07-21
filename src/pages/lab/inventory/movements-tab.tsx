@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useMemo, useState } from "react";
+=======
+import { useState } from "react";
+>>>>>>> origin/main
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,9 +23,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+<<<<<<< HEAD
 import { useApi, useMyPermissions } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { MovementType, StockMovement, StockMovementListResponse } from "@/api/types/inventory";
+=======
+import { useMyPermissions } from "@/hooks/use-api";
+import { useStockMovements } from "@/hooks/use-inventory";
+import type { MovementType, StockMovement } from "@/api/types/inventory";
+>>>>>>> origin/main
 import { AdjustDialog } from "./adjust-dialog";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -85,6 +95,7 @@ export function MovementsTab() {
   const [adjustOpen, setAdjustOpen] = useState(false);
 
   // ── Data ──
+<<<<<<< HEAD
   const movementsUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (movType !== "all") params.set("type", movType);
@@ -98,6 +109,13 @@ export function MovementsTab() {
   const pagination = data?.data
     ? { totalDocs: data.data.totalDocs, page: data.data.page, totalPages: data.data.totalPages }
     : null;
+=======
+  const { movements, pagination, isLoading } = useStockMovements({
+    type: movType !== "all" ? movType : undefined,
+    page: movPage,
+    limit: 20,
+  });
+>>>>>>> origin/main
 
   const visibleMovements = movSearch.trim()
     ? movements.filter((m) =>

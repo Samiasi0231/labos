@@ -13,9 +13,15 @@ import {
 } from "@/components/ui/dialog";
 import { PackagePlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+<<<<<<< HEAD
 import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { InventoryItem, RestockPayload, StockMutationResponse } from "@/api/types/inventory";
+=======
+import { useRestockItem } from "@/hooks/use-inventory";
+import endpoint from "@/api/endpoints";
+import type { InventoryItem } from "@/api/types/inventory";
+>>>>>>> origin/main
 
 interface RestockDialogProps {
   target: InventoryItem | null;
@@ -33,10 +39,14 @@ const EMPTY_FORM = {
 export function RestockDialog({ target, onClose }: RestockDialogProps) {
   const { toast } = useToast();
   const { mutate } = useSWRConfig();
+<<<<<<< HEAD
   const { trigger: triggerRestock, isLoading: isRestocking } = useMutation<
     StockMutationResponse,
     RestockPayload
   >("inventory/restock", { successToast: "Stock restocked", invalidate: [] });
+=======
+  const { restock, isLoading: isRestocking } = useRestockItem([]);
+>>>>>>> origin/main
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   useEffect(() => {
@@ -58,13 +68,19 @@ export function RestockDialog({ target, onClose }: RestockDialogProps) {
       toast({ title: "Enter a valid quantity", variant: "destructive" });
       return;
     }
+<<<<<<< HEAD
     const res = await triggerRestock(
       {
+=======
+    try {
+      await restock(target._id, {
+>>>>>>> origin/main
         quantity: qty,
         unitCost: form.unitCost ? parseFloat(form.unitCost) : undefined,
         supplier: form.supplier || undefined,
         expiryDate: form.expiryDate || undefined,
         note: form.note || undefined,
+<<<<<<< HEAD
       },
       endpoint.lab.inventory.restock(target._id),
     );
@@ -73,6 +89,20 @@ export function RestockDialog({ target, onClose }: RestockDialogProps) {
       typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
     );
     onClose();
+=======
+      });
+      mutate((key: unknown) =>
+        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+      );
+      toast({
+        title: "Item restocked",
+        description: `${target.name} +${qty} ${target.unit}`,
+      });
+      onClose();
+    } catch {
+      toast({ title: "Restock failed", variant: "destructive" });
+    }
+>>>>>>> origin/main
   };
 
   return (

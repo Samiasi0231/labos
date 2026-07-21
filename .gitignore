@@ -25,5 +25,9 @@ reports
 *.sw?
 code_template.zip
 
+<<<<<<< HEAD
 .claude
 .env
+=======
+.claude
+>>>>>>> origin/main

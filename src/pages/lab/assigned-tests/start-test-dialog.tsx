@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import { PermissionButton } from "@/components/button";
+=======
+>>>>>>> origin/main
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,6 +14,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Play, FlaskConical } from "lucide-react";
+<<<<<<< HEAD
+=======
+import { useToast } from "@/hooks/use-toast";
+>>>>>>> origin/main
 import { useApi, useMutation } from "@/hooks/use-api";
 import type {
   AssignmentItem,
@@ -19,7 +26,10 @@ import type {
 } from "@/api/types/test-order";
 import type { TestCatalogEntry } from "@/api/types/test-catalog";
 import endpoint from "@/api/endpoints";
+<<<<<<< HEAD
 import { concatStrings } from "@/lib/utils";
+=======
+>>>>>>> origin/main
 
 interface StartTestDialogProps {
   item: AssignmentItem | null;
@@ -32,13 +42,21 @@ export function StartTestDialog({
   onClose,
   onStarted,
 }: StartTestDialogProps) {
+<<<<<<< HEAD
+=======
+  const { toast } = useToast();
+>>>>>>> origin/main
   const [materialQtys, setMaterialQtys] = useState<Record<string, string>>({});
 
   const { trigger: startTest, isLoading: isStarting } = useMutation<
     TestOrderItem,
     StartTestPayload
   >("test-orders/start-test", {
+<<<<<<< HEAD
     successToast: "Test started",
+=======
+    skipErrorHandling: true,
+>>>>>>> origin/main
     invalidate: [endpoint.lab.testOrders.assignments],
   });
 
@@ -47,7 +65,11 @@ export function StartTestDialog({
       item ? endpoint.lab.testCatalog.get(item.testCatalog) : null,
     );
   const analysisMaterials = (catalogData?.data?.materials ?? []).filter(
+<<<<<<< HEAD
     (m) => m.phase === "analysis" && m.inventoryItem != null && typeof m.inventoryItem === "object",
+=======
+    (m) => m.phase === "analysis",
+>>>>>>> origin/main
   );
 
   const handleClose = () => {
@@ -64,6 +86,7 @@ export function StartTestDialog({
       }))
       .filter((m) => m.quantity > 0);
 
+<<<<<<< HEAD
     const res = await startTest(
       { materials },
       endpoint.lab.testOrders.startTest(item.testOrder._id, item._id),
@@ -71,6 +94,26 @@ export function StartTestDialog({
     if (!res) return;
     setMaterialQtys({});
     onStarted();
+=======
+    try {
+      await startTest(
+        { materials },
+        endpoint.lab.testOrders.startTest(item.testOrder._id, item._id),
+      );
+      setMaterialQtys({});
+      onStarted();
+      toast({
+        title: "Test started",
+        description: `${item.testName} is now In Progress.`,
+      });
+    } catch {
+      toast({
+        title: "Couldn't start test",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+>>>>>>> origin/main
   };
 
   return (
@@ -91,8 +134,14 @@ export function StartTestDialog({
                 {item.testName}
               </span>
             </p>
+<<<<<<< HEAD
             <p className="text-xs capitalize text-muted-foreground">
               Patient: {concatStrings(item?.testOrder?.patient?.firstName, item?.testOrder?.patient?.lastName, " ")}
+=======
+            <p className="text-xs text-muted-foreground">
+              Patient: {item.testOrder.patient.firstName}{" "}
+              {item.testOrder.patient.lastName}
+>>>>>>> origin/main
             </p>
           </div>
         )}
@@ -150,6 +199,7 @@ export function StartTestDialog({
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
+<<<<<<< HEAD
           <PermissionButton
             permission="tests.process"
             fallback="hide"
@@ -160,6 +210,16 @@ export function StartTestDialog({
           >
             Start Test
           </PermissionButton>
+=======
+          <Button
+            onClick={handleStart}
+            disabled={isStarting || isLoadingCatalog}
+            className="gap-1.5"
+          >
+            <Play className="w-4 h-4" />
+            {isStarting ? "Starting…" : "Start Test"}
+          </Button>
+>>>>>>> origin/main
         </DialogFooter>
       </DialogContent>
     </Dialog>

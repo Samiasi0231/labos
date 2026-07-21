@@ -1,6 +1,9 @@
 import { useSWRConfig } from "swr";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import { PermissionButton } from "@/components/button";
+=======
+>>>>>>> origin/main
 import {
   Dialog,
   DialogContent,
@@ -9,7 +12,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
+<<<<<<< HEAD
 import { useMutation } from "@/hooks/use-api";
+=======
+import { useToast } from "@/hooks/use-toast";
+import { useRemoveInventoryItem } from "@/hooks/use-inventory";
+>>>>>>> origin/main
 import endpoint from "@/api/endpoints";
 import type { InventoryItem } from "@/api/types/inventory";
 
@@ -19,6 +27,7 @@ interface DeleteItemDialogProps {
 }
 
 export function DeleteItemDialog({ target, onClose }: DeleteItemDialogProps) {
+<<<<<<< HEAD
   const { mutate } = useSWRConfig();
   const { trigger: triggerRemove, isLoading: isRemoving } = useMutation<unknown, void>(
     "inventory/remove",
@@ -33,6 +42,29 @@ export function DeleteItemDialog({ target, onClose }: DeleteItemDialogProps) {
       typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
     );
     onClose();
+=======
+  const { toast } = useToast();
+  const { mutate } = useSWRConfig();
+  const { removeItem, isLoading: isRemoving } = useRemoveInventoryItem([]);
+
+  const handleConfirm = async () => {
+    if (!target) return;
+    try {
+      await removeItem(target._id);
+      mutate((key: unknown) =>
+        typeof key === "string" && key.startsWith(endpoint.lab.inventory.list),
+      );
+      toast({ title: "Item removed", description: `${target.name} deleted.` });
+      onClose();
+    } catch {
+      toast({
+        title: "Cannot delete",
+        description: "Item still has stock on hand. Adjust to zero first.",
+        variant: "destructive",
+      });
+      onClose();
+    }
+>>>>>>> origin/main
   };
 
   return (
@@ -53,6 +85,7 @@ export function DeleteItemDialog({ target, onClose }: DeleteItemDialogProps) {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
+<<<<<<< HEAD
           <PermissionButton
             variant="destructive"
             permission="inventory.delete"
@@ -63,6 +96,17 @@ export function DeleteItemDialog({ target, onClose }: DeleteItemDialogProps) {
           >
             Delete
           </PermissionButton>
+=======
+          <Button
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={isRemoving}
+            className="gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            {isRemoving ? "Deleting…" : "Delete"}
+          </Button>
+>>>>>>> origin/main
         </DialogFooter>
       </DialogContent>
     </Dialog>

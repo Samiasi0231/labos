@@ -4,11 +4,16 @@ import { useSWRConfig } from "swr";
 import { fetcher, get, post, put, patch, del } from "@/api/fetcher";
 import type { ApiError, ApiResponse } from "@/api/types/common";
 import type { GlobalSearchResult } from "@/api/types/search";
+<<<<<<< HEAD
 import type { CurrentUser } from "@/api/types/user";
 import type { Lab } from "@/api/types/lab";
 import { notify } from "@/lib/notify";
 import endpoint from "@/api/endpoints";
 import { useStore } from "@/hooks/use-store";
+=======
+import { toast } from "sonner";
+import endpoint from "@/api/endpoints";
+>>>>>>> origin/main
 export { default as useDebounce } from "./use-debounce";
 import useDebounce from "./use-debounce";
 
@@ -19,6 +24,34 @@ interface MyPermissionsResponse {
     permission: string;
     description: string;
   }[];
+<<<<<<< HEAD
+=======
+}
+
+const TOAST_IDS = {
+  AUTH_ERROR: "auth-error",
+  NETWORK_ERROR: "network-error",
+} as const;
+
+function isNetworkError(err: ApiError): boolean {
+  return err.status == null;
+}
+
+function showApiErrorToast(err: ApiError) {
+  if (err.status === 401) {
+    toast.error("Session expired. Please sign in again.", {
+      id: TOAST_IDS.AUTH_ERROR,
+    });
+    return;
+  }
+  if (isNetworkError(err)) {
+    toast.error(err.message || "Network error. Check your connection.", {
+      id: TOAST_IDS.NETWORK_ERROR,
+    });
+    return;
+  }
+  toast.error(err.message);
+>>>>>>> origin/main
 }
 
 export interface UseApiOptions {
@@ -145,6 +178,7 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
   };
 }
 
+<<<<<<< HEAD
 /** Fetch current user only when missing from the store / storage. */
 export function useCurrentUser() {
   const { auth, user, hydrated, setUser } = useStore();
@@ -226,6 +260,26 @@ export function useMyPermissions() {
     permissions: permissions ?? [],
     isLoading: !hydrated || (needsFetch && isLoading),
   };
+=======
+export function useMyPermissions() {
+  const { data, isLoading } = useApi<MyPermissionsResponse>(
+    endpoint.lab.staff.myPermissions
+  );
+
+  const isAdmin = data?.data?.isAdmin ?? false;
+  const permissionSet = new Set(
+    (data?.data?.permissions ?? []).map((p) => p.permission)
+  );
+
+  const can = (permission: string): boolean => {
+    if (isAdmin) return true;
+    return permissionSet.has(permission);
+  };
+
+  const role = data?.data?.role ?? null;
+
+  return { can, isAdmin, role, isLoading };
+>>>>>>> origin/main
 }
 
 export function useGlobalSearch(q: string, types?: string[]) {
@@ -243,4 +297,8 @@ export function useGlobalSearch(q: string, types?: string[]) {
     isLoading,
     hasQuery: debounced.length >= 2,
   };
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

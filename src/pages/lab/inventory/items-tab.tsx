@@ -40,12 +40,20 @@ import {
   Library,
 } from "lucide-react";
 import { PresetLibrarySheet } from "@/components/lab/PresetLibrarySheet";
+<<<<<<< HEAD
 import { useApi, useMyPermissions } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type {
   InventoryCategory,
   InventoryItem,
   InventoryListResponse,
+=======
+import { useMyPermissions } from "@/hooks/use-api";
+import { useInventoryList } from "@/hooks/use-inventory";
+import type {
+  InventoryCategory,
+  InventoryItem,
+>>>>>>> origin/main
   InventoryStatus,
 } from "@/api/types/inventory";
 import { AddItemDialog } from "./add-dialog";
@@ -129,6 +137,7 @@ export function ItemsTab() {
   }, []);
 
   // ── Data ──
+<<<<<<< HEAD
   const listUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
@@ -143,6 +152,16 @@ export function ItemsTab() {
 
   const { data, isLoading } = useApi<InventoryListResponse>(listUrl);
   const items = data?.data?.docs ?? [];
+=======
+  const { items, isLoading } = useInventoryList({
+    search: search || undefined,
+    category: categoryFilter === "All" ? undefined : categoryFilter,
+    status: statusFilter === "All" ? undefined : statusFilter,
+    lowStock: lowStockOnly ? true : undefined,
+    expiringBefore: expiringSoon ? expiringSoonDate : undefined,
+    limit: 100,
+  });
+>>>>>>> origin/main
 
   const openAdjust = (item: InventoryItem) => {
     setAdjustItemId(item._id);

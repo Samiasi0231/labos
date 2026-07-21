@@ -70,11 +70,19 @@ export function EditPatientSheet({
   const { toast } = useToast();
   const { trigger, isLoading } = useMutation<Patient, UpdatePatientPayload>(
     "patients/update",
+<<<<<<< HEAD
     { method: "PATCH", successToast: "Patient updated", invalidate: [endpoint.lab.patients.list] },
   );
   const updatePatient = async (patientId: string, payload: UpdatePatientPayload) => {
     const res = await trigger(payload, endpoint.lab.patients.update(patientId));
     if (!res) return null;
+=======
+    { method: "PATCH", skipErrorHandling: true, invalidate: [endpoint.lab.patients.list] },
+  );
+  const updatePatient = async (patientId: string, payload: UpdatePatientPayload) => {
+    const res = await trigger(payload, endpoint.lab.patients.update(patientId));
+    if (!res) throw new Error("Failed to update patient");
+>>>>>>> origin/main
     return res.data;
   };
 
