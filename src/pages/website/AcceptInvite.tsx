@@ -64,10 +64,9 @@ export default function AcceptInvite() {
   const { data: inviteData, isLoading, error } = useApi<InviteInfo>(inviteUrl);
   const info = inviteData?.data ?? null;
 
-  const { trigger: acceptInvite, isLoading: isAccepting } = useMutation<
-  AcceptInviteResponse,
-    AcceptInvitePayload >
-     (endpoint.auth.acceptInvite, { skipErrorHandling: true });
+  const { trigger: acceptInvite, isLoading: isAccepting } = useMutation
+    <AcceptInviteResponse, AcceptInvitePayload>
+    (endpoint.auth.acceptInvite, { skipErrorHandling: true });
 
   const form = useForm<AcceptInviteValues>({
     resolver: zodResolver(acceptInviteSchema),

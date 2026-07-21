@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
 import { PermissionButton } from "@/components/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { TextInput } from "@/components/form/text-input";
 import { SelectInput } from "@/components/form/select-input";
-import { PrimaryButton, SecondaryButton } from "@/components/button";
 import { StateLgaFields } from "@/components/form/StateLgaField";
 import {
   UserPlus,
@@ -24,6 +21,7 @@ import { useMutation } from "@/hooks/use-api";
 import endpoint from "@/api/endpoints";
 import type { Patient, CreatePatientPayload } from "@/api/types/patients";
 import { z } from "zod";
+import { concatStrings } from "@/lib/utils";
 
 export const patientRegistrationSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -31,7 +29,7 @@ export const patientRegistrationSchema = z.object({
   gender: z.enum(["male", "female"], { message: "Gender is required" }),
   dob: z.string().optional(),
   phone: z.string().min(1, "Phone number is required"),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  email: z.email("Invalid email").optional().or(z.literal("")),
   addressLine1: z.string().optional(),
   addressLine2: z.string().optional(),
   state: z.string().min(1, "State is required"),
@@ -57,8 +55,7 @@ export default function PatientRegistration() {
   };
   const [submitted, setSubmitted] = useState(false);
   const [patientCode, setPatientCode] = useState("");
-  const [submittedValues, setSubmittedValues] =
-    useState<PatientRegistrationValues | null>(null);
+  const [submittedValues, setSubmittedValues] = useState<PatientRegistrationValues | null>(null);
 
   const form = useForm<PatientRegistrationValues>({
     resolver: zodResolver(patientRegistrationSchema),
@@ -89,25 +86,18 @@ export default function PatientRegistration() {
       email: values.email || undefined,
       address: hasAddress
         ? {
-            line1: values.addressLine1 || "",
-            line2: values.addressLine2 || undefined,
-            city: values.city || "",
-            state: values.state || "",
-            country: "NG",
-          }
+          line1: values.addressLine1 || "",
+          line2: values.addressLine2 || undefined,
+          city: values.city || "",
+          state: values.state || "",
+          country: "NG",
+        }
         : undefined,
     });
     if (!patient) return;
     setSubmittedValues(values);
     setPatientCode(patient.code);
     setSubmitted(true);
-  };
-
-  const handleReset = () => {
-    form.reset();
-    setSubmitted(false);
-    setPatientCode("");
-    setSubmittedValues(null);
   };
 
   if (submitted && submittedValues) {
@@ -138,7 +128,7 @@ export default function PatientRegistration() {
             {[
               {
                 label: "Full Name",
-                value: `${submittedValues.firstName} ${submittedValues.lastName}`,
+                value: concatStrings(submittedValues.firstName, submittedValues.lastName, " "),
               },
               { label: "Gender", value: submittedValues.gender },
               {
@@ -170,22 +160,6 @@ export default function PatientRegistration() {
             ))}
           </CardContent>
         </Card>
-
-        <div className="flex gap-3">
-          <SecondaryButton
-            className="flex-1"
-            onClick={handleReset}
-            leftIcon={<RefreshCw className="w-4 h-4" />}
-          >
-            Register Another
-          </SecondaryButton>
-          <PrimaryButton
-            className="flex-1"
-            leftIcon={<Printer className="w-4 h-4" />}
-          >
-            Print Patient Card
-          </PrimaryButton>
-        </div>
       </div>
     );
   }
